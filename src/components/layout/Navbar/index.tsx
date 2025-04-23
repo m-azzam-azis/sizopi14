@@ -38,9 +38,6 @@ export const Navbar = () => {
           className="flex flex-row justify-center items-center gap-3"
           href="/"
         >
-          <div className="relative w-[38px] lg:w-[49px]">
-            <img src="/logo.png" alt="text logo" className="object-contain" />
-          </div>
           <div className="font-hepta font-bold text-h6 md:text-h3 text-orange-500">
             Sizopi
           </div>
