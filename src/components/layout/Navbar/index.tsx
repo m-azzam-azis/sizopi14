@@ -6,7 +6,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Chevron } from "@/components/icons/Chevron";
-import { Logout } from "@/components/icons/Logout";
 import {
   Drawer,
   DrawerClose,
@@ -15,8 +14,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { DrawerLines } from "@/components/icons/DrawerLines";
-import { X } from "lucide-react";
-import { Dashboard } from "@/components/icons/Dashboard";
+import { CircleUserRound, LayoutDashboard, LogOut, X } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -32,7 +30,7 @@ export const Navbar = () => {
   const [popoverOpen2, setPopoverOpen2] = useState(false);
 
   return (
-    <nav className="fixed top-0 p-5 px-5 sm:px-16 md:px-14 lg:px-20 w-full bg-white z-50">
+    <nav className="fixed top-0 p-5 px-5 sm:px-16 md:px-14 lg:px-20 w-full bg-white z-50 border-b border-orange-100">
       <div className="flex gap-2 justify-between items-center">
         <Link
           className="flex flex-row justify-center items-center gap-3"
@@ -105,7 +103,7 @@ export const Navbar = () => {
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
               <PopoverTrigger asChild className="max-md:hidden">
                 <button className="relative group flex gap-3 max-sm:gap-2 py-2 items-center text-black fill-black group cursor-pointer">
-                  <p className="text-s7 text-orange-500 max-sm:hidden font-outfit font-medium">
+                  <p className="text-h7 text-orange-500 max-sm:hidden font-outfit font-medium">
                     Shaney Zoya
                   </p>
                   <Chevron
@@ -120,23 +118,23 @@ export const Navbar = () => {
               <PopoverContent className="z-50 translate-y-6 -translate-x-2 space-y-6">
                 <Link
                   href="/dashboard"
-                  className="flex flex-row gap-2 text-s7 w-full text-left duration-300 rounded-xl font-jakarta"
+                  className="flex flex-row gap-2 text-h7 w-full text-left duration-300 rounded-xl font-outfit"
                 >
-                  <Dashboard className="w-6 h-6" />
+                  <LayoutDashboard className="w-6 h-6" />
                   Dashboard
                 </Link>
                 <Link
                   href="/profile"
-                  className="flex flex-row gap-2 text-s7 w-full text-left duration-300 rounded-xl font-jakarta"
+                  className="flex flex-row gap-2 text-h7 w-full text-left duration-300 rounded-xl font-outfit"
                 >
-                  <Dashboard className="w-6 h-6" />
+                  <CircleUserRound className="w-6 h-6" />
                   Profil Diri
                 </Link>
                 <button
                   // onClick={logout}
-                  className="flex flex-row gap-2 text-s7 w-full text-left duration-300 rounded-xl cursor-pointer font-jakarta"
+                  className="flex flex-row gap-2 text-h7 w-full text-left duration-300 rounded-xl cursor-pointer font-outfit"
                 >
-                  <Logout className="w-6 h-6" />
+                  <LogOut className="w-6 h-6" />
                   Log Out
                 </button>
               </PopoverContent>
@@ -154,22 +152,73 @@ export const Navbar = () => {
 
                   <Link
                     href="/"
-                    className="text-s7 text-orange-800 font-jakarta"
+                    className="text-h7 text-orange-800 font-outfit font-medium"
                   >
                     Home
                   </Link>
 
-                  <Link
-                    href="/faq"
-                    className="text-s7 text-orange-800 font-jakarta"
-                  >
-                    FAQ
-                  </Link>
+                  {data?.user.role == "dokter" ? (
+                    <Link
+                      href="/rekam-medis-hewan"
+                      className="text-h7 text-orange-800 font-outfit font-medium"
+                    >
+                      Rekam Medis
+                    </Link>
+                  ) : data?.user.role == "penjaga" ? (
+                    <Link
+                      href="/catatan-perawatan-hewan"
+                      className="text-h7 text-orange-800 font-outfit font-medium"
+                    >
+                      Catatan Perawatan
+                    </Link>
+                  ) : data?.user.role == "admin" ? (
+                    <>
+                      <Link
+                        href="/kelola-pengunjung"
+                        className="text-h7 text-orange-800 font-outfit font-medium"
+                      >
+                        Kelola Pengunjung
+                      </Link>
+                      <Link
+                        href="/kelola-adopsi-hewan"
+                        className="text-h7 text-orange-800 font-outfit font-medium"
+                      >
+                        Kelola Adopsi
+                      </Link>
+                      <Link
+                        href="/kelola-adopter"
+                        className="text-h7 text-orange-800 font-outfit font-medium"
+                      >
+                        Kelola Adopter
+                      </Link>
+                    </>
+                  ) : data?.user.role == "pelatih" ? (
+                    <Link
+                      href="/jadwal-pertunjukan"
+                      className="text-h7 text-orange-800 font-outfit font-medium"
+                    >
+                      Jadwal Pertunjukan
+                    </Link>
+                  ) : data?.user.role == "pengunjung" ? (
+                    <Link
+                      href="/kebun-binatang"
+                      className="text-h7 text-orange-800 font-outfit font-medium"
+                    >
+                      Kebun Binatang
+                    </Link>
+                  ) : data?.user.role == "adopter" ? (
+                    <Link
+                      href="/hewan-adopsi"
+                      className="text-h7 text-orange-800 font-outfit font-medium"
+                    >
+                      Hewan Adopsi
+                    </Link>
+                  ) : null}
 
                   <Popover open={popoverOpen2} onOpenChange={setPopoverOpen2}>
                     <PopoverTrigger asChild>
-                      <button className="relative group flex gap-3 max-sm:gap-2 py-2 items-center text-black fill-black group cursor-pointer font-jakarta">
-                        <p className="text-s7 text-orange-800">Shaney Zoya</p>
+                      <button className="relative group flex gap-3 max-sm:gap-2 py-2 items-center text-black fill-black group cursor-pointer font-outfit">
+                        <p className="text-h7 text-orange-800 font-medium font-outfit">Shaney Zoya</p>
                         <Chevron
                           className={`${
                             popoverOpen ? "-rotate-180" : ""
@@ -182,35 +231,28 @@ export const Navbar = () => {
                     <PopoverContent className="z-50 bg-transparent px-0 translate-x-10 -translate-y-2 space-y-8 shadow-none">
                       <Link
                         href="/dashboard"
-                        className="flex flex-row gap-2 text-s7 w-full text-left duration-300 rounded-xl font-jakarta"
+                        className="flex flex-row gap-2 text-h7 w-full text-left duration-300 rounded-xl font-medium font-outfit text-orange-800"
                       >
-                        <Dashboard className="w-6 h-6" />
+                        <LayoutDashboard className="w-6 h-6" />
                         Dashboard
                       </Link>
                       <Link
                         href="/profile"
-                        className="flex flex-row gap-2 text-s7 w-full text-left duration-300 rounded-xl font-jakarta"
+                        className="flex flex-row gap-2 text-h7 w-full text-left duration-300 rounded-xl font-medium font-outfit text-orange-800"
                       >
-                        <Dashboard className="w-6 h-6" />
+                        <CircleUserRound className="w-6 h-6" />
                         Profil Diri
                       </Link>
                       <button
                         // onClick={logout}
-                        className="flex flex-row gap-2 text-s7 w-full text-left duration-300 rounded-xl cursor-pointer font-jakarta"
+                        className="flex flex-row gap-2 text-h7 w-full text-left duration-300 rounded-xl cursor-pointer font-medium font-outfit text-orange-800"
                       >
-                        <Logout className="w-6 h-6" />
+                        <LogOut className="w-6 h-6" />
                         Log Out
                       </button>
                     </PopoverContent>
                   </Popover>
                 </DrawerHeader>
-                <div className="absolute w-[386.7px] bottom-0">
-                  <img
-                    src="/drawer-hat.png"
-                    alt="drawer hat"
-                    className="object-contain"
-                  />
-                </div>
               </DrawerContent>
             </Drawer>
           </div>

@@ -1,6 +1,6 @@
 export const Footer = () => {
   return (
-    <footer className="mx-auto w-full flex flex-col sm:flex-row justify-between gap-7 sm:gap-0 text-basic fill-bg-white bg-white max-sm:py-10 sm:h-[300px] px-5 sm:px-15 relative z-50">
+    <footer className="mx-auto w-full flex flex-col sm:flex-row justify-between gap-7 sm:gap-0 text-basic fill-bg-white bg-white max-sm:py-10 sm:h-[300px] px-5 sm:px-15 relative z-50 border-t border-orange-100">
       <div className="flex flex-col gap-1 sm:gap-3 items-center sm:items-start justify-center">
         <div className="font-hepta font-bold text-h5 md:text-h3 text-orange-500">
           Sizopi

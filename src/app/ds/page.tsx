@@ -1,3 +1,5 @@
-export default async function Page() {
-  return <div>hi</div>;
+import DesignSytemModule from "@/modules/DesignSystemModule";
+
+export default function DesignSystemPage() {
+  return <DesignSytemModule />;
 }
