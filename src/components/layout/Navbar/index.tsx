@@ -6,7 +6,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Chevron } from "@/components/icons/Chevron";
-import { Logout } from "@/components/icons/Logout";
 import {
   Drawer,
   DrawerClose,
@@ -15,8 +14,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { DrawerLines } from "@/components/icons/DrawerLines";
-import { X } from "lucide-react";
-import { Dashboard } from "@/components/icons/Dashboard";
+import { CircleUserRound, LayoutDashboard, LogOut, X } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -132,21 +130,21 @@ export const Navbar = () => {
                   href="/dashboard"
                   className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl font-jakarta hover:text-primary"
                 >
-                  <Dashboard className="w-6 h-6" />
+                  <LayoutDashboard className="w-6 h-6" />
                   Dashboard
                 </Link>
                 <Link
                   href="/profile"
                   className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl font-jakarta hover:text-primary"
                 >
-                  <Dashboard className="w-6 h-6" />
+                  <CircleUserRound className="w-6 h-6" />
                   Profil Diri
                 </Link>
                 <button
                   // onClick={logout}
                   className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl cursor-pointer font-jakarta hover:text-primary"
                 >
-                  <Logout className="w-6 h-6" />
+                  <LogOut className="w-6 h-6" />
                   Log Out
                 </button>
               </PopoverContent>
@@ -203,33 +201,26 @@ export const Navbar = () => {
                         href="/dashboard"
                         className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl font-jakarta hover:text-primary"
                       >
-                        <Dashboard className="w-6 h-6" />
+                        <LayoutDashboard className="w-6 h-6" />
                         Dashboard
                       </Link>
                       <Link
                         href="/profile"
                         className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl font-jakarta hover:text-primary"
                       >
-                        <Dashboard className="w-6 h-6" />
+                        <CircleUserRound className="w-6 h-6" />
                         Profil Diri
                       </Link>
                       <button
                         // onClick={logout}
                         className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl cursor-pointer font-jakarta hover:text-primary"
                       >
-                        <Logout className="w-6 h-6" />
+                        <LogOut className="w-6 h-6" />
                         Log Out
                       </button>
                     </PopoverContent>
                   </Popover>
                 </DrawerHeader>
-                <div className="absolute w-[386.7px] bottom-0">
-                  <img
-                    src="/drawer-hat.png"
-                    alt="drawer hat"
-                    className="object-contain"
-                  />
-                </div>
               </DrawerContent>
             </Drawer>
           </div>

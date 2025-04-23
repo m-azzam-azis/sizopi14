@@ -3,7 +3,55 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@theme {
+  --font-outfit: "Outfit", sans-serif;
+  --font-hepta: "Hepta Slab", serif;
+
+  --text-h1: 60px;
+  --text-h1--line-height: 60px;
+  --text-h2: 48px;
+  --text-h2--line-height: 48px;
+  --text-h3: 36px;
+  --text-h3--line-height: 40px;
+  --text-h4: 28px;
+  --text-h4--line-height: 36px;
+  --text-h5: 24px;
+  --text-h5--line-height: 32px;
+  --text-h6: 20px;
+  --text-h6--line-height: 28px;
+  --text-h7: 16px;
+  --text-h7--line-height: 24px;
+  --text-h8: 12px;
+  --text-h8--line-height: 16px;
+
+  --radius-2xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 2px);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
 @theme inline {
+  --color-black-2: var(--color-black-2);
+  --color-black: var(--component-black);
+  --color-white: var(--component-white);
+  --color-border: var(--component-border);
+  --color-frame: var(--component-frame);
+  --color-success: var(--component-success);
+  --color-error: var(--component-error);
+  --color-warning: var(--component-warning);
+
+  --color-orange-050: var(--orange-050);
+  --color-orange-100: var(--orange-100);
+  --color-orange-200: var(--orange-200);
+  --color-orange-300: var(--orange-300);
+  --color-orange-400: var(--orange-400);
+  --color-orange-500: var(--orange-500);
+  --color-orange-600: var(--orange-600);
+  --color-orange-700: var(--orange-700);
+  --color-orange-800: var(--orange-800);
+  --color-orange-900: var(--orange-900);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -44,6 +92,26 @@
 }
 
 :root {
+  --component-black-2: oklch(0 0 0);
+  --component-black: oklch(32.11% 0 0);
+  --component-white: oklch(100% 0 0);
+  --component-border: oklch(89% 0 0);
+  --component-frame: oklch(97% 0 0);
+  --component-success: oklch(70% 0.1224 154.4);
+  --component-error: oklch(60% 0.1313 21.25);
+  --component-warning: oklch(71% 0.1384 88.06);
+
+  --orange-050: oklch(0.97 0.0137 46.23);
+  --orange-100: oklch(0.9 0.0442 44.55);
+  --orange-200: oklch(0.86 0.0675 45.06);
+  --orange-300: oklch(0.8 0.0998 44.59);
+  --orange-400: oklch(0.76 0.1209 43.97);
+  --orange-500: oklch(0.71 0.153 43.14);
+  --orange-600: oklch(0.66 0.141 43.49);
+  --orange-700: oklch(0.55 0.1164 42.67);
+  --orange-800: oklch(0.46 0.0939 43.43);
+  --orange-900: oklch(0.38 0.0749 44.05);
+
   --radius: 0.625rem;
   --background: oklch(0.99 0.02 145);
   --foreground: oklch(0.2 0.05 145);

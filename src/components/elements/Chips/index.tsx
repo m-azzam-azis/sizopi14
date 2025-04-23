@@ -20,8 +20,8 @@ export const Chips = function ({
       : "px-[15px] py-[7px] text-s7";
 
   const selectedStyle = isSelected
-    ? "bg-blue-500 border-1 border-blue-500 text-white"
-    : "bg-transparent hover:bg-blue-050 border-1 border-blue-500";
+    ? "bg-orange-500 border-1 border-orange-500 text-white"
+    : "bg-transparent hover:bg-orange-050 border-1 border-orange-500";
 
   return (
     <button
@@ -32,7 +32,7 @@ export const Chips = function ({
           onClick();
         }
       }}
-      className={`h-fit w-fit flex items-center justify-center font-jakarta text-blue-500 gap-1 rounded-[100px] duration-200 bg-gradient ${selectedStyle} ${buttonPadding}`}
+      className={`h-fit w-fit flex items-center justify-center font-jakarta text-orange-500 gap-1 rounded-[100px] duration-200 bg-gradient ${selectedStyle} ${buttonPadding}`}
     >
       {icon && type !== "p1" &&
         cloneElement(
@@ -41,9 +41,9 @@ export const Chips = function ({
             width: 13,
             height: 13,
             className: `shrink-0 `,
-            stroke: isSelected ? "#ffffff" : "#447295",
+            stroke: isSelected ? "#ffffff" : "#ee7e4c",
             style: {
-              stroke: isSelected ? "#ffffff" : "#447295",
+              stroke: isSelected ? "#ffffff" : "#ee7e4c",
             },
           } as React.SVGProps<SVGSVGElement>
         )}
@@ -54,9 +54,9 @@ export const Chips = function ({
             width: 10,
             height: 10,
             className: `shrink-0 `,
-            stroke: isSelected ? "#ffffff" : "#447295",
+            stroke: isSelected ? "#ffffff" : "#ee7e4c",
             style: {
-              stroke: isSelected ? "#ffffff" : "#447295",
+              stroke: isSelected ? "#ffffff" : "#ee7e4c",
             },
           } as React.SVGProps<SVGSVGElement>
         )}
