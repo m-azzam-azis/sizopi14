@@ -9,7 +9,7 @@ const NotFound = () => {
         404
       </h1>
       <Link href={"/"}>
-        <Button variant="primary" className="mt-8">
+        <Button variant="default" className="mt-8">
           Back to Home
         </Button>
       </Link>
