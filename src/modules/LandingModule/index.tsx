@@ -1,0 +1,7 @@
+export const LandingModule = () => {
+  return (
+    <main className="flex flex-col justify-center items-center mb-[10dvh]">
+      Hello!
+    </main>
+  );
+};
