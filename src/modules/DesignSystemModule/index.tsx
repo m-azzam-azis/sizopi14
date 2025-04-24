@@ -47,7 +47,7 @@ export default function DesignSytemModule() {
 
       <div className="grid grid-cols-3 gap-4 py-5">
         <Button
-          variant={"primary"}
+          variant={"default"}
           onClick={() => {
             toast({
               title: "Loading",
@@ -58,7 +58,7 @@ export default function DesignSytemModule() {
           Loading toast
         </Button>
         <Button
-          variant={"primary"}
+          variant={"default"}
           onClick={() => {
             toast({
               title: "Error message",
@@ -69,7 +69,7 @@ export default function DesignSytemModule() {
           Error toast
         </Button>
         <Button
-          variant={"primary"}
+          variant={"default"}
           onClick={() => {
             toast({
               title: "Success message",
@@ -127,13 +127,16 @@ export default function DesignSytemModule() {
       </div>
 
       <div className="w-1/5 space-y-3">
-        <Input placeholder="Search..." label="Full Name" desc="Desc" required />
-        <Input
-          icon={<Search />}
-          placeholder="Search..."
-          label="Full Name"
-          error="This is an error"
-        />
+        <Input placeholder="Search..." required />
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+          <Input
+            placeholder="Search..."
+            aria-label="Full Name"
+            className="pl-10"
+          />
+          <p className="text-red-500 text-sm mt-1">This is an error</p>
+        </div>
       </div>
 
       <Dialog>

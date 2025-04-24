@@ -107,7 +107,7 @@ export const LandingModule = () => {
         transition={{ duration: 0.7 }}
         className="w-full min-h-[90vh] flex flex-col items-center justify-center bg-gradient-to-b from-background to-primary/10 py-20"
       >
-        <div className="container max-w-7xl px-4 md:px-6 flex flex-col md:flex-row items-center  ">
+        <div className="container max-w-7xl px-4 md:px-6 flex flex-col md:flex-row items-center  ">``
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={heroInView ? { opacity: 1, x: 0 } : {}}
