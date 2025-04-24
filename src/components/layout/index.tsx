@@ -8,7 +8,7 @@ export const Layout = async ({ children }: { children: React.ReactNode }) => {
     <main className="min-h-screen font-openSans flex flex-col">
       <Toaster position="top-center" />
       <Navbar />
-      {children}
+      <main className="min-h-screen mt-[40px]">{children}</main>
       <Footer />
     </main>
   );

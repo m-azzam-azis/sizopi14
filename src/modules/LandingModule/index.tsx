@@ -98,7 +98,7 @@ export const LandingModule = () => {
   const developersInView = useInView(developersRef, {});
 
   return (
-    <main className="flex flex-col justify-center items-center pt-20 ">
+    <div className="flex flex-col justify-center items-center pt-20 ">
       {/* Hero Section */}
       <motion.section
         ref={heroRef}
@@ -273,7 +273,7 @@ export const LandingModule = () => {
           </div>
         </div>
       </motion.section>
-    </main>
+    </div>
   );
 };
 
