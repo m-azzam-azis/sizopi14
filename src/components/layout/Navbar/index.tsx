@@ -21,7 +21,7 @@ import Image from "next/image";
 
 export const Navbar = () => {
   const data = {
-    isLoggedIn: false,
+    isLoggedIn: true,
     user: {
       role: "dokter",
     },
@@ -128,21 +128,21 @@ export const Navbar = () => {
               <PopoverContent className="z-50 translate-y-6 -translate-x-2 space-y-6 bg-card text-card-foreground">
                 <Link
                   href="/dashboard"
-                  className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl font-jakarta hover:text-primary"
+                  className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl font-outfit hover:text-primary"
                 >
                   <LayoutDashboard className="w-6 h-6" />
                   Dashboard
                 </Link>
                 <Link
                   href="/profile"
-                  className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl font-jakarta hover:text-primary"
+                  className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl font-outfit hover:text-primary"
                 >
                   <CircleUserRound className="w-6 h-6" />
                   Profil Diri
                 </Link>
                 <button
                   // onClick={logout}
-                  className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl cursor-pointer font-jakarta hover:text-primary"
+                  className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl cursor-pointer font-outfit hover:text-primary"
                 >
                   <LogOut className="w-6 h-6" />
                   Log Out
@@ -160,32 +160,71 @@ export const Navbar = () => {
                     <X />
                   </DrawerClose>
 
-                  <Link href="/" className="text-lg text-primary font-jakarta">
+                  <Link href="/" className="text-lg text-primary font-outfit">
                     Home
                   </Link>
 
-                  <Link
-                    href="/faq"
-                    className="text-lg text-primary font-jakarta"
-                  >
-                    FAQ
-                  </Link>
-                  <Link
-                    href="/login"
-                    className="text-lg text-primary font-jakarta"
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="text-lg text-primary font-jakarta"
-                  >
-                    Register
-                  </Link>
+                  {data?.user.role == "dokter" ? (
+                    <Link
+                      href="/rekam-medis-hewan"
+                      className="text-lg text-primary font-outfit"
+                    >
+                      Rekam Medis
+                    </Link>
+                  ) : data?.user.role == "penjaga" ? (
+                    <Link
+                      href="/catatan-perawatan-hewan"
+                      className="text-base text-primary font-outfit"
+                    >
+                      Catatan Perawatan
+                    </Link>
+                  ) : data?.user.role == "admin" ? (
+                    <>
+                      <Link
+                        href="/kelola-pengunjung"
+                        className="text-base text-primary font-outfit"
+                      >
+                        Kelola Pengunjung
+                      </Link>
+                      <Link
+                        href="/kelola-adopsi-hewan"
+                        className="text-base text-primary font-outfit"
+                      >
+                        Kelola Adopsi
+                      </Link>
+                      <Link
+                        href="/kelola-adopter"
+                        className="text-base text-primary font-outfit"
+                      >
+                        Kelola Adopter
+                      </Link>
+                    </>
+                  ) : data?.user.role == "pelatih" ? (
+                    <Link
+                      href="/jadwal-pertunjukan"
+                      className="text-base text-primary font-outfit"
+                    >
+                      Jadwal Pertunjukan
+                    </Link>
+                  ) : data?.user.role == "pengunjung" ? (
+                    <Link
+                      href="/kebun-binatang"
+                      className="text-base text-primary font-outfit"
+                    >
+                      Kebun Binatang
+                    </Link>
+                  ) : data?.user.role == "adopter" ? (
+                    <Link
+                      href="/hewan-adopsi"
+                      className="text-base text-primary font-outfit"
+                    >
+                      Hewan Adopsi
+                    </Link>
+                  ) : null}
 
                   <Popover open={popoverOpen2} onOpenChange={setPopoverOpen2}>
                     <PopoverTrigger asChild>
-                      <button className="relative group flex gap-3 max-sm:gap-2 py-2 items-center text-foreground fill-primary group cursor-pointer font-jakarta">
+                      <button className="relative group flex gap-3 max-sm:gap-2 py-2 items-center text-foreground fill-primary group cursor-pointer font-outfit">
                         <p className="text-lg text-primary">Shaney Zoya</p>
                         <Chevron
                           className={`${
@@ -196,24 +235,24 @@ export const Navbar = () => {
                         />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="z-50 bg-transparent px-0 translate-x-10 -translate-y-2 space-y-8 shadow-none">
+                    <PopoverContent className="z-50 bg-transparent border-0 translate-x-10 -translate-y-2 space-y-8 shadow-none">
                       <Link
                         href="/dashboard"
-                        className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl font-jakarta hover:text-primary"
+                        className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl font-outfit hover:text-primary"
                       >
                         <LayoutDashboard className="w-6 h-6" />
                         Dashboard
                       </Link>
                       <Link
                         href="/profile"
-                        className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl font-jakarta hover:text-primary"
+                        className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl font-outfit hover:text-primary"
                       >
                         <CircleUserRound className="w-6 h-6" />
                         Profil Diri
                       </Link>
                       <button
                         // onClick={logout}
-                        className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl cursor-pointer font-jakarta hover:text-primary"
+                        className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl cursor-pointer font-outfit hover:text-primary"
                       >
                         <LogOut className="w-6 h-6" />
                         Log Out
@@ -226,12 +265,12 @@ export const Navbar = () => {
           </div>
         ) : (
           <div className="flex gap-4">
-            <Link href="/login" className="max-md:hidden">
+            <Link href="/login" className="">
               <Button className="text-primary-foreground bg-primary hover:bg-primary/90">
                 Login
               </Button>
             </Link>
-            <Link href="/register" className="max-md:hidden">
+            <Link href="/register" className="">
               <Button
                 variant="outline"
                 className="border-primary text-primary hover:bg-primary/10"
