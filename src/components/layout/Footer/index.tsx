@@ -1,5 +1,6 @@
-import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Twitter, Youtube } from "lucide-react";
 import Link from "next/link";
+import { FACEBOOK_URL, INSTAGRAM_URL, X_URL, YOUTUBE_URL } from "./constant";
 
 export const Footer = () => {
   return (
@@ -15,28 +16,28 @@ export const Footer = () => {
           |
           <div className="flex gap-4">
             <a
-              href="https://twitter.com"
+              href={`${X_URL}`}
               className="text-muted-foreground hover:text-primary transition-colors"
             >
               <Twitter size={20} />
             </a>
             <a
-              href="https://facebook.com"
+              href={`${FACEBOOK_URL}`}
               className="text-muted-foreground hover:text-primary transition-colors"
             >
               <Facebook size={20} />
             </a>
             <a
-              href="https://instagram.com"
+              href={`${INSTAGRAM_URL}`}
               className="text-muted-foreground hover:text-primary transition-colors"
             >
               <Instagram size={20} />
             </a>
             <a
-              href="https://linkedin.com"
+              href={`${YOUTUBE_URL}`}
               className="text-muted-foreground hover:text-primary transition-colors"
             >
-              <Linkedin size={20} />
+              <Youtube size={20} />
             </a>
           </div>
         </div>
