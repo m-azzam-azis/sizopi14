@@ -98,16 +98,16 @@ export const LandingModule = () => {
   const developersInView = useInView(developersRef, {});
 
   return (
-    <div className="flex flex-col justify-center items-center pt-20 ">
+    <div className="flex flex-col justify-center items-center">
       {/* Hero Section */}
       <motion.section
         ref={heroRef}
         initial={{ opacity: 0 }}
         animate={heroInView ? { opacity: 1 } : {}}
         transition={{ duration: 0.7 }}
-        className="w-full min-h-[90vh] flex flex-col items-center justify-center bg-gradient-to-b from-background to-primary/10 py-20"
+        className="w-full min-h-[90vh] flex flex-col items-center justify-center bg-gradient-to-b from-background to-primary/10 py-20 px-5 md:px-10 lg:px-20"
       >
-        <div className="container max-w-7xl px-4 md:px-6 flex flex-col md:flex-row items-center  ">``
+        <div className="container max-w-7xl flex flex-col md:flex-row items-center gap-5 ">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={heroInView ? { opacity: 1, x: 0 } : {}}
@@ -115,7 +115,7 @@ export const LandingModule = () => {
             className="flex-1 space-y-6 mx-auto"
           >
             <div className="max-md:mx-auto">
-              <div className="text-4xl md:text-6xl font-bold text-foreground text-center md:text-left">
+              <div className="text-4xl md:text-h3 lg:text-h2 xl:text-h1 font-bold text-foreground text-center md:text-left">
                 Next-Generation <br />
                 <span className="text-primary">Zoo Management</span>
               </div>
@@ -146,7 +146,7 @@ export const LandingModule = () => {
             transition={{ duration: 0.7, delay: 0.4 }}
             className="flex-1 flex"
           >
-            <div className="relative h-[300px] w-[450px] lg:h-[400px] lg:w-[600px] max-w-full p-10">
+            <div className="relative w-[100%] max-w-full aspect-[1.5]">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full blur-3xl" />
               <Image
                 src="/hero-image.avif"
@@ -166,7 +166,7 @@ export const LandingModule = () => {
         initial={{ opacity: 0 }}
         animate={aboutInView ? { opacity: 1 } : {}}
         transition={{ duration: 0.7 }}
-        className="w-full py-20 bg-card container mx-auto"
+        className="w-full py-20 bg-card container mx-auto px-5 md:px-10 lg:px-20"
       >
         <div className="container max-w-7xl px-4 md:px-6">
           <div className="text-center mb-16">
@@ -219,7 +219,7 @@ export const LandingModule = () => {
         initial={{ opacity: 0 }}
         animate={developersInView ? { opacity: 1 } : {}}
         transition={{ duration: 0.7 }}
-        className="w-full py-20 bg-background container mx-auto"
+        className="w-full py-20 bg-background container mx-auto px-5 md:px-10 lg:px-20"
       >
         <div className="container max-w-7xl px-4 md:px-6">
           <div className="text-center mb-16">
