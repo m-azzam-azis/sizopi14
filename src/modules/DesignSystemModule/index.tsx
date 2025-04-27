@@ -128,15 +128,12 @@ export default function DesignSytemModule() {
 
       <div className="w-1/5 space-y-3">
         <Input placeholder="Search..." required />
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-          <Input
-            placeholder="Search..."
-            aria-label="Full Name"
-            className="pl-10"
-          />
-          <p className="text-red-500 text-sm mt-1">This is an error</p>
-        </div>
+        <Input
+          icon={<Search />}
+          placeholder="Search..."
+          label="Full Name"
+          error="This is an error"
+        />
       </div>
 
       <Dialog>
@@ -162,7 +159,7 @@ export default function DesignSytemModule() {
 
       <div className="flex flex-col gap-1 w-fit">
         <div className="flex flex-rpw gap-1 w-fit">
-          <Button>
+          <Button variant="default">
             <UserCircle2 />
             Register
             <UserCircle2 />
@@ -172,14 +169,19 @@ export default function DesignSytemModule() {
             Register
             <UserCircle2 />
           </Button>
-          <Button variant="ghost">
+          <Button variant="outline">
+            <UserCircle2 />
+            Register
+            <UserCircle2 />
+          </Button>
+          <Button variant="link">
             <UserCircle2 />
             Register
             <UserCircle2 />
           </Button>
         </div>
         <div className="flex flex-row gap-1">
-          <Button disabled>
+          <Button variant="default" disabled>
             <UserCircle2 />
             Register
             <UserCircle2 />
@@ -189,7 +191,12 @@ export default function DesignSytemModule() {
             Register
             <UserCircle2 />
           </Button>
-          <Button variant="ghost" disabled>
+          <Button variant="outline" disabled>
+            <UserCircle2 />
+            Register
+            <UserCircle2 />
+          </Button>
+          <Button variant="link" disabled>
             <UserCircle2 />
             Register
             <UserCircle2 />
