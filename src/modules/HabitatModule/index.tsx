@@ -24,8 +24,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import HabitatFormModal from "@/components/modals/HabitatFormModal";
-import { HabitatFormValues } from "@/components/forms/HabitatForm";
+import HabitatFormModal from "@/modules/HabitatModule/components/modals/HabitatFormModal";
+import { HabitatFormValues } from "@/modules/HabitatModule/components/forms/HabitatForm";
 
 // Define the Habitat interface for better type safety
 interface Habitat {
@@ -180,11 +180,12 @@ const HabitatModule = () => {
   };
 
   return (
-    <div className="container mx-auto py-10 px-4">
+    <div className="container mx-auto pb-20 px-4">
+      <h1 className="mb-10 text-4xl font-bold"> Manajemen Habitat</h1>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-h3 font-bold text-foreground">
-            MANAJEMEN HABITAT
+            Daftar Habitat
           </CardTitle>
           <Button
             className="bg-primary text-primary-foreground hover:bg-primary/90"

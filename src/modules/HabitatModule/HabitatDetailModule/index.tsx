@@ -197,7 +197,7 @@ const HabitatDetailModule = () => {
   };
 
   return (
-    <div className="container mx-auto py-20 px-4">
+    <div className="container mx-auto px-4 pb-20">
       <div className="mb-8">
         <Link
           href="/habitat"

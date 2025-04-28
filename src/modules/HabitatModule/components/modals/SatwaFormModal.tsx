@@ -6,7 +6,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { SatwaForm, SatwaFormValues } from "@/components/forms/SatwaForm";
+import {
+  SatwaForm,
+  SatwaFormValues,
+} from "@/modules/HabitatModule/components/forms/SatwaForm";
 
 interface SatwaFormModalProps {
   isOpen: boolean;

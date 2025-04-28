@@ -6,7 +6,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { HabitatForm, HabitatFormValues } from "@/components/forms/HabitatForm";
+import {
+  HabitatForm,
+  HabitatFormValues,
+} from "@/modules/HabitatModule/components/forms/HabitatForm";
 
 interface HabitatFormModalProps {
   isOpen: boolean;
