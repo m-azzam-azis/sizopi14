@@ -31,92 +31,32 @@ import {
 } from "@/components/ui/alert-dialog";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-// Define interfaces for better type safety
-interface Habitat {
-  id: string;
-  name: string;
-  type: string;
-  area: number;
-  capacity: number;
-  status: "Available" | "Maintenance" | "Full";
-  environmentStatus: "Excellent" | "Good" | "Fair" | "Poor";
-  description: string;
-}
-
-interface Animal {
-  id: string;
-  name: string;
-  species: string;
-  origin: string;
-  birthDate: string;
-  healthStatus: "Healthy" | "Sick" | "Under Observation" | "Critical";
-}
+import HabitatFormModal from "../components/modals/HabitatFormModal";
+import { HabitatFormValues } from "@/modules/HabitatModule/components/forms/HabitatForm";
+import { Habitat } from "../interface";
+import { animals } from "../constants";
+import { habitats_dummy } from "../constants";
+import { Animal } from "../interface";
 
 const HabitatDetailModule = () => {
   const router = useRouter();
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Dummy data for a single habitat
-  const habitat: Habitat = {
-    id: "hab-001",
-    name: "Savanna Enclosure",
-    type: "Grassland",
-    area: 5000,
-    capacity: 15,
-    status: "Available",
-    environmentStatus: "Good",
-    description:
-      "A spacious savanna habitat designed to mimic the African plains. Features both open grassland areas and scattered shade trees.",
-  };
+  const [habitat, setHabitat] = useState<Habitat>(habitats_dummy[0]);
 
-  // Dummy data for animals in this habitat
-  const animals: Animal[] = [
-    {
-      id: "ani-101",
-      name: "Simba",
-      species: "African Lion",
-      origin: "Wildlife Conservation Center",
-      birthDate: "2018-06-15",
-      healthStatus: "Healthy",
-    },
-    {
-      id: "ani-102",
-      name: "Zara",
-      species: "Plains Zebra",
-      origin: "Born in captivity",
-      birthDate: "2020-04-22",
-      healthStatus: "Healthy",
-    },
-    {
-      id: "ani-103",
-      name: "Rafiki",
-      species: "Giraffe",
-      origin: "Animal Sanctuary",
-      birthDate: "2019-08-10",
-      healthStatus: "Under Observation",
-    },
-    {
-      id: "ani-104",
-      name: "Pumbaa",
-      species: "Warthog",
-      origin: "Wildlife Reserve",
-      birthDate: "2021-02-28",
-      healthStatus: "Sick",
-    },
-    {
-      id: "ani-105",
-      name: "Nala",
-      species: "African Lion",
-      origin: "Wildlife Conservation Center",
-      birthDate: "2017-11-05",
-      healthStatus: "Healthy",
-    },
-  ];
-
-  // Function to handle edit (placeholder for now)
-  const handleEdit = () => {
-    console.log(`Edit habitat with ID: ${habitat.id}`);
+  // Function to handle edit habitat submission
+  const handleEditHabitat = (data: HabitatFormValues) => {
+    setHabitat({
+      ...habitat,
+      name: data.name,
+      area: parseInt(data.area),
+      capacity: parseInt(data.capacity),
+      status: data.environmentStatus as any, // Type casting
+    });
+    console.log(`Edited habitat with ID: ${habitat.id}`, data);
   };
 
   // Function to handle delete confirmation
@@ -147,7 +87,7 @@ const HabitatDetailModule = () => {
   };
 
   // Function to get environment status badge
-  const getEnvironmentBadge = (status: Habitat["environmentStatus"]) => {
+  const getEnvironmentBadge = (status: Habitat["status"]) => {
     switch (status) {
       case "Excellent":
         return (
@@ -210,12 +150,25 @@ const HabitatDetailModule = () => {
             <h1 className="text-h3 font-bold text-foreground">
               {habitat.name}
             </h1>
-            <p className="text-muted-foreground mt-1">{habitat.type}</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleEdit}>
-              <Pencil className="mr-2 h-4 w-4" /> Edit
-            </Button>
+            {/* Edit Habitat Modal */}
+            {habitat && (
+              <HabitatFormModal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                  setIsEditModalOpen(false);
+                }}
+                onSubmit={handleEditHabitat}
+                initialData={{
+                  name: habitat.name,
+                  area: habitat.area,
+                  capacity: habitat.capacity,
+                  environmentStatus: habitat.status,
+                }}
+                isEditing={true}
+              />
+            )}
             <Button
               variant="destructive"
               onClick={() => setShowDeleteAlert(true)}
@@ -243,9 +196,7 @@ const HabitatDetailModule = () => {
             <CardTitle className="text-h6">Status Lingkungan</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center">
-              {getEnvironmentBadge(habitat.environmentStatus)}
-            </div>
+            <p className="flex items-center">{habitat.status}</p>
           </CardContent>
         </Card>
 
@@ -261,20 +212,10 @@ const HabitatDetailModule = () => {
               <p className="text-muted-foreground">
                 (Current: {animals.length})
               </p>
-              {getStatusBadge(habitat.status)}
             </div>
           </CardContent>
         </Card>
       </div>
-
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Deskripsi</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>{habitat.description}</p>
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>

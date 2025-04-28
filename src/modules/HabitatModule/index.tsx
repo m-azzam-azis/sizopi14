@@ -26,17 +26,8 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import HabitatFormModal from "@/modules/HabitatModule/components/modals/HabitatFormModal";
 import { HabitatFormValues } from "@/modules/HabitatModule/components/forms/HabitatForm";
-
-// Define the Habitat interface for better type safety
-interface Habitat {
-  id: string;
-  name: string;
-  type: string;
-  area: number;
-  capacity: number;
-  status: "Available" | "Maintenance" | "Full";
-  environmentStatus: string;
-}
+import { habitats_dummy } from "./constants";
+import { Habitat } from "./interface";
 
 const HabitatModule = () => {
   const router = useRouter();
@@ -47,53 +38,7 @@ const HabitatModule = () => {
   const [currentHabitat, setCurrentHabitat] = useState<Habitat | null>(null);
 
   // Dummy data for habitats
-  const [habitats, setHabitats] = useState<Habitat[]>([
-    {
-      id: "hab-001",
-      name: "Savanna Enclosure",
-      type: "Grassland",
-      area: 5000,
-      capacity: 15,
-      status: "Available",
-      environmentStatus: "Suhu: 28°C, Kelembapan: 60%, Vegetasi savana",
-    },
-    {
-      id: "hab-002",
-      name: "Tropical Rainforest",
-      type: "Forest",
-      area: 8000,
-      capacity: 25,
-      status: "Full",
-      environmentStatus: "Suhu: 30°C, Kelembapan: 85%, Vegetasi lebat",
-    },
-    {
-      id: "hab-003",
-      name: "Arctic Zone",
-      type: "Tundra",
-      area: 4000,
-      capacity: 10,
-      status: "Available",
-      environmentStatus: "Suhu: -5°C, Kelembapan: 40%, Es dan salju",
-    },
-    {
-      id: "hab-004",
-      name: "Desert Exhibit",
-      type: "Desert",
-      area: 3500,
-      capacity: 12,
-      status: "Maintenance",
-      environmentStatus: "Suhu: 35°C, Kelembapan: 20%, Pasir dan kaktus",
-    },
-    {
-      id: "hab-005",
-      name: "Aquatic Center",
-      type: "Aquatic",
-      area: 6000,
-      capacity: 30,
-      status: "Available",
-      environmentStatus: "Suhu air: 25°C, pH: 7.5, Terumbu karang",
-    },
-  ]);
+  const [habitats, setHabitats] = useState<Habitat[]>(habitats_dummy);
 
   // Function to handle view details
   const handleViewDetails = (id: string) => {
@@ -127,11 +72,9 @@ const HabitatModule = () => {
     const newHabitat: Habitat = {
       id: `hab-${Math.floor(Math.random() * 1000)}`,
       name: data.name,
-      type: "New",
       area: parseInt(data.area),
       capacity: parseInt(data.capacity),
       status: "Available",
-      environmentStatus: data.environmentStatus,
     };
 
     setHabitats([...habitats, newHabitat]);
@@ -200,7 +143,6 @@ const HabitatModule = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[150px]">Nama</TableHead>
-                  <TableHead>Habitat</TableHead>
                   <TableHead className="text-right">Luas (m²)</TableHead>
                   <TableHead className="text-right">Kapasitas</TableHead>
                   <TableHead>Status</TableHead>
@@ -213,14 +155,13 @@ const HabitatModule = () => {
                     <TableCell className="font-medium">
                       {habitat.name}
                     </TableCell>
-                    <TableCell>{habitat.type}</TableCell>
                     <TableCell className="text-right">
                       {habitat.area.toLocaleString()}
                     </TableCell>
                     <TableCell className="text-right">
                       {habitat.capacity}
                     </TableCell>
-                    <TableCell>{getStatusBadge(habitat.status)}</TableCell>
+                    <TableCell>{habitat.status}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
@@ -278,7 +219,7 @@ const HabitatModule = () => {
             name: currentHabitat.name,
             area: currentHabitat.area,
             capacity: currentHabitat.capacity,
-            environmentStatus: currentHabitat.environmentStatus,
+            environmentStatus: currentHabitat.status,
           }}
           isEditing={true}
         />
