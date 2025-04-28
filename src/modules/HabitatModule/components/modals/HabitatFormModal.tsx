@@ -6,55 +6,57 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { WahanaForm } from "@/components/forms/WahanaForm";
+import {
+  HabitatForm,
+  HabitatFormValues,
+} from "@/modules/HabitatModule/components/forms/HabitatForm";
 
-interface WahanaFormModalProps {
+interface HabitatFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: HabitatFormValues) => void;
   initialData?: {
-    jadwal: Date;
-    kapasitas: number;
+    name: string;
+    area: number;
+    capacity: number;
+    environmentStatus: string;
   };
   isEditing?: boolean;
-  nama_wahana?: string;
 }
 
-const WahanaFormModal: React.FC<WahanaFormModalProps> = ({
+const HabitatFormModal: React.FC<HabitatFormModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
   initialData,
   isEditing = false,
-  nama_wahana,
 }) => {
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (data: HabitatFormValues) => {
     onSubmit(data);
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-525px">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Wahana" : "Tambah Wahana"}
+            {isEditing ? "Edit Habitat" : "Tambah Habitat"}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Ubah jadwal dan kapasitas wahana di bawah ini"
-              : "Tambahkan wahana baru pada sistem"}
+              ? "Ubah informasi habitat di bawah ini"
+              : "Tambahkan habitat baru pada sistem"}
           </DialogDescription>
         </DialogHeader>
-        <WahanaForm
+        <HabitatForm
+          initialData={initialData}
           onSubmit={handleSubmit}
-          initialValues={initialData}
           isEditing={isEditing}
-          nama_wahana={nama_wahana}
         />
       </DialogContent>
     </Dialog>
   );
 };
 
-export default WahanaFormModal;
+export default HabitatFormModal;

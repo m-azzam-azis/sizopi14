@@ -15,14 +15,14 @@ import { Pencil, Trash } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import AdminReservasiFormModal from "@/components/modals/AdminReservasiFormModal";
+import AdminReservasiFormModal from "../modals/AdminReservasiFormModal";
 import {
   Pengunjung,
   Pengguna,
   ReservationStatus,
   ReservasiTiket,
 } from "@/types/schema";
-import ReservasiCancelModal from "@/components/modals/ReservasiCancelModal";
+import ReservasiCancelModal from "../modals/ReservasiCancelModal";
 
 const ReservasiTiketAdmin = () => {
   const { toast } = useToast();

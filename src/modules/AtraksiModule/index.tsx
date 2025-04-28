@@ -25,11 +25,11 @@ import {
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import AtraksiFormModal from "@/components/modals/AtraksiFormModal";
+import AtraksiFormModal from "./modals/AtraksiFormModal";
 import {
   AtraksiFormValues,
   EditAtraksiFormValues,
-} from "@/components/forms/AtraksiForm";
+} from "./forms/AtraksiForm";
 
 interface Fasilitas {
   nama: string;

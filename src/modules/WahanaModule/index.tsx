@@ -24,11 +24,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import WahanaFormModal from "@/components/modals/WahanaFormModal";
+import WahanaFormModal from "./modals/WahanaFormModal";
 import {
   CreateWahanaFormValues,
   EditWahanaFormValues,
-} from "@/components/forms/WahanaForm";
+} from "./forms/WahanaForm";
 
 interface Fasilitas {
   nama: string;

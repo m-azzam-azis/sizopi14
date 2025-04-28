@@ -6,54 +6,55 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { HabitatForm, HabitatFormValues } from "@/components/forms/HabitatForm";
+import { WahanaForm } from "../forms/WahanaForm";
 
-interface HabitatFormModalProps {
+interface WahanaFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: HabitatFormValues) => void;
+  onSubmit: (data: any) => void;
   initialData?: {
-    name: string;
-    area: number;
-    capacity: number;
-    environmentStatus: string;
+    jadwal: Date;
+    kapasitas: number;
   };
   isEditing?: boolean;
+  nama_wahana?: string;
 }
 
-const HabitatFormModal: React.FC<HabitatFormModalProps> = ({
+const WahanaFormModal: React.FC<WahanaFormModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
   initialData,
   isEditing = false,
+  nama_wahana,
 }) => {
-  const handleSubmit = (data: HabitatFormValues) => {
+  const handleSubmit = (data: any) => {
     onSubmit(data);
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-525px">
+      <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Habitat" : "Tambah Habitat"}
+            {isEditing ? "Edit Wahana" : "Tambah Wahana"}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Ubah informasi habitat di bawah ini"
-              : "Tambahkan habitat baru pada sistem"}
+              ? "Ubah jadwal dan kapasitas wahana di bawah ini"
+              : "Tambahkan wahana baru pada sistem"}
           </DialogDescription>
         </DialogHeader>
-        <HabitatForm
-          initialData={initialData}
+        <WahanaForm
           onSubmit={handleSubmit}
+          initialValues={initialData}
           isEditing={isEditing}
+          nama_wahana={nama_wahana}
         />
       </DialogContent>
     </Dialog>
   );
 };
 
-export default HabitatFormModal;
+export default WahanaFormModal;

@@ -6,7 +6,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { ReservasiTiketForm } from "@/components/forms/ReservasiTiketForm";
+import { ReservasiTiketForm } from "../forms/ReservasiTiketForm";
 import { Atraksi, ReservasiFormData } from "@/types/schema";
 
 interface ReservasiTiketFormModalProps {

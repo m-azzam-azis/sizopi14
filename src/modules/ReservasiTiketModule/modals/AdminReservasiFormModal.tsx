@@ -5,7 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AdminReservasiForm } from "@/components/forms/AdminReservasiForm";
+import { AdminReservasiForm } from "../forms/AdminReservasiForm";
 import { ReservasiTiket, ReservationStatus } from "@/types/schema";
 
 interface AdminReservasiFormModalProps {

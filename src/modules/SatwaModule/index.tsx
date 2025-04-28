@@ -25,8 +25,8 @@ import {
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import SatwaFormModal from "@/components/modals/SatwaFormModal";
-import { SatwaFormValues } from "@/components/forms/SatwaForm";
+import SatwaFormModal from "@/modules/HabitatModule/components/modals/SatwaFormModal";
+import { SatwaFormValues } from "@/modules/HabitatModule/components/forms/SatwaForm";
 
 // Define interfaces for type safety
 interface Animal {
@@ -245,11 +245,12 @@ const SatwaModule = () => {
   };
 
   return (
-    <div className="container mx-auto py-10 px-4">
+    <div className="container mx-auto pb-10 px-4">
+      <h1 className="mb-10 text-4xl font-bold">Manajemen Satwa</h1>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-h3 font-bold text-foreground">
-            DATA SATWA
+            Daftar Satwa Sizopi
           </CardTitle>
           <Button
             className="bg-primary text-primary-foreground hover:bg-primary/90"

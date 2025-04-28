@@ -14,9 +14,9 @@ import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Eye, Pencil, Trash } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
-import ReservasiTiketFormModal from "@/components/modals/ReservasiTiketFormModal";
-import ReservasiTiketDetailModal from "@/components/modals/ReservasiTiketDetailModal";
-import ReservasiTiketCancelModal from "@/components/modals/ReservasiTiketCancelModal";
+import ReservasiTiketFormModal from "../modals/ReservasiTiketFormModal";
+import ReservasiTiketDetailModal from "../modals/ReservasiTiketDetailModal";
+import ReservasiTiketCancelModal from "../modals/ReservasiTiketCancelModal";
 import { useToast } from "@/hooks/use-toast";
 
 interface Fasilitas {

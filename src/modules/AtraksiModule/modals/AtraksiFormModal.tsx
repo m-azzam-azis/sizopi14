@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AtraksiForm } from "@/components/forms/AtraksiForm";
+import { AtraksiForm } from "../forms/AtraksiForm";
 
 interface Pelatih {
   id: string;
