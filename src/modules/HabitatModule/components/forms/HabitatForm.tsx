@@ -122,7 +122,7 @@ export const HabitatForm: React.FC<HabitatFormProps> = ({
               <FormControl>
                 <Textarea
                   placeholder="Contoh: Suhu: 28°C, Kelembapan: 70%, Vegetasi lebat"
-                  className="resize-none"
+                  className="resize-none bg-white"
                   {...field}
                 />
               </FormControl>

@@ -121,16 +121,17 @@ export const SatwaForm: React.FC<SatwaFormProps> = ({
           name="birthDate"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Tanggal Lahir (opsional)</FormLabel>
+              <FormLabel>Tanggal Lahir</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
-                      variant={"outline"}
+                      variant="outline"
                       className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
+                        "w-full pl-3 text-left font-normal bg-white hover:bg-white",
+                        !field.value && "ring-accent"
                       )}
+                      type="button"
                     >
                       {field.value ? (
                         format(field.value, "PPP")
@@ -149,7 +150,6 @@ export const SatwaForm: React.FC<SatwaFormProps> = ({
                     disabled={(date) =>
                       date > new Date() || date < new Date("1900-01-01")
                     }
-                    initialFocus
                   />
                 </PopoverContent>
               </Popover>
