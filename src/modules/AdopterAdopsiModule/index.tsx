@@ -11,9 +11,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 interface Animal {
   id: string;
   name: string;
+  habitat: string;
   species: string;
   condition: string;
   imageUrl: string;
+  startDate: string;
+  endDate: string;
   isAdopted: boolean;
 }
 
@@ -27,7 +30,10 @@ export default function AdopterAdopsiModule() {
       name: "Simba",
       species: "African Lion",
       condition: "Sehat",
+      habitat: "Savanna Enclosure",
       imageUrl: "https://images.unsplash.com/photo-1545006398-2cf48043d3f3?q=80&w=400",
+      startDate: "2025-01-01",
+      endDate: "2025-12-31",
       isAdopted: true,
     },
     {
@@ -35,14 +41,13 @@ export default function AdopterAdopsiModule() {
       name: "Zara",
       species: "Plains Zebra",
       condition: "Sehat",
+      habitat: "Savanna Enclosure",
       imageUrl: "https://images.unsplash.com/photo-1549975248-52273875de73?q=80&w=400",
+      startDate: "2025-02-01",
+      endDate: "2025-11-30",
       isAdopted: true,
     },
   ]);
-
-  const handleViewDetail = (animalId: string) => {
-    router.push(`/adopsi/detail/${animalId}`);
-  };
 
   const getConditionBadgeStyle = (condition: string) => {
     switch (condition) {
@@ -107,7 +112,7 @@ export default function AdopterAdopsiModule() {
                     <Button
                       variant="outline"
                       className="text-primary border-primary hover:bg-primary/10 text-base font-medium"
-                      onClick={() => handleViewDetail(animal.id)}
+                      onClick={() => router.push(`/adopter-adopsi/detail/${animal.id}`)}
                     >
                       <Eye className="mr-2 h-5 w-5" /> Lihat Detail
                     </Button>
