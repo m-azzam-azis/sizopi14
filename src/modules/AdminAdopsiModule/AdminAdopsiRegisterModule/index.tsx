@@ -6,11 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import AdopsiIndividuFormModal from "@/components/modals/AdopsiIndividuFormModal";
-import AdopsiOrganisasiFormModal from "@/components/modals/AdopsiOrganisasiFormModal";
-import AdopsiIndividuForm from "@/components/forms/AdopsiIndividuForm";
-import AdopsiOrganisasiForm from "@/components/forms/AdopsiOrganisasiForm";
-
+import AdopsiIndividuForm from "../components/forms/AdopsiIndividuForm";  
+import AdopsiOrganisasiForm from "../components/forms/AdopsiOrganisasiForm";
+import AdopsiIndividuFormModal from "../components/modals/AdopsiIndividuFormModal";
+import AdopsiOrganisasiFormModal from "../components/modals/AdopsiOrganisasiFormModal";
 const adopters = [
   {
     id: "d290f1ee-6c54-4b01-90e6-d701748f0851",

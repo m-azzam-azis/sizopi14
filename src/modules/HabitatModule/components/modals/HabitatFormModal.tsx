@@ -6,26 +6,32 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { SatwaForm, SatwaFormValues } from "@/components/forms/SatwaForm";
+import {
+  HabitatForm,
+  HabitatFormValues,
+} from "@/modules/HabitatModule/components/forms/HabitatForm";
 
-interface SatwaFormModalProps {
+interface HabitatFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: SatwaFormValues) => void;
-  initialData?: SatwaFormValues;
-  habitats: { id: string; name: string }[];
+  onSubmit: (data: HabitatFormValues) => void;
+  initialData?: {
+    name: string;
+    area: number;
+    capacity: number;
+    environmentStatus: string;
+  };
   isEditing?: boolean;
 }
 
-const SatwaFormModal: React.FC<SatwaFormModalProps> = ({
+const HabitatFormModal: React.FC<HabitatFormModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
   initialData,
-  habitats,
   isEditing = false,
 }) => {
-  const handleSubmit = (data: SatwaFormValues) => {
+  const handleSubmit = (data: HabitatFormValues) => {
     onSubmit(data);
     onClose();
   };
@@ -35,18 +41,17 @@ const SatwaFormModal: React.FC<SatwaFormModalProps> = ({
       <DialogContent className="sm:max-w-525px">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Data Satwa" : "Tambah Data Satwa"}
+            {isEditing ? "Edit Habitat" : "Tambah Habitat"}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Ubah informasi satwa di bawah ini"
-              : "Tambahkan satwa baru pada sistem"}
+              ? "Ubah informasi habitat di bawah ini"
+              : "Tambahkan habitat baru pada sistem"}
           </DialogDescription>
         </DialogHeader>
-        <SatwaForm
+        <HabitatForm
           initialData={initialData}
           onSubmit={handleSubmit}
-          habitats={habitats}
           isEditing={isEditing}
         />
       </DialogContent>
@@ -54,4 +59,4 @@ const SatwaFormModal: React.FC<SatwaFormModalProps> = ({
   );
 };
 
-export default SatwaFormModal;
+export default HabitatFormModal;
