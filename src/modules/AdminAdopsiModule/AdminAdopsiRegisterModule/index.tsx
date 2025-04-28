@@ -78,6 +78,16 @@ export default function AdminAdopsiRegisterModule({ animalId, animalData }: { an
     }
   };
 
+  const handleSubmitsForm = (data: { nik: string; nominal: string; adoptionPeriod: string }) => {
+    // Simulasi perubahan status isAdopted menjadi true
+    animalData.isAdopted = true;
+    setShowToast(true);
+    setTimeout(() => {
+        setShowToast(false);
+        router.push("/admin-adopsi");
+      }, 3000);
+    };
+
   const handleSubmitForm = (data: { name: string; npp: string; nominal: string; adoptionPeriod: string }) => {
     // Simulasi perubahan status isAdopted menjadi true
     animalData.isAdopted = true;
@@ -153,8 +163,8 @@ export default function AdminAdopsiRegisterModule({ animalId, animalData }: { an
       {adopterType === "individu" ? (
         <AdopsiIndividuFormModal isOpen={showForm} onClose={handleCancel} title="">
           <AdopsiIndividuForm
-            onSubmit={handleSubmitForm}
-            adopter={adopters.find((a) => a.username === username)!}
+            onSubmit={handleSubmitsForm}
+            adopter={adopters.find((a) => a.username === username && a.type === "individu") as { name: string; address: string; noTelp: string }}
             animalData={animalData}
           />
         </AdopsiIndividuFormModal>
@@ -162,7 +172,7 @@ export default function AdminAdopsiRegisterModule({ animalId, animalData }: { an
         <AdopsiOrganisasiFormModal isOpen={showForm} onClose={handleCancel} title="">
           <AdopsiOrganisasiForm
             onSubmit={handleSubmitForm}
-            adopter={adopters.find((a) => a.username === username)!}
+            adopter={adopters.find((a) => a.username === username && a.type === "organisasi") as { address: string; noTelp: string }}
             animalData={animalData}
           />
         </AdopsiOrganisasiFormModal>
