@@ -56,6 +56,7 @@ const RiwayatAdopsiModule = () => {
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     // Fetch adopter data based on ID
@@ -152,7 +153,6 @@ const RiwayatAdopsiModule = () => {
     });
   };
 
-  // Function to show delete confirmation
   const handleDeleteClick = (id: string) => {
     // Check if the record is eligible for deletion (expired)
     const record = adoptionRecords.find((r) => r.id === id);
@@ -162,7 +162,6 @@ const RiwayatAdopsiModule = () => {
     }
   };
 
-  // Function to handle actual delete action
   const handleDelete = () => {
     if (recordToDelete) {
       setAdoptionRecords(adoptionRecords.filter((record) => record.id !== recordToDelete));
@@ -170,6 +169,10 @@ const RiwayatAdopsiModule = () => {
     }
     setShowDeleteAlert(false);
     setRecordToDelete(null);
+  
+    // Tampilkan toast
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
   };
 
   // Function to determine if a record can be deleted
@@ -282,13 +285,18 @@ const RiwayatAdopsiModule = () => {
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-white hover:bg-destructive/90 hover:text-white"
             >
               Hapus
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {showToast && (
+        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
+          Aksi berhasil dilakukan!
+        </div>
+      )}
     </div>
   );
 };

@@ -47,6 +47,7 @@ const AdopterRiwayatModule = () => {
   const router = useRouter();
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [adopterToDelete, setAdopterToDelete] = useState<string | null>(null);
+  const [showToast, setShowToast] = useState(false);
 
   // Dummy data for all adopters with requested names
   const [adopters, setAdopters] = useState<Adopter[]>([
@@ -180,6 +181,9 @@ const AdopterRiwayatModule = () => {
     }
     setShowDeleteAlert(false);
     setAdopterToDelete(null);
+
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
   };
 
   // Function to view adoption history
@@ -298,13 +302,18 @@ const AdopterRiwayatModule = () => {
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-white hover:bg-destructive/90 hover:text-white"
             >
               Hapus
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {showToast && (
+        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
+          Aksi berhasil dilakukan!
+        </div>
+      )}
     </div>
   );
 };
