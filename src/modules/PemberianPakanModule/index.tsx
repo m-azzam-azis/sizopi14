@@ -79,7 +79,7 @@ const mockPemberianPakan: PemberianPakan[] = [
     id_hewan: "H001",
     jadwal: new Date("2025-04-25T08:00:00"),
     jenis: "Rumput",
-    jumlah: 2,
+    jumlah: 200,
     status: "completed",
     username_jh: "jh_bambang",
   },
@@ -88,7 +88,7 @@ const mockPemberianPakan: PemberianPakan[] = [
     id_hewan: "H002",
     jadwal: new Date("2025-04-25T09:30:00"),
     jenis: "Daging",
-    jumlah: 3,
+    jumlah: 350,
     status: "pending",
     username_jh: "jh_sarah",
   },
@@ -97,7 +97,7 @@ const mockPemberianPakan: PemberianPakan[] = [
     id_hewan: "H003",
     jadwal: new Date("2025-04-26T10:00:00"),
     jenis: "Buah-buahan",
-    jumlah: 1,
+    jumlah: 100,
     status: "canceled",
     username_jh: "jh_ahmad",
   },
@@ -137,7 +137,7 @@ const pakanFormSchema = z.object({
   jumlah: z.coerce
     .number()
     .min(1, "Jumlah pakan minimal 1")
-    .max(100, "Jumlah pakan maksimal 100"),
+    .max(10000000, "Jumlah pakan maksimal 10000000"),
   status: z.enum(["pending", "completed", "canceled"]),
   username_jh: z.string().min(1, "Penjaga hewan harus diisi"),
 });
@@ -520,12 +520,12 @@ export const PemberianPakanModule: React.FC = () => {
                   name="jumlah"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Jumlah (kg)</FormLabel>
+                      <FormLabel>Jumlah (gram)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min={1}
-                          max={100}
+                          max={100000}
                           {...field}
                         />
                       </FormControl>
@@ -610,7 +610,7 @@ export const PemberianPakanModule: React.FC = () => {
                 <TableHead>ID Hewan</TableHead>
                 <TableHead>Jadwal</TableHead>
                 <TableHead>Jenis Pakan</TableHead>
-                <TableHead>Jumlah (kg)</TableHead>
+                <TableHead>Jumlah (gram)</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Penjaga Hewan</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
@@ -711,7 +711,7 @@ export const PemberianPakanModule: React.FC = () => {
                 <TableHead>Habitat</TableHead>
                 <TableHead>Status Kesehatan</TableHead>
                 <TableHead>Jenis Pakan</TableHead>
-                <TableHead>Jumlah (kg)</TableHead>
+                <TableHead>Jumlah (gram)</TableHead>
                 <TableHead>Jadwal</TableHead>
                 <TableHead>Penjaga</TableHead>
               </TableRow>

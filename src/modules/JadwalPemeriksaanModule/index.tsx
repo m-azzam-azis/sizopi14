@@ -89,21 +89,21 @@ const mockJadwalPemeriksaan: JadwalPemeriksaan[] = [
     id: "1",
     id_hewan: "H001",
     tanggal_pemeriksaan: new Date("2025-05-10"),
-    frekuensi_pemeriksaan: 30, // every 30 days
+    frekuensi_pemeriksaan: 3, // every 3 months
     created_at: new Date("2025-04-10"),
   },
   {
     id: "2",
     id_hewan: "H002",
     tanggal_pemeriksaan: new Date("2025-05-15"),
-    frekuensi_pemeriksaan: 14, // every 14 days
+    frekuensi_pemeriksaan: 4, // every 4 months
     created_at: new Date("2025-05-01"),
   },
   {
     id: "3",
     id_hewan: "H003",
     tanggal_pemeriksaan: new Date("2025-05-05"),
-    frekuensi_pemeriksaan: 7, // every 7 days
+    frekuensi_pemeriksaan: 1, // every 1 month
     created_at: new Date("2025-04-28"),
   },
 ];
@@ -116,8 +116,8 @@ const pemeriksaanFormSchema = z.object({
   }),
   frekuensi_pemeriksaan: z.coerce
     .number()
-    .min(1, "Frekuensi minimal 1 hari")
-    .max(365, "Frekuensi maksimal 365 hari"),
+    .min(1, "Frekuensi minimal 1 bulan")
+    .max(12, "Frekuensi maksimal 12 bulan"),
 });
 
 type PemeriksaanFormValues = z.infer<typeof pemeriksaanFormSchema>;
@@ -357,7 +357,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                   name="frekuensi_pemeriksaan"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Frekuensi Pemeriksaan (hari)</FormLabel>
+                      <FormLabel>Frekuensi Pemeriksaan (bulan)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -390,7 +390,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                 <TableHead>ID Hewan</TableHead>
                 <TableHead>Nama Hewan</TableHead>
                 <TableHead>Tanggal Pemeriksaan</TableHead>
-                <TableHead>Frekuensi (hari)</TableHead>
+                <TableHead>Frekuensi (bulan)</TableHead>
                 <TableHead>Tanggal Dibuat</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
@@ -402,7 +402,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                     <TableCell>{item.id_hewan}</TableCell>
                     <TableCell>{getAnimalName(item.id_hewan)}</TableCell>
                     <TableCell>{format(new Date(item.tanggal_pemeriksaan), "dd/MM/yyyy")}</TableCell>
-                    <TableCell>{item.frekuensi_pemeriksaan} hari</TableCell>
+                    <TableCell>{item.frekuensi_pemeriksaan} </TableCell>
                     <TableCell>{format(new Date(item.created_at), "dd/MM/yyyy")}</TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button

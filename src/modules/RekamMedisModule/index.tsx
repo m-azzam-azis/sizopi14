@@ -80,7 +80,7 @@ const rekamMedisSchema = z.object({
   tanggal_pemeriksaan: z.string().min(1, "Tanggal pemeriksaan harus diisi"),
   diagnosis: z.string().min(1, "Diagnosis harus diisi"),
   pengobatan: z.string().min(1, "Pengobatan harus diisi"),
-  status_kesehatan: z.enum(["Sehat", "Sakit", "Dalam Perawatan", "Kritis", "Sembuh"]),
+  status_kesehatan: z.enum(["Sehat", "Sakit"]),
   catatan_tindak_lanjut: z.string().optional(),
 });
 
@@ -105,7 +105,7 @@ const mockRekamMedis = [
     tanggal_pemeriksaan: "2025-04-20",
     diagnosis: "Flu kucing",
     pengobatan: "Antibiotik dan cairan infus",
-    status_kesehatan: "Dalam Perawatan",
+    status_kesehatan: "Sehat",
     catatan_tindak_lanjut: "Kunjungan ulang dalam 3 hari",
   },
   {
@@ -116,7 +116,7 @@ const mockRekamMedis = [
     tanggal_pemeriksaan: "2025-04-15",
     diagnosis: "Infeksi kulit",
     pengobatan: "Salep antiinflamasi",
-    status_kesehatan: "Sembuh",
+    status_kesehatan: "Sehat",
     catatan_tindak_lanjut: "Tidak diperlukan tindak lanjut",
   },
   {
@@ -227,14 +227,15 @@ export const RekamMedisModule = () => {
     // Handle edit rekam medis
     const handleEditRekamMedis = (values: RekamMedisFormValues) => {
       if (!currentRecord) return;
-  
-      const pet = mockPets.find(p => p.id === values.id_hewan);
+    
+      // Hanya update field yang boleh diubah
       const updatedRecord = {
         ...currentRecord,
-        ...values,
-        nama_hewan: pet ? pet.name : "Unknown",
+        status_kesehatan: values.status_kesehatan,
+        diagnosis: values.diagnosis,
+        pengobatan: values.pengobatan,
       };
-  
+    
       setRekamMedisList(rekamMedisList.map(record => 
         record.id === currentRecord.id ? updatedRecord : record
       ));
@@ -256,13 +257,12 @@ export const RekamMedisModule = () => {
     const getStatusColor = (status: string) => {
       switch (status) {
         case "Sehat": return "bg-green-100 text-green-800";
-        case "Sembuh": return "bg-blue-100 text-blue-800";
-        case "Sakit": return "bg-yellow-100 text-yellow-800";
-        case "Dalam Perawatan": return "bg-orange-100 text-orange-800";
-        case "Kritis": return "bg-red-100 text-red-800";
+        case "Sakit": return "bg-red-100 text-red-800";
         default: return "bg-gray-100 text-gray-800";
       }
     };
+
+    const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   
     return (
       <div className="container mx-auto py-10 px-4 mt-7">
@@ -460,37 +460,43 @@ export const RekamMedisModule = () => {
                     <TableHead>Dokter</TableHead>
                     <TableHead>Tanggal Pemeriksaan</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Pengobatan</TableHead>
+                    <TableHead>Catatan Tindak Lanjut</TableHead>
+                    <TableHead>Diagnosis</TableHead>
                     <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currentItems.length > 0 ? (
-                    currentItems.map((record) => (
-                      <TableRow key={record.id}>
-                        <TableCell className="font-medium">{record.id}</TableCell>
-                        <TableCell>{record.id_hewan}</TableCell>
-                        <TableCell>{record.nama_hewan}</TableCell>
-                        <TableCell>{record.username_dokter}</TableCell>
-                        <TableCell>{record.tanggal_pemeriksaan}</TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(record.status_kesehatan)}>
-                            {record.status_kesehatan}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <span className="sr-only">View</span>
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="sm:max-w-[550px]">
+                {currentItems.length > 0 ? (
+                  currentItems.map((record) => (
+                    <TableRow key={record.id}>
+                      <TableCell className="font-medium">{record.id}</TableCell>
+                      <TableCell>{record.id_hewan}</TableCell>
+                      <TableCell>{record.nama_hewan}</TableCell>
+                      <TableCell>{record.username_dokter}</TableCell>
+                      <TableCell>{record.tanggal_pemeriksaan}</TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(record.status_kesehatan)}>
+                          {record.status_kesehatan}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{record.pengobatan}</TableCell>
+                      <TableCell>{record.catatan_tindak_lanjut || "-"}</TableCell>
+                      <TableCell>{record.diagnosis}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                              >
+                                <span className="sr-only">View</span>
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[550px]">
                                 <DialogHeader>
                                   <DialogTitle>Detail Rekam Medis</DialogTitle>
                                   <DialogDescription>
@@ -542,8 +548,9 @@ export const RekamMedisModule = () => {
                                   )}
                                 </div>
                               </DialogContent>
-                            </Dialog>
-  
+                          </Dialog>
+
+                          {record.status_kesehatan === "Sakit" && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -556,23 +563,25 @@ export const RekamMedisModule = () => {
                               <span className="sr-only">Edit</span>
                               <Edit className="h-4 w-4" />
                             </Button>
-  
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
-                              onClick={() => {
-                                setCurrentRecord(record);
-                                setIsDeleteDialogOpen(true);
-                              }}
-                            >
-                              <span className="sr-only">Delete</span>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                          )}
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                            onClick={() => {
+                              setCurrentRecord(record);
+                              setIsDeleteDialogOpen(true);
+                            }}
+                          >
+                            <span className="sr-only">Delete</span>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                    
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} className="h-24 text-center">
@@ -628,85 +637,27 @@ export const RekamMedisModule = () => {
             </DialogHeader>
             <Form {...editForm}>
               <form onSubmit={editForm.handleSubmit(handleEditRekamMedis)} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={editForm.control}
-                    name="id_hewan"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>ID Hewan</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Pilih hewan" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {mockPets.map((pet) => (
-                              <SelectItem key={pet.id} value={pet.id}>
-                                {pet.id} - {pet.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={editForm.control}
-                    name="username_dokter"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Username Dokter</FormLabel>
+                <FormField
+                  control={editForm.control}
+                  name="status_kesehatan"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status Kesehatan</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <Input placeholder="Masukkan username dokter" {...field} />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Pilih status" />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={editForm.control}
-                    name="tanggal_pemeriksaan"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tanggal Pemeriksaan</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={editForm.control}
-                    name="status_kesehatan"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status Kesehatan</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Pilih status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Sehat">Sehat</SelectItem>
-                            <SelectItem value="Sakit">Sakit</SelectItem>
-                            <SelectItem value="Dalam Perawatan">Dalam Perawatan</SelectItem>
-                            <SelectItem value="Kritis">Kritis</SelectItem>
-                            <SelectItem value="Sembuh">Sembuh</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                        <SelectContent>
+                          <SelectItem value="Sehat">Sehat</SelectItem>
+                          <SelectItem value="Sakit">Sakit</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
                 <FormField
                   control={editForm.control}
@@ -735,24 +686,6 @@ export const RekamMedisModule = () => {
                       <FormControl>
                         <Textarea
                           placeholder="Masukkan pengobatan yang diberikan"
-                          className="resize-none"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={editForm.control}
-                  name="catatan_tindak_lanjut"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Catatan Tindak Lanjut</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Masukkan catatan tindak lanjut (opsional)"
                           className="resize-none"
                           {...field}
                         />
