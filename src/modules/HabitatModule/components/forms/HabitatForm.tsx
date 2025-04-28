@@ -132,7 +132,10 @@ export const HabitatForm: React.FC<HabitatFormProps> = ({
         />
 
         <div className="flex justify-end gap-2">
-          <Button type="submit" className="bg-primary text-primary-foreground">
+          <Button
+            variant={"default"}
+            className="bg-primary text-primary-foreground"
+          >
             {isEditing ? "Simpan Perubahan" : "Tambah Habitat"}
           </Button>
         </div>

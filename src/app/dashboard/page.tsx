@@ -1,7 +1,8 @@
 import React from "react";
+import DashboardModule from "@/modules/DashboardModule";
 
-const index = () => {
-  return <div>index</div>;
+const DashboardPage = () => {
+  return <DashboardModule />;
 };
 
-export default index;
+export default DashboardPage;

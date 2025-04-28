@@ -135,7 +135,7 @@ export const LoginModule: React.FC = () => {
                           />
                         </FormControl>
                         <button
-                          type="button"
+                          variant={"default"}
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-3 top-1.5 text-6uted-foreground hover:text-foreground"
                         >
@@ -154,7 +154,7 @@ export const LoginModule: React.FC = () => {
 
               <motion.div variants={itemVariants}>
                 <Button
-                  type="submit"
+                  variant={"default"}
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded-md transition-colors mt-4"
                 >
                   Sign In

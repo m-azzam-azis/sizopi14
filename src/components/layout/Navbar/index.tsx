@@ -23,7 +23,7 @@ export const Navbar = () => {
   const data = {
     isLoggedIn: true,
     user: {
-      role: "dokter",
+      role: "pengguna",
     },
   };
 

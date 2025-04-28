@@ -5,7 +5,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Trash2, Pencil, Plus, Search, X } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  Trash2,
+  Pencil,
+  Plus,
+  Search,
+  X,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -150,7 +157,7 @@ const hewanExtended = [
     origin: "Sumatera",
     birthDate: new Date("2015-06-12"),
     habitat: "Hutan Hujan Tropis",
-    healthStatus: "Sehat"
+    healthStatus: "Sehat",
   },
   {
     id: "H002",
@@ -159,16 +166,16 @@ const hewanExtended = [
     origin: "India",
     birthDate: new Date("2018-03-24"),
     habitat: "Hutan Tropis",
-    healthStatus: "Pemulihan"
+    healthStatus: "Pemulihan",
   },
   {
-    id: "H003", 
+    id: "H003",
     name: "Orangutan",
     species: "Pongo pygmaeus",
     origin: "Kalimantan",
     birthDate: new Date("2017-09-30"),
     habitat: "Hutan Hujan Tropis",
-    healthStatus: "Sehat"
+    healthStatus: "Sehat",
   },
   {
     id: "H004",
@@ -177,14 +184,15 @@ const hewanExtended = [
     origin: "Pulau Komodo",
     birthDate: new Date("2019-11-05"),
     habitat: "Savana",
-    healthStatus: "Sehat"
+    healthStatus: "Sehat",
   },
 ];
 
 type PakanFormValues = z.infer<typeof pakanFormSchema>;
 
 export const PemberianPakanModule: React.FC = () => {
-  const [pemberianPakan, setPemberianPakan] = useState<PemberianPakan[]>(mockPemberianPakan);
+  const [pemberianPakan, setPemberianPakan] =
+    useState<PemberianPakan[]>(mockPemberianPakan);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -206,15 +214,17 @@ export const PemberianPakanModule: React.FC = () => {
   });
 
   const getAnimalExtendedInfo = (id: string) => {
-    return hewanExtended.find(h => h.id === id) || {
-      id,
-      name: "Unknown",
-      species: "Unknown",
-      origin: "Unknown",
-      birthDate: new Date(),
-      habitat: "Unknown",
-      healthStatus: "Unknown"
-    };
+    return (
+      hewanExtended.find((h) => h.id === id) || {
+        id,
+        name: "Unknown",
+        species: "Unknown",
+        origin: "Unknown",
+        birthDate: new Date(),
+        habitat: "Unknown",
+        healthStatus: "Unknown",
+      }
+    );
   };
 
   // Reset form when dialog is closed
@@ -246,7 +256,9 @@ export const PemberianPakanModule: React.FC = () => {
       // Update existing item
       setPemberianPakan(
         pemberianPakan.map((item) =>
-          item.id === editingItem.id ? { ...data, id: item.id } as PemberianPakan : item
+          item.id === editingItem.id
+            ? ({ ...data, id: item.id } as PemberianPakan)
+            : item
         )
       );
     } else {
@@ -272,13 +284,13 @@ export const PemberianPakanModule: React.FC = () => {
       item.id_hewan.toLowerCase().includes(search.toLowerCase()) ||
       item.jenis.toLowerCase().includes(search.toLowerCase()) ||
       item.username_jh.toLowerCase().includes(search.toLowerCase());
-    
+
     const matchesStatus = statusFilter === null || item.status === statusFilter;
-    
-    const matchesDate = 
-      dateFilter === null || 
+
+    const matchesDate =
+      dateFilter === null ||
       format(item.jadwal, "yyyy-MM-dd") === format(dateFilter, "yyyy-MM-dd");
-    
+
     return matchesSearch && matchesStatus && matchesDate;
   });
 
@@ -298,25 +310,26 @@ export const PemberianPakanModule: React.FC = () => {
 
   // Helper to get animal name from ID
   const getAnimalName = (id: string) => {
-    const animal = hewan.find(h => h.id === id);
+    const animal = hewan.find((h) => h.id === id);
     return animal ? animal.name : id;
   };
 
   // Helper to get caretaker name from username
   const getCaretakerName = (username: string) => {
-    const caretaker = penjagaHewan.find(p => p.username === username);
+    const caretaker = penjagaHewan.find((p) => p.username === username);
     return caretaker ? caretaker.name : username;
   };
 
-  const completedFeedings = pemberianPakan.filter(item => 
-    item.status === "completed" && 
-    (caretakerFilter === null || item.username_jh === caretakerFilter)
+  const completedFeedings = pemberianPakan.filter(
+    (item) =>
+      item.status === "completed" &&
+      (caretakerFilter === null || item.username_jh === caretakerFilter)
   );
 
   return (
     <div className="container mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-6">Pemberian Pakan</h1>
-      
+
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Filter &amp; Pencarian</CardTitle>
@@ -332,7 +345,7 @@ export const PemberianPakanModule: React.FC = () => {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            
+
             <Select
               value={statusFilter || ""}
               onValueChange={(value) => setStatusFilter(value || null)}
@@ -340,9 +353,8 @@ export const PemberianPakanModule: React.FC = () => {
               <SelectTrigger>
                 <SelectValue placeholder="Filter status" />
               </SelectTrigger>
-            
             </Select>
-            
+
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -376,7 +388,7 @@ export const PemberianPakanModule: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-      
+
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Daftar Pemberian Pakan</h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -388,7 +400,9 @@ export const PemberianPakanModule: React.FC = () => {
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>
-                {editingItem ? "Edit Pemberian Pakan" : "Tambah Pemberian Pakan"}
+                {editingItem
+                  ? "Edit Pemberian Pakan"
+                  : "Tambah Pemberian Pakan"}
               </DialogTitle>
               <DialogDescription>
                 {editingItem
@@ -397,7 +411,10 @@ export const PemberianPakanModule: React.FC = () => {
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={form.control}
                   name="id_hewan"
@@ -425,7 +442,7 @@ export const PemberianPakanModule: React.FC = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="jadwal"
@@ -486,7 +503,7 @@ export const PemberianPakanModule: React.FC = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="jenis"
@@ -514,7 +531,7 @@ export const PemberianPakanModule: React.FC = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="jumlah"
@@ -522,18 +539,13 @@ export const PemberianPakanModule: React.FC = () => {
                     <FormItem>
                       <FormLabel>Jumlah (kg)</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={100}
-                          {...field}
-                        />
+                        <Input type="number" min={1} max={100} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="status"
@@ -541,7 +553,9 @@ export const PemberianPakanModule: React.FC = () => {
                     <FormItem>
                       <FormLabel>Status</FormLabel>
                       <Select
-                        onValueChange={field.onChange as (value: string) => void}
+                        onValueChange={
+                          field.onChange as (value: string) => void
+                        }
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -559,7 +573,7 @@ export const PemberianPakanModule: React.FC = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="username_jh"
@@ -590,9 +604,9 @@ export const PemberianPakanModule: React.FC = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <DialogFooter>
-                  <Button type="submit" className="bg-primary text-white">
+                  <Button variant={"default"} className="bg-primary text-white">
                     {editingItem ? "Simpan Perubahan" : "Tambah Pakan"}
                   </Button>
                 </DialogFooter>
@@ -601,7 +615,7 @@ export const PemberianPakanModule: React.FC = () => {
           </DialogContent>
         </Dialog>
       </div>
-      
+
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -620,8 +634,12 @@ export const PemberianPakanModule: React.FC = () => {
               {filteredData.length > 0 ? (
                 filteredData.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>{item.id_hewan} - {getAnimalName(item.id_hewan)}</TableCell>
-                    <TableCell>{format(new Date(item.jadwal), "dd/MM/yyyy HH:mm")}</TableCell>
+                    <TableCell>
+                      {item.id_hewan} - {getAnimalName(item.id_hewan)}
+                    </TableCell>
+                    <TableCell>
+                      {format(new Date(item.jadwal), "dd/MM/yyyy HH:mm")}
+                    </TableCell>
                     <TableCell>{item.jenis}</TableCell>
                     <TableCell>{item.jumlah}</TableCell>
                     <TableCell>{getStatusBadge(item.status)}</TableCell>
@@ -636,15 +654,27 @@ export const PemberianPakanModule: React.FC = () => {
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-red-500">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500"
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Hapus Data Pemberian Pakan</AlertDialogTitle>
+                            <AlertDialogTitle>
+                              Hapus Data Pemberian Pakan
+                            </AlertDialogTitle>
                             <AlertDialogDescription>
-                              Apakah Anda yakin ingin menghapus data pemberian pakan untuk hewan {item.id_hewan} pada {format(new Date(item.jadwal), "dd/MM/yyyy HH:mm")}? Tindakan ini tidak dapat dibatalkan.
+                              Apakah Anda yakin ingin menghapus data pemberian
+                              pakan untuk hewan {item.id_hewan} pada{" "}
+                              {format(
+                                new Date(item.jadwal),
+                                "dd/MM/yyyy HH:mm"
+                              )}
+                              ? Tindakan ini tidak dapat dibatalkan.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -672,7 +702,9 @@ export const PemberianPakanModule: React.FC = () => {
           </Table>
         </CardContent>
       </Card>
-      <h2 className="text-xl font-semibold mt-10 mb-4">Riwayat Pemberian Makan</h2>
+      <h2 className="text-xl font-semibold mt-10 mb-4">
+        Riwayat Pemberian Makan
+      </h2>
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Filter Penjaga Hewan</CardTitle>
@@ -681,7 +713,9 @@ export const PemberianPakanModule: React.FC = () => {
           <div className="w-full md:w-1/3">
             <Select
               value={caretakerFilter || "all"}
-              onValueChange={(value) => setCaretakerFilter(value === "all" ? null : value)}
+              onValueChange={(value) =>
+                setCaretakerFilter(value === "all" ? null : value)
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Pilih penjaga hewan" />
@@ -698,7 +732,7 @@ export const PemberianPakanModule: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -725,13 +759,19 @@ export const PemberianPakanModule: React.FC = () => {
                       <TableCell>{animal.name}</TableCell>
                       <TableCell>{animal.species}</TableCell>
                       <TableCell>{animal.origin}</TableCell>
-                      <TableCell>{format(animal.birthDate, "dd/MM/yyyy")}</TableCell>
+                      <TableCell>
+                        {format(animal.birthDate, "dd/MM/yyyy")}
+                      </TableCell>
                       <TableCell>{animal.habitat}</TableCell>
                       <TableCell>{animal.healthStatus}</TableCell>
                       <TableCell>{item.jenis}</TableCell>
                       <TableCell>{item.jumlah}</TableCell>
-                      <TableCell>{format(new Date(item.jadwal), "dd/MM/yyyy HH:mm")}</TableCell>
-                      <TableCell>{getCaretakerName(item.username_jh)}</TableCell>
+                      <TableCell>
+                        {format(new Date(item.jadwal), "dd/MM/yyyy HH:mm")}
+                      </TableCell>
+                      <TableCell>
+                        {getCaretakerName(item.username_jh)}
+                      </TableCell>
                     </TableRow>
                   );
                 })
