@@ -5,9 +5,10 @@ import { UserRole } from "@/types/user";
 import DashboardShell from "./components/DashboardShell";
 import AdminDashboard from "./components/AdminDashboard";
 import VeterinarianDashboard from "./components/VeterinarianDashboard";
+import TrainerDashboard from "./components/TrainerDashboard";
 import ReservasiTiketDashboardModule from "../ReservasiTiketModule/Pengunjung/Dashboard";
 
-// Mock user data - would typically come from an API or auth context
+// Mock user data - aligned with the database schema
 const mockUserData = {
   id: "user-123",
   username: "johndoe",
@@ -16,7 +17,7 @@ const mockUserData = {
   middleName: "",
   lastName: "Doe",
   phoneNumber: "+62123456789",
-  role: "caretaker" as UserRole, // Change this to test different dashboards
+  role: "trainer" as UserRole, // Change this to test different dashboards
 
   // Role-specific fields
 
@@ -39,6 +40,10 @@ const mockUserData = {
 
   // For caretaker
   jumlahHewan: 50,
+
+  // From PELATIH_HEWAN table (if trainer)
+  username_lh: "johndoe", // Same as username from PENGGUNA
+  id_staf: "550e8400-e29b-41d4-a716-446655440010", // UUID format
 };
 
 const DashboardModule: React.FC = () => {
@@ -54,8 +59,9 @@ const DashboardModule: React.FC = () => {
         return <VeterinarianDashboard userData={user} />;
       case "visitor":
         return <ReservasiTiketDashboardModule />;
-      case "caretaker":
       case "trainer":
+        return <TrainerDashboard userData={user} />;
+      case "caretaker":
       default:
         return <p>Welcome to your dashboard!</p>;
     }
@@ -73,8 +79,13 @@ const DashboardModule: React.FC = () => {
         ...(user.role === "visitor"
           ? { alamat: user.alamat, tanggalLahir: user.tanggalLahir }
           : {}),
-        ...(user.role === "caretaker"
-          ? { jumlahHewan: user.jumlahHewan, staffId: user.staffId }
+        ...(user.role === "caretaker" ||
+        user.role === "trainer" ||
+        user.role === "admin"
+          ? {
+              jumlahHewan: user.jumlahHewan,
+              staffId: user.staffId,
+            }
           : {}),
       }}
       roleSpecificContent={renderRoleSpecificContent()}
