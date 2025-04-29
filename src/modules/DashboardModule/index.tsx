@@ -5,6 +5,7 @@ import { UserRole } from "@/types/user";
 import DashboardShell from "./components/DashboardShell";
 import AdminDashboard from "./components/AdminDashboard";
 import VeterinarianDashboard from "./components/VeterinarianDashboard";
+import ReservasiTiketDashboardModule from "../ReservasiTiketModule/Pengunjung/Dashboard";
 
 // Mock user data - would typically come from an API or auth context
 const mockUserData = {
@@ -28,6 +29,10 @@ const mockUserData = {
   certificationNumber: "VET-12345",
   specializations: ["Large Mammals", "Reptiles"],
   animalsTreated: 45,
+
+  // For visitor
+  alamat: "123 Main St, Cityville",
+  tanggalLahir: "1990-01-01",
 };
 
 const DashboardModule: React.FC = () => {
@@ -41,7 +46,10 @@ const DashboardModule: React.FC = () => {
         return <AdminDashboard userData={user} />;
       case "veterinarian":
         return <VeterinarianDashboard userData={user} />;
-      // Add more role-specific dashboards as needed
+      case "visitor":
+        return <ReservasiTiketDashboardModule />;
+      case "caretaker":
+      case "trainer":
       default:
         return <p>Welcome to your dashboard!</p>;
     }
@@ -56,6 +64,9 @@ const DashboardModule: React.FC = () => {
         email: user.email,
         phoneNumber: user.phoneNumber,
         role: user.role,
+        ...(user.role === "visitor"
+          ? { alamat: user.alamat, tanggalLahir: user.tanggalLahir }
+          : {}),
       }}
       roleSpecificContent={renderRoleSpecificContent()}
     />
