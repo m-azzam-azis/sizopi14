@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ interface Animal {
   imageUrl: string;
   startDate: string;
   endDate: string;
+  ownerId: string;
 }
 
 const animals: Animal[] = [
@@ -32,6 +33,7 @@ const animals: Animal[] = [
     imageUrl: "https://images.unsplash.com/photo-1545006398-2cf48043d3f3?q=80&w=400",
     startDate: "2025-01-01",
     endDate: "2025-12-31",
+    ownerId: "d290f1ee-6c54-4b01-90e6-d701748f0851" // rajatacalista
   },
   {
     id: "ani-102",
@@ -41,48 +43,69 @@ const animals: Animal[] = [
     imageUrl: "https://images.unsplash.com/photo-1549975248-52273875de73?q=80&w=400",
     startDate: "2025-02-01",
     endDate: "2025-11-30",
+    ownerId: "d290f1ee-6c54-4b01-90e6-d701748f0851" // rajatacalista
   },
+  {
+    id: "ani-103",
+    name: "Luna",
+    species: "Kucing",
+    habitat: "Sabana Afrika",
+    imageUrl: "https://example.com/luna.jpg",
+    startDate: "2025-02-01",
+    endDate: "2025-11-30",
+    ownerId: "11d5b3ec-4513-476e-b5ee-7a9ecb2f13f2" // margana08
+  }
 ];
 
 const adopters = [
-    {
-      id: "d290f1ee-6c54-4b01-90e6-d701748f0851",
-      username: "rajatacalista",
-      type: "individu",
-      address: "Jalan Pasteur No. 949, Ambon, Jawa Tengah 90622",
-      birthDate: "1997-04-24",
-      nik: "3175091201010001",
-      name: "Prasetya Andriani",
-      noTelp: "089635460305",
-    },
-    {
-      id: "11d5b3ec-4513-476e-b5ee-7a9ecb2f13f2",
-      username: "margana08",
-      type: "organisasi",
-      address: "Gg. Ir. H. Djuanda No. 06, Banjarbaru, LA 79983",
-      birthDate: "1975-03-22",
-      npp: "ORG00001",
-      organizationName: "Yayasan Margana Jaya",
-      noTelp: "080925544576",
-    },
-  ]
+  {
+    id: "d290f1ee-6c54-4b01-90e6-d701748f0851",
+    username: "rajatacalista",
+    type: "individu",
+    address: "Jalan Pasteur No. 949, Ambon, Jawa Tengah 90622",
+    birthDate: "1997-04-24",
+    nik: "3175091201010001",
+    name: "Prasetya Andriani",
+    noTelp: "089635460305",
+  },
+  {
+    id: "11d5b3ec-4513-476e-b5ee-7a9ecb2f13f2",
+    username: "margana08",
+    type: "organisasi",
+    address: "Gg. Ir. H. Djuanda No. 06, Banjarbaru, LA 79983",
+    birthDate: "1975-03-22",
+    npp: "ORG00001",
+    organizationName: "Yayasan Margana Jaya",
+    noTelp: "080925544576",
+  },
+];
 
 export default function AdopterAdopsiDetailModule({ animalId }: { animalId: string }) {
   const router = useRouter();
   const [showAlert, setShowAlert] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedAdopter, setSelectedAdopter] = useState<any>(null);  
+  const [selectedAdopter, setSelectedAdopter] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   // Cari data hewan berdasarkan ID
   const animal = animals.find((a) => a.id === animalId);
+
+  useEffect(() => {
+    if (animal) {
+      const owner = adopters.find(a => a.id === animal.ownerId);
+      if (owner) {
+        setCurrentUser(owner);
+      }
+    }
+  }, [animal]);
 
   if (!animal) {
     return <p className="text-center">Data hewan tidak ditemukan.</p>;
   }
 
-  if (!adopters) {
-    return <p>Data adopter tidak ditemukan.</p>;
+  if (!currentUser) {
+    return <p className="text-center">Loading user data...</p>;
   }
 
   const handleStopAdoption = () => {
@@ -94,13 +117,8 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
     }, 3000);
   };
 
-  const handleExtendAdoption = (adopterId: string) => {
-    const adopter = adopters.find((a) => a.id === adopterId);
-    if (!adopter) {
-      console.error("Adopter tidak ditemukan");
-      return;
-    }
-    setSelectedAdopter({...adopter, animal});
+  const handleExtendAdoption = () => {
+    setSelectedAdopter({...currentUser, animal});
     setIsModalOpen(true);
   };
 
@@ -111,16 +129,17 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
 
   return (
     <div className="container mx-auto py-10 px-4 font-outfit">
+      
       <Card className="shadow-md w-full max-w-lg mx-auto">
-      <CardHeader className="relative">
-        <CardTitle className="text-xl font-bold text-center">Informasi Hewan Adopsi</CardTitle>
-        <Button
-        variant="ghost"
-        className="absolute top-6 right-6 text-red-500 hover:bg-red-100 p-2 rounded-full"
-        onClick={() => router.push("/adopter-adopsi")}
-        >
-        <X className="h-5 w-5" />
-        </Button>
+        <CardHeader className="relative">
+          <CardTitle className="text-xl font-bold text-center">Informasi Hewan Adopsi</CardTitle>
+          <Button
+            variant="ghost"
+            className="absolute top-6 right-6 text-red-500 hover:bg-red-100 p-2 rounded-full"
+            onClick={() => router.push("/adopter-adopsi")}
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4 text-center">
           {/* Gambar Hewan */}
@@ -146,21 +165,26 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
             <p>
               <span className="font-semibold">Tanggal Akhir Adopsi:</span> {animal.endDate}
             </p>
+            <p>
+              <span className="font-semibold">Adopter:</span> {
+                currentUser.type === "individu" ? currentUser.name : currentUser.organizationName
+              }
+            </p>
           </div>
 
           {/* Aksi */}
           <div className="flex justify-center gap-4 mt-4">
-           <Button
-            className="bg-primary text-white px-4 py-2 rounded-md cursor-pointer hover:bg-primary/100"
-            onClick={() => router.push(`/adopter-adopsi/kondisi/${animalId}`)}
+            <Button
+              className="bg-primary text-white px-4 py-2 rounded-md cursor-pointer hover:bg-primary/100"
+              onClick={() => router.push(`/adopter-adopsi/kondisi/${animalId}`)}
             >
-            Pantau Kondisi Hewan
+              Pantau Kondisi Hewan
             </Button>
             <Badge
-            className="bg-primary text-white px-4 py-2 rounded-md cursor-pointer hover:bg-primary/100"
-            onClick={() => router.push(`/adopter-adopsi/sertifikat/${animal.id}`)}
+              className="bg-primary text-white px-4 py-2 rounded-md cursor-pointer hover:bg-primary/100"
+              onClick={() => router.push(`/adopter-adopsi/sertifikat/${animal.id}`)}
             >
-            Lihat Sertifikat Adopsi
+              Lihat Sertifikat Adopsi
             </Badge>
           </div>
           <div className="flex justify-center gap-4">
@@ -172,14 +196,11 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
               Berhenti Adopsi
             </Button>
             <Button
-            variant="outline"
-            className="bg-blue-500 text-white hover:bg-blue-600 hover:text-white"
-            // masih hardocoded karena untuk demo (individu)
-             onClick={() => handleExtendAdoption("d290f1ee-6c54-4b01-90e6-d701748f0851")}
-            // masih hardocoded karena untuk demo (organisasi)
-            //onClick={() => handleExtendAdoption("11d5b3ec-4513-476e-b5ee-7a9ecb2f13f2")}
+              variant="outline"
+              className="bg-blue-500 text-white hover:bg-blue-600 hover:text-white"
+              onClick={handleExtendAdoption}
             >
-            Perpanjang Periode Adopsi
+              Perpanjang Periode Adopsi
             </Button>
           </div>
         </CardContent>
@@ -205,26 +226,26 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
 
       {/* Modal */}
       {isModalOpen && selectedAdopter && (
-    <>
-        {selectedAdopter.type === "individu" ? (
-        <AdopterIndividuFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-            <AdopterIndividuForm
-            adopter={selectedAdopter}
-            animal={selectedAdopter.animal} 
-            onSubmit={(data) => console.log(data)}
-            />
-        </AdopterIndividuFormModal>
-        ) : (
-        <AdopterOrganisasiFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-            <AdopterOrganisasiForm
-            adopter={selectedAdopter}
-            animal={selectedAdopter.animal} 
-            onSubmit={(data) => console.log(data)}
-            />
-        </AdopterOrganisasiFormModal>
-        )}
-    </>
-    )}
+        <>
+          {selectedAdopter.type === "individu" ? (
+            <AdopterIndividuFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+              <AdopterIndividuForm
+                adopter={selectedAdopter}
+                animal={selectedAdopter.animal} 
+                onSubmit={(data) => console.log(data)}
+              />
+            </AdopterIndividuFormModal>
+          ) : (
+            <AdopterOrganisasiFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+              <AdopterOrganisasiForm
+                adopter={selectedAdopter}
+                animal={selectedAdopter.animal} 
+                onSubmit={(data) => console.log(data)}
+              />
+            </AdopterOrganisasiFormModal>
+          )}
+        </>
+      )}
 
       {/* Toast Notification */}
       {showToast && (

@@ -18,13 +18,49 @@ interface Animal {
   startDate: string;
   endDate: string;
   isAdopted: boolean;
+  ownerId: string;
+}
+
+interface Adopter {
+  id: string;
+  username: string;
+  type: "individu" | "organisasi";
+  name?: string;
+  organizationName?: string;
 }
 
 export default function AdopterAdopsiModule() {
   const router = useRouter();
+  
+  // cuma buat demo
+  const [currentUser, setCurrentUser] = useState<Adopter>({
+    id: "d290f1ee-6c54-4b01-90e6-d701748f0851",
+    username: "rajatacalista",
+    type: "individu",
+    name: "Prasetya Andriani"
+  });
+  
+  // cuma buat demo
+  const toggleUser = () => {
+    if (currentUser.username === "rajatacalista") {
+      setCurrentUser({
+        id: "11d5b3ec-4513-476e-b5ee-7a9ecb2f13f2",
+        username: "margana08",
+        type: "organisasi",
+        organizationName: "Yayasan Margana Jaya"
+      });
+    } else {
+      setCurrentUser({
+        id: "d290f1ee-6c54-4b01-90e6-d701748f0851",
+        username: "rajatacalista",
+        type: "individu",
+        name: "Prasetya Andriani"
+      });
+    }
+  };
 
-  // Sample data for user's adopted animals
-  const [adoptedAnimals, setAdoptedAnimals] = useState<Animal[]>([
+  // Sample data for all adopted animals
+  const allAnimals: Animal[] = [
     {
       id: "ani-101",
       name: "Simba",
@@ -35,6 +71,7 @@ export default function AdopterAdopsiModule() {
       startDate: "2025-01-01",
       endDate: "2025-12-31",
       isAdopted: true,
+      ownerId: "d290f1ee-6c54-4b01-90e6-d701748f0851" // rajatacalista
     },
     {
       id: "ani-102",
@@ -46,8 +83,30 @@ export default function AdopterAdopsiModule() {
       startDate: "2025-02-01",
       endDate: "2025-11-30",
       isAdopted: true,
+      ownerId: "d290f1ee-6c54-4b01-90e6-d701748f0851" // rajatacalista
     },
-  ]);
+    {
+      id: "ani-103",
+      name: "Luna",
+      species: "Kucing",
+      condition: "Sakit",
+      habitat: "Sabana Afrika",
+      imageUrl: "https://example.com/luna.jpg",
+      startDate: "2025-02-01",
+      endDate: "2025-11-30",
+      isAdopted: true,
+      ownerId: "11d5b3ec-4513-476e-b5ee-7a9ecb2f13f2" // margana08
+    }
+  ];
+
+  // Filter animals based on current user
+  const [adoptedAnimals, setAdoptedAnimals] = useState<Animal[]>([]);
+
+  useEffect(() => {
+    // Filter animals based on current user's ID
+    const userAnimals = allAnimals.filter(animal => animal.ownerId === currentUser.id);
+    setAdoptedAnimals(userAnimals);
+  }, [currentUser]);
 
   const getConditionBadgeStyle = (condition: string) => {
     switch (condition) {
@@ -64,6 +123,18 @@ export default function AdopterAdopsiModule() {
 
   return (
     <div className="container mx-auto py-10 px-4 font-outfit">
+      {/* cuma buat demo */}
+      <div className="mb-4 p-2 bg-gray-100 rounded-md">
+        <Button 
+          onClick={toggleUser} 
+          variant="outline" 
+          size="sm" 
+          className="text-xs"
+        >
+          Switch to {currentUser.username === "rajatacalista" ? "margana08" : "rajatacalista"}
+        </Button>
+      </div>
+
       <Card className="mb-8">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-primary font-outfit">
@@ -87,42 +158,53 @@ export default function AdopterAdopsiModule() {
         </CardContent>
       </Card>
 
-      <h2 className="text-xl font-bold mb-6">Hewan yang Sedang Anda Adopsi</h2>
+      <h2 className="text-xl font-bold mb-6">
+        {currentUser.type === "individu" 
+          ? "Hewan yang Sedang Anda Adopsi"
+          : `Hewan yang Sedang Anda Adopsi`
+        }
+      </h2>
 
-      <div className="space-y-6">
-        {adoptedAnimals.map((animal) => (
-          <Card key={animal.id}>
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row gap-4">
-              <Avatar className="h-32 w-32 rounded-md">
-                <AvatarImage src={animal.imageUrl} alt={animal.name} />
-                <AvatarFallback className="rounded-md">
-                  {animal.name.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-                <div className="space-y-2 flex-1">
-                  <h3 className="font-semibold text-lg">{animal.name || "[nama hewan] (kalau ada)"}</h3>
-                  <p className="text-muted-foreground">{animal.species}</p>
-                  <Badge
-                    className={`mt-2 px-3 py-1 text-sm rounded-full ${getConditionBadgeStyle(animal.condition)}`}
-                  >
-                    {animal.condition}
-                  </Badge>
-                  <div className="flex justify-end">
-                    <Button
-                      variant="outline"
-                      className="text-primary border-primary hover:bg-primary/10 text-base font-medium"
-                      onClick={() => router.push(`/adopter-adopsi/detail/${animal.id}`)}
+      {adoptedAnimals.length > 0 ? (
+        <div className="space-y-6">
+          {adoptedAnimals.map((animal) => (
+            <Card key={animal.id}>
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <Avatar className="h-32 w-32 rounded-md">
+                    <AvatarImage src={animal.imageUrl} alt={animal.name} />
+                    <AvatarFallback className="rounded-md">
+                      {animal.name.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="space-y-2 flex-1">
+                    <h3 className="font-semibold text-lg">{animal.name || "[nama hewan] (kalau ada)"}</h3>
+                    <p className="text-muted-foreground">{animal.species}</p>
+                    <Badge
+                      className={`mt-2 px-3 py-1 text-sm rounded-full ${getConditionBadgeStyle(animal.condition)}`}
                     >
-                      <Eye className="mr-2 h-5 w-5" /> Lihat Detail
-                    </Button>
+                      {animal.condition}
+                    </Badge>
+                    <div className="flex justify-end">
+                      <Button
+                        variant="outline"
+                        className="text-primary border-primary hover:bg-primary/10 text-base font-medium"
+                        onClick={() => router.push(`/adopter-adopsi/detail/${animal.id}`)}
+                      >
+                        <Eye className="mr-2 h-5 w-5" /> Lihat Detail
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center p-8 bg-gray-50 rounded-lg">
+          <p className="text-gray-500">Tidak ada hewan yang sedang diadopsi.</p>
+        </div>
+      )}
     </div>
   );
 }

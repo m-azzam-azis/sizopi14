@@ -24,23 +24,15 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
+import { Navbar } from "@/components/layout/Navbar";
 
-// Define interfaces for type safety
 interface Adopter {
   id: string;
   name: string;
+  address: string;
+  contact: string;
   totalContribution: number;
-}
-
-interface AdoptionHistory {
-  id: string;
-  adopterId: string;
-  animalName: string;
-  animalSpecies: string;
-  adoptionDate: string;
-  contributionAmount: number;
-  expiryDate: string;
-  status: "Active" | "Expired" | "Cancelled";
+  avatarUrl?: string;
 }
 
 const AdopterRiwayatModule = () => {
@@ -49,116 +41,55 @@ const AdopterRiwayatModule = () => {
   const [adopterToDelete, setAdopterToDelete] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
 
-  // Dummy data for all adopters with requested names
   const [adopters, setAdopters] = useState<Adopter[]>([
     {
       id: "adp-001",
       name: "Prasetya Andriani",
+      address: "Jl. Diponegoro No. 45, Surabaya",
+      contact: "089635460305",
       totalContribution: 15000000,
-    },
-    {
-      id: "adp-002",
-      name: "Damar Thamrin",
-      totalContribution: 12500000,
-    },
-    {
-      id: "adp-003",
-      name: "Gading Nainggolan",
-      totalContribution: 10750000,
-    },
-    {
-      id: "adp-004",
-      name: "Drajat Rahmi Nainggolan",
-      totalContribution: 8800000,
-    },
-    {
-      id: "adp-005",
-      name: "Tira Jais Mangunsong",
-      totalContribution: 7500000,
-    },
-    {
-      id: "adp-006",
-      name: "Praba Wulandari",
-      totalContribution: 6200000,
-    },
-    {
-      id: "adp-007",
-      name: "Elon Budiman",
-      totalContribution: 5500000,
-    },
-    {
-      id: "adp-008",
-      name: "Silvia Nurdiyanti",
-      totalContribution: 4800000,
-    },
-    {
-      id: "adp-009",
-      name: "Pardi Lili Siregar",
-      totalContribution: 3900000,
+      avatarUrl: "https://i.pravatar.cc/150?u=prasetya",
     },
     {
       id: "adp-010",
       name: "Agus Januar",
+      address: "Jl. Sudirman No. 123, Jakarta",
+      contact: "083573452405",
       totalContribution: 3200000,
+      avatarUrl: "https://i.pravatar.cc/150?u=agus",
     },
     {
       id: "adp-011",
       name: "Yayasan Margana Jaya",
+      address: "Jl. Merdeka No. 123, Jakarta Pusat",
+      contact: "080925544576",
       totalContribution: 25000000,
+      avatarUrl: "https://i.pravatar.cc/150?u=margana",
     },
     {
       id: "adp-012",
       name: "Lembaga Dwinarno Mandiri",
+      address: "Jl. Pahlawan No. 55, Bandung",
+      contact: "080749318642",
       totalContribution: 22000000,
+      avatarUrl: "https://i.pravatar.cc/150?u=dwinarno",
     },
     {
       id: "adp-013",
       name: "Rika Sinaga Foundation",
+      address: "Jl. Gajah Mada No. 72, Medan",
+      contact: "087638079651",
       totalContribution: 20500000,
-    },
-    {
-      id: "adp-014",
-      name: "Gereja Ghu Tasoit",
-      totalContribution: 18000000,
-    },
-    {
-      id: "adp-015",
-      name: "Komunitas Galar Peduli",
-      totalContribution: 17000000,
-    },
-    {
-      id: "adp-016",
-      name: "Yayasan Tirtayasa Amanah",
-      totalContribution: 16000000,
-    },
-    {
-      id: "adp-017",
-      name: "ULI Petcare Group",
-      totalContribution: 15500000,
-    },
-    {
-      id: "adp-018",
-      name: "Azalea Foster House",
-      totalContribution: 14000000,
-    },
-    {
-      id: "adp-019",
-      name: "Ekopertiwi Foundation",
-      totalContribution: 120000000,
-    },
-    {
-      id: "adp-020",
-      name: "Santoso Animal Shelter",
-      totalContribution: 100000000,
+      avatarUrl: "https://i.pravatar.cc/150?u=rika",
     },
   ]);
 
-  // Get top 5 adopters by contribution amount
+  // top 5 adopters 
   const topAdopters = [...adopters]
     .sort((a, b) => b.totalContribution - a.totalContribution)
     .slice(0, 5);
 
-  // Function to format currency
+  // format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -167,13 +98,11 @@ const AdopterRiwayatModule = () => {
     }).format(amount);
   };
 
-  // Function to show delete confirmation
   const handleDeleteClick = (id: string) => {
     setAdopterToDelete(id);
     setShowDeleteAlert(true);
   };
 
-  // Function to handle actual delete action
   const handleDelete = () => {
     if (adopterToDelete) {
       setAdopters(adopters.filter((adopter) => adopter.id !== adopterToDelete));
@@ -246,6 +175,7 @@ const AdopterRiwayatModule = () => {
                       <div className="flex items-center space-x-3">
                         <Avatar className="h-8 w-8">
                           <AvatarImage
+                            src={adopter.avatarUrl}
                             alt={adopter.name}
                           />
                           <AvatarFallback>
@@ -254,8 +184,6 @@ const AdopterRiwayatModule = () => {
                         </Avatar>
                         <div>
                           <div>{adopter.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                          </div>
                         </div>
                       </div>
                     </TableCell>

@@ -28,6 +28,7 @@ interface Animal {
   startDate: string;
   endDate: string;
   isAdopted: boolean;
+  ownerId: string;
   medicalRecords: MedicalRecord[];
 }
 
@@ -43,6 +44,7 @@ const animals: Animal[] = [
     startDate: "2025-01-01",
     endDate: "2025-12-31",
     isAdopted: true,
+    ownerId: "d290f1ee-6c54-4b01-90e6-d701748f0851", // rajatacalista
     medicalRecords: [
       {
         id: "med-101-1",
@@ -83,6 +85,7 @@ const animals: Animal[] = [
     startDate: "2025-02-01",
     endDate: "2025-11-30",
     isAdopted: true,
+    ownerId: "d290f1ee-6c54-4b01-90e6-d701748f0851", // rajatacalista
     medicalRecords: [
       {
         id: "med-102-1",
@@ -112,22 +115,85 @@ const animals: Animal[] = [
         notes: "Luka sudah menutup sempurna, tidak ada tanda infeksi."
       }
     ]
+  },
+  {
+    id: "ani-103",
+    name: "Luna",
+    species: "Kucing",
+    condition: "Sakit",
+    habitat: "Sabana Afrika",
+    imageUrl: "https://example.com/luna.jpg",
+    startDate: "2025-02-01",
+    endDate: "2025-11-30",
+    isAdopted: true,
+    ownerId: "11d5b3ec-4513-476e-b5ee-7a9ecb2f13f2", // margana08
+    medicalRecords: [
+      {
+        id: "med-103-1",
+        date: "2025-03-20",
+        doctorName: "Dr. Bambang Sulistyo",
+        healthStatus: "Sakit",
+        diagnosis: "Demam dan kehilangan nafsu makan",
+        treatment: "Pengobatan suportif dan antibiotik",
+        notes: "Perlu pantau asupan makanan dan cairan."
+      },
+      {
+        id: "med-103-2",
+        date: "2025-03-25",
+        doctorName: "Dr. Bambang Sulistyo",
+        healthStatus: "Dalam pemantauan",
+        diagnosis: "Demam berkurang, nafsu makan masih rendah",
+        treatment: "Lanjutkan antibiotik dan tambah suplemen",
+        notes: "Beri makanan basah untuk meningkatkan nafsu makan."
+      },
+      {
+        id: "med-103-3",
+        date: "2025-04-01",
+        doctorName: "Dr. Dewi Rahmawati",
+        healthStatus: "Sakit",
+        diagnosis: "Infeksi saluran kemih",
+        treatment: "Antibiotik khusus untuk infeksi saluran kemih",
+        notes: "Kondisi memburuk, diperlukan pemeriksaan lanjutan."
+      }
+    ]
+  }
+];
+
+const adopters = [
+  {
+    id: "d290f1ee-6c54-4b01-90e6-d701748f0851",
+    username: "rajatacalista",
+    type: "individu",
+    name: "Prasetya Andriani"
+  },
+  {
+    id: "11d5b3ec-4513-476e-b5ee-7a9ecb2f13f2",
+    username: "margana08",
+    type: "organisasi",
+    organizationName: "Yayasan Margana Jaya"
   }
 ];
 
 export default function KondisiPage({ animalId }: { animalId: string }) {
   const router = useRouter();
   const [animal, setAnimal] = useState<Animal | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
     // Find the animal data based on the animalId
     const foundAnimal = animals.find(a => a.id === animalId);
     if (foundAnimal) {
       setAnimal(foundAnimal);
+      
+      // Find the owner
+      const owner = adopters.find(a => a.id === foundAnimal.ownerId);
+      if (owner) {
+        setCurrentUser(owner);
+      }
     }
   }, [animalId]);
 
-  if (!animal) {
+  if (!animal || !currentUser) {
     return <p className="text-center p-8">Data hewan tidak ditemukan.</p>;
   }
 
@@ -145,7 +211,7 @@ export default function KondisiPage({ animalId }: { animalId: string }) {
   };
 
   return (
-    <div className="container mx-auto py-10 px-4 font-outfit">
+    <div className="container mx-auto py-10 px-4 font-outfit"> 
       <Button 
         variant="ghost" 
         className="mb-4 flex items-center gap-2"
@@ -172,6 +238,11 @@ export default function KondisiPage({ animalId }: { animalId: string }) {
               <Badge className={`px-3 py-1 ${getStatusBadgeStyle(animal.condition)}`}>
                 Kondisi Saat Ini: {animal.condition}
               </Badge>
+            </p>
+            <p className="mt-2">
+              <span className="font-semibold">Diadopsi oleh:</span> {
+                currentUser.type === "individu" ? currentUser.name : currentUser.organizationName
+              }
             </p>
           </div>
         </CardContent>
