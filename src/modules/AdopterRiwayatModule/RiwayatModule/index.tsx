@@ -392,11 +392,9 @@ const RiwayatAdopsiModule: React.FC<RiwayatAdopsiModuleProps> = ({ adopterId }) 
                 <TableRow>
                   <TableHead>Nama Hewan</TableHead>
                   <TableHead>Jenis Hewan</TableHead>
-                  <TableHead>Habitat</TableHead>
-                  <TableHead>Tanggal Mulai</TableHead>
-                  <TableHead>Tanggal Akhir</TableHead>
-                  <TableHead>Nominal</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Tanggal Mulai Adopsi</TableHead>
+                  <TableHead>Tanggal Akhir Adopsi</TableHead>
+                  <TableHead>Nominal Kontribusi</TableHead>
                   <TableHead>Aksi</TableHead>
                 </TableRow>
               </TableHeader>
@@ -406,17 +404,9 @@ const RiwayatAdopsiModule: React.FC<RiwayatAdopsiModuleProps> = ({ adopterId }) 
                     <TableRow key={record.id}>
                       <TableCell className="font-medium">{record.animalName}</TableCell>
                       <TableCell>{record.animalSpecies}</TableCell>
-                      <TableCell>{record.animalHabitat}</TableCell>
                       <TableCell>{formatDate(record.startDate)}</TableCell>
                       <TableCell>{formatDate(record.endDate)}</TableCell>
                       <TableCell>{formatCurrency(record.contributionAmount)}</TableCell>
-                      <TableCell>
-                        {record.status === "Active" ? (
-                          <Badge className="bg-green-500">Aktif</Badge>
-                        ) : (
-                          <Badge className="bg-gray-500">Berakhir</Badge>
-                        )}
-                      </TableCell>
                       <TableCell>
                         {record.status === "Active" ? (
                           <Badge className="bg-green-500">Sedang Berlangsung</Badge>

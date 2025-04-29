@@ -36,6 +36,14 @@ export default function AdminAdopsiModule() {
             isAdopted: true,
           },
           {
+            id: "ani-104",
+            name: "Nala",
+            species: "African Lion",
+            condition: "Sakit",
+            imageUrl: "https://images.unsplash.com/photo-1534628526458-a8de087b1123?q=80&w=400",
+            isAdopted: false,
+          },
+          {
             id: "ani-102",
             name: "Zara",
             species: "Plains Zebra",
@@ -50,14 +58,6 @@ export default function AdminAdopsiModule() {
             condition: "Dalam pemantauan",
             imageUrl: "https://images.unsplash.com/photo-1534567059665-cbcfe2e19af4?q=80&w=400",
             isAdopted: true,
-          },
-          {
-            id: "ani-104",
-            name: "Nala",
-            species: "African Lion",
-            condition: "Sakit",
-            imageUrl: "https://images.unsplash.com/photo-1534628526458-a8de087b1123?q=80&w=400",
-            isAdopted: false,
           },
         ];
         

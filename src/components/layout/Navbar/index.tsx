@@ -23,7 +23,7 @@ export const Navbar = () => {
   const data = {
     isLoggedIn: true,
     user: {
-      role: "pengguna",
+      role: "adopter",
     },
   };
 
@@ -193,7 +193,7 @@ export const Navbar = () => {
                         Kelola Adopsi
                       </Link>
                       <Link
-                        href="/kelola-adopter"
+                        href="/adopter"
                         className="text-base text-primary font-outfit"
                       >
                         Kelola Adopter

@@ -16,6 +16,10 @@ interface DashboardShellProps {
     email: string;
     phoneNumber: string;
     role: UserRole;
+    alamat?: string;
+    tanggalLahir?: string;
+    staffId?: string;
+    jumlahHewan?: number;
   };
   roleSpecificContent: ReactNode;
 }
@@ -60,6 +64,34 @@ const DashboardShell: React.FC<DashboardShellProps> = ({
               <p className="text-sm text-muted-foreground">Role</p>
               <p className="font-medium capitalize">{user.role}</p>
             </div>
+
+            {user.alamat && (
+              <div>
+                <p className="text-sm text-muted-foreground">Address</p>
+                <p className="font-medium">{user.alamat}</p>
+              </div>
+            )}
+
+            {user.tanggalLahir && (
+              <div>
+                <p className="text-sm text-muted-foreground">Date of Birth</p>
+                <p className="font-medium">{user.tanggalLahir}</p>
+              </div>
+            )}
+
+            {user.staffId && (
+              <div>
+                <p className="text-sm text-muted-foreground">Staff ID</p>
+                <p className="font-medium">{user.staffId}</p>
+              </div>
+            )}
+
+            {user.jumlahHewan && (
+              <div>
+                <p className="text-sm text-muted-foreground">Number of Animals</p>
+                <p className="font-medium">{user.jumlahHewan}</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
