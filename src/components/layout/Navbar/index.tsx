@@ -28,8 +28,13 @@ export const Navbar = () => {
       return "dokter";
     } else if (pathname.includes("pakan")) {
       return "penjaga";
+    } else if (pathname.includes("adopter-adopsi")) {
+      return "adopter";
+    } else if (pathname.includes("admin-adopsi") || pathname.includes("dashboard/admin/reservasi") || pathname.includes("adopter")) {
+      return "admin";
+    } else if (pathname.includes("atraksi")) {
+      return "pelatih";
     }
-    return "pengunjung";
   };
 
   // Use getUserRole instead of hardcoded role
@@ -99,19 +104,19 @@ export const Navbar = () => {
             ) : data?.user.role == "admin" ? (
               <>
                 <Link
-                  href="/kelola-pengunjung"
+                  href="/dashboard/admin/reservasi"
                   className="max-md:hidden text-base text-primary font-outfit font-medium"
                 >
                   Kelola Pengunjung
                 </Link>
                 <Link
-                  href="/kelola-adopsi-hewan"
+                  href="/admin-adopsi"
                   className="max-md:hidden text-base text-primary font-outfit font-medium"
                 >
                   Kelola Adopsi
                 </Link>
                 <Link
-                  href="/kelola-adopter"
+                  href="/adopter"
                   className="max-md:hidden text-base text-primary font-outfit font-medium"
                 >
                   Kelola Adopter
@@ -119,7 +124,7 @@ export const Navbar = () => {
               </>
             ) : data?.user.role == "pelatih" ? (
               <Link
-                href="/jadwal-pertunjukan"
+                href="/atraksi"
                 className="max-md:hidden text-base text-primary font-outfit font-medium"
               >
                 Jadwal Pertunjukan
@@ -133,7 +138,7 @@ export const Navbar = () => {
               </Link>
             ) : data?.user.role == "adopter" ? (
               <Link
-                href="/hewan-adopsi"
+                href="/adopter-adopsi"
                 className="max-md:hidden text-base text-primary font-outfit font-medium"
               >
                 Hewan Adopsi
@@ -228,13 +233,13 @@ export const Navbar = () => {
                   ) : data?.user.role == "admin" ? (
                     <>
                       <Link
-                        href="/kelola-pengunjung"
+                        href="/dashboard/admin/reservasi"
                         className="text-base text-primary font-outfit"
                       >
                         Kelola Pengunjung
                       </Link>
                       <Link
-                        href="/kelola-adopsi-hewan"
+                        href="/admin-adopsi"
                         className="text-base text-primary font-outfit"
                       >
                         Kelola Adopsi
@@ -248,7 +253,7 @@ export const Navbar = () => {
                     </>
                   ) : data?.user.role == "pelatih" ? (
                     <Link
-                      href="/jadwal-pertunjukan"
+                      href="/atraksi"
                       className="text-base text-primary font-outfit"
                     >
                       Jadwal Pertunjukan
@@ -262,7 +267,7 @@ export const Navbar = () => {
                     </Link>
                   ) : data?.user.role == "adopter" ? (
                     <Link
-                      href="/hewan-adopsi"
+                      href="/adopter-adopsi"
                       className="text-base text-primary font-outfit"
                     >
                       Hewan Adopsi
