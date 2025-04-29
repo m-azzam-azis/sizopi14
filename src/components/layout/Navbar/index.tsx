@@ -140,31 +140,6 @@ export const Navbar = () => {
               </Link>
             ) : null}
 
-            {/* Common navigation for all logged in users */}
-            <div className="max-md:hidden flex items-center gap-4">
-              <Link
-                href="/dashboard"
-                className="text-base text-primary font-outfit font-medium flex items-center gap-1"
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                Dashboard
-              </Link>
-              <Link
-                href="/profile"
-                className="text-base text-primary font-outfit font-medium flex items-center gap-1"
-              >
-                <CircleUserRound className="w-4 h-4" />
-                Profile
-              </Link>
-              <button
-                className="text-base text-primary font-outfit font-medium flex items-center gap-1 hover:text-primary/80"
-                // onClick={logout}
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
-            </div>
-
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
               <PopoverTrigger asChild className="max-md:hidden">
                 <button className="relative group flex gap-3 max-sm:gap-2 py-2 items-center text-foreground fill-primary group cursor-pointer">
@@ -293,29 +268,6 @@ export const Navbar = () => {
                       Hewan Adopsi
                     </Link>
                   ) : null}
-
-                  {/* Common links for all users in mobile menu */}
-                  <Link
-                    href="/dashboard"
-                    className="text-base text-primary font-outfit flex items-center gap-2"
-                  >
-                    <LayoutDashboard className="w-5 h-5" />
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/profile"
-                    className="text-base text-primary font-outfit flex items-center gap-2"
-                  >
-                    <CircleUserRound className="w-5 h-5" />
-                    Profile
-                  </Link>
-                  <button
-                    className="text-base text-primary font-outfit flex items-center gap-2 text-left"
-                    // onClick={logout}
-                  >
-                    <LogOut className="w-5 h-5" />
-                    Logout
-                  </button>
 
                   <Popover open={popoverOpen2} onOpenChange={setPopoverOpen2}>
                     <PopoverTrigger asChild>
