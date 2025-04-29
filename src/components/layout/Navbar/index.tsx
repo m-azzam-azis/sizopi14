@@ -28,8 +28,13 @@ export const Navbar = () => {
       return "dokter";
     } else if (pathname.includes("pakan")) {
       return "penjaga";
+    } else if (pathname.includes("adopter-adopsi")) {
+      return "adopter";
+    } else if (pathname.includes("admin-adopsi") || pathname.includes("dashboard/admin/reservasi") || pathname.includes("adopter")) {
+      return "admin";
+    } else if (pathname.includes("atraksi")) {
+      return "pelatih";
     }
-    return "pengunjung";
   };
 
   // Use getUserRole instead of hardcoded role
@@ -99,19 +104,19 @@ export const Navbar = () => {
             ) : data?.user.role == "admin" ? (
               <>
                 <Link
-                  href="/kelola-pengunjung"
+                  href="/dashboard/admin/reservasi"
                   className="max-md:hidden text-base text-primary font-outfit font-medium"
                 >
                   Kelola Pengunjung
                 </Link>
                 <Link
-                  href="/kelola-adopsi-hewan"
+                  href="/admin-adopsi"
                   className="max-md:hidden text-base text-primary font-outfit font-medium"
                 >
                   Kelola Adopsi
                 </Link>
                 <Link
-                  href="/kelola-adopter"
+                  href="/adopter"
                   className="max-md:hidden text-base text-primary font-outfit font-medium"
                 >
                   Kelola Adopter
@@ -119,7 +124,7 @@ export const Navbar = () => {
               </>
             ) : data?.user.role == "pelatih" ? (
               <Link
-                href="/jadwal-pertunjukan"
+                href="/atraksi"
                 className="max-md:hidden text-base text-primary font-outfit font-medium"
               >
                 Jadwal Pertunjukan
@@ -133,37 +138,12 @@ export const Navbar = () => {
               </Link>
             ) : data?.user.role == "adopter" ? (
               <Link
-                href="/hewan-adopsi"
+                href="/adopter-adopsi"
                 className="max-md:hidden text-base text-primary font-outfit font-medium"
               >
                 Hewan Adopsi
               </Link>
             ) : null}
-
-            {/* Common navigation for all logged in users */}
-            <div className="max-md:hidden flex items-center gap-4">
-              <Link
-                href="/dashboard"
-                className="text-base text-primary font-outfit font-medium flex items-center gap-1"
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                Dashboard
-              </Link>
-              <Link
-                href="/profile"
-                className="text-base text-primary font-outfit font-medium flex items-center gap-1"
-              >
-                <CircleUserRound className="w-4 h-4" />
-                Profile
-              </Link>
-              <button
-                className="text-base text-primary font-outfit font-medium flex items-center gap-1 hover:text-primary/80"
-                // onClick={logout}
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
-            </div>
 
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
               <PopoverTrigger asChild className="max-md:hidden">
@@ -253,13 +233,13 @@ export const Navbar = () => {
                   ) : data?.user.role == "admin" ? (
                     <>
                       <Link
-                        href="/kelola-pengunjung"
+                        href="/dashboard/admin/reservasi"
                         className="text-base text-primary font-outfit"
                       >
                         Kelola Pengunjung
                       </Link>
                       <Link
-                        href="/kelola-adopsi-hewan"
+                        href="/admin-adopsi"
                         className="text-base text-primary font-outfit"
                       >
                         Kelola Adopsi
@@ -273,7 +253,7 @@ export const Navbar = () => {
                     </>
                   ) : data?.user.role == "pelatih" ? (
                     <Link
-                      href="/jadwal-pertunjukan"
+                      href="/atraksi"
                       className="text-base text-primary font-outfit"
                     >
                       Jadwal Pertunjukan
@@ -287,35 +267,12 @@ export const Navbar = () => {
                     </Link>
                   ) : data?.user.role == "adopter" ? (
                     <Link
-                      href="/hewan-adopsi"
+                      href="/adopter-adopsi"
                       className="text-base text-primary font-outfit"
                     >
                       Hewan Adopsi
                     </Link>
                   ) : null}
-
-                  {/* Common links for all users in mobile menu */}
-                  <Link
-                    href="/dashboard"
-                    className="text-base text-primary font-outfit flex items-center gap-2"
-                  >
-                    <LayoutDashboard className="w-5 h-5" />
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/profile"
-                    className="text-base text-primary font-outfit flex items-center gap-2"
-                  >
-                    <CircleUserRound className="w-5 h-5" />
-                    Profile
-                  </Link>
-                  <button
-                    className="text-base text-primary font-outfit flex items-center gap-2 text-left"
-                    // onClick={logout}
-                  >
-                    <LogOut className="w-5 h-5" />
-                    Logout
-                  </button>
 
                   <Popover open={popoverOpen2} onOpenChange={setPopoverOpen2}>
                     <PopoverTrigger asChild>

@@ -44,28 +44,11 @@ export const StaffRegisterModule: React.FC<StaffRegisterModuleProps> = ({
     }, 1000);
   };
 
-  // Additional fields specific to staff
-  const extraFields = (
-    <FormField
-      name="staffId"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Staff ID</FormLabel>
-          <FormControl>
-            <Input placeholder="STAFF-12345" {...field} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
-
   return (
     <BaseRegisterForm
       onSubmit={handleSubmit}
       title={title}
       description={description}
-      extraFields={extraFields}
       extraSchema={staffExtraSchema}
       isLoading={isLoading}
     />
