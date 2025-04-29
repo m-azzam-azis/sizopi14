@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import {
   Popover,
   PopoverContent,
@@ -20,10 +21,22 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
 export const Navbar = () => {
+  const pathname = usePathname();
+
+  const getUserRole = () => {
+    if (pathname.includes("rekam-medis") || pathname.includes("jadwal-pemeriksaan")) {
+      return "dokter";
+    } else if (pathname.includes("pakan")) {
+      return "penjaga";
+    }
+    return "pengunjung";
+  };
+
+  // Use getUserRole instead of hardcoded role
   const data = {
     isLoggedIn: true,
     user: {
-      role: "pengguna",
+      role: getUserRole(),
     },
   };
 
@@ -52,20 +65,37 @@ export const Navbar = () => {
         </Link>
         {data?.isLoggedIn ? (
           <div className="flex gap-4 md:gap-8 lg:gap-11 items-center">
+            {/* Role-specific navigation links */}
             {data?.user.role == "dokter" ? (
-              <Link
-                href="/rekam-medis-hewan"
-                className="max-md:hidden text-lg text-primary font-outfit font-medium"
-              >
-                Rekam Medis
-              </Link>
+               <>
+               <Link
+                  href="/rekam-medis"
+                  className="max-md:hidden text-lg text-primary font-outfit font-medium"
+                >
+                  Rekam Medis
+                </Link>
+                <Link
+                  href="/jadwal-pemeriksaan"
+                  className="max-md:hidden text-lg text-primary font-outfit font-medium"
+                >
+                  Jadwal Pemeriksaan
+               </Link>
+              </>
             ) : data?.user.role == "penjaga" ? (
-              <Link
-                href="/catatan-perawatan-hewan"
-                className="max-md:hidden text-base text-primary font-outfit font-medium"
-              >
-                Catatan Perawatan
-              </Link>
+              <> 
+                  <Link
+                      href="/catatan-perawatan-hewan"
+                      className="max-md:hidden text-base text-primary font-outfit font-medium"
+                    >
+                      Catatan Perawatan
+                    </Link>
+                    <Link
+                      href="/pakan"
+                      className="max-md:hidden text-base text-primary font-outfit font-medium"
+                    >
+                      Pemberian Pakan Hewan
+                  </Link>
+              </>
             ) : data?.user.role == "admin" ? (
               <>
                 <Link
@@ -109,6 +139,31 @@ export const Navbar = () => {
                 Hewan Adopsi
               </Link>
             ) : null}
+
+            {/* Common navigation for all logged in users */}
+            <div className="max-md:hidden flex items-center gap-4">
+              <Link
+                href="/dashboard"
+                className="text-base text-primary font-outfit font-medium flex items-center gap-1"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Dashboard
+              </Link>
+              <Link
+                href="/profile"
+                className="text-base text-primary font-outfit font-medium flex items-center gap-1"
+              >
+                <CircleUserRound className="w-4 h-4" />
+                Profile
+              </Link>
+              <button
+                className="text-base text-primary font-outfit font-medium flex items-center gap-1 hover:text-primary/80"
+                // onClick={logout}
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            </div>
 
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
               <PopoverTrigger asChild className="max-md:hidden">
@@ -164,20 +219,37 @@ export const Navbar = () => {
                     Home
                   </Link>
 
+                  {/* Role-specific mobile menu items */}
                   {data?.user.role == "dokter" ? (
-                    <Link
-                      href="/rekam-medis-hewan"
-                      className="text-lg text-primary font-outfit"
-                    >
-                      Rekam Medis
-                    </Link>
+                    <>
+                     <Link
+                        href="/rekam-medis"
+                        className="text-lg text-primary font-outfit"
+                      >
+                        Rekam Medis
+                      </Link>
+                      <Link
+                        href="/jadwal-pemeriksaan"
+                        className="text-lg text-primary font-outfit"
+                      >
+                        Jadwal Pemeriksaan
+                     </Link>
+                    </>
                   ) : data?.user.role == "penjaga" ? (
+                    <> 
                     <Link
                       href="/catatan-perawatan-hewan"
                       className="text-base text-primary font-outfit"
                     >
                       Catatan Perawatan
                     </Link>
+                    <Link
+                      href="/pakan"
+                      className="text-base text-primary font-outfit"
+                    >
+                      Pemberian Pakan Hewan
+                    </Link>
+                    </>
                   ) : data?.user.role == "admin" ? (
                     <>
                       <Link
@@ -221,6 +293,29 @@ export const Navbar = () => {
                       Hewan Adopsi
                     </Link>
                   ) : null}
+
+                  {/* Common links for all users in mobile menu */}
+                  <Link
+                    href="/dashboard"
+                    className="text-base text-primary font-outfit flex items-center gap-2"
+                  >
+                    <LayoutDashboard className="w-5 h-5" />
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/profile"
+                    className="text-base text-primary font-outfit flex items-center gap-2"
+                  >
+                    <CircleUserRound className="w-5 h-5" />
+                    Profile
+                  </Link>
+                  <button
+                    className="text-base text-primary font-outfit flex items-center gap-2 text-left"
+                    // onClick={logout}
+                  >
+                    <LogOut className="w-5 h-5" />
+                    Logout
+                  </button>
 
                   <Popover open={popoverOpen2} onOpenChange={setPopoverOpen2}>
                     <PopoverTrigger asChild>

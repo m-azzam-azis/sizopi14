@@ -60,7 +60,7 @@ const userData = {
   middleName: "",
   lastName: "Doe",
   phoneNumber: "+62123456789",
-  role: "visitor" as UserRole, // Change this to test different role forms
+  role: "admin" as UserRole, // Change this to test different role forms
 
   // Role-specific fields
   // For visitor
