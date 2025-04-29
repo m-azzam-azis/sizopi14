@@ -31,7 +31,7 @@ const animals = [
     id: "ani-102",
     name: "Zara",
     species: "Plains Zebra",
-    adopter: "Damar Thamrin",
+    adopter: "Prasetya Andriani",
     startDate: "2025-02-01",
     endDate: "2025-11-30",
     contribution: "Rp 1.200.000",

@@ -265,7 +265,7 @@ export const Navbar = () => {
                         Kelola Adopsi
                       </Link>
                       <Link
-                        href="/kelola-adopter"
+                        href="/adopter"
                         className="text-base text-primary font-outfit"
                       >
                         Kelola Adopter
