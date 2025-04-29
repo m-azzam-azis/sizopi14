@@ -189,7 +189,7 @@ const AdopterRiwayatModule = () => {
   // Function to view adoption history
   const handleViewHistory = (adopterId: string) => {
     console.log(`View adoption history for adopter with ID: ${adopterId}`);
-    router.push(`/adopter/${adopterId}`);
+    router.push(`/adopter/${adopterId}`); 
   };
 
   return (

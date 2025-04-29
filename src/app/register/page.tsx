@@ -1,8 +1,8 @@
 import React from "react";
 import { RegisterModule } from "@/modules/RegisterModule";
 
-const index = () => {
+const RegisterPage = () => {
   return <RegisterModule />;
 };
 
-export default index;
+export default RegisterPage;

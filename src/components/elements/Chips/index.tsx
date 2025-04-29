@@ -25,7 +25,7 @@ export const Chips = function ({
 
   return (
     <button
-      type="button"
+      variant={"default"}
       onClick={() => {
         setIsSelected(!isSelected);
         if (onClick) {
@@ -34,7 +34,8 @@ export const Chips = function ({
       }}
       className={`h-fit w-fit flex items-center justify-center font-jakarta text-orange-500 gap-1 rounded-[100px] duration-200 bg-gradient ${selectedStyle} ${buttonPadding}`}
     >
-      {icon && type !== "p1" &&
+      {icon &&
+        type !== "p1" &&
         cloneElement(
           icon as React.ReactElement,
           {
@@ -47,7 +48,8 @@ export const Chips = function ({
             },
           } as React.SVGProps<SVGSVGElement>
         )}
-        {icon && type === "p1" &&
+      {icon &&
+        type === "p1" &&
         cloneElement(
           icon as React.ReactElement,
           {

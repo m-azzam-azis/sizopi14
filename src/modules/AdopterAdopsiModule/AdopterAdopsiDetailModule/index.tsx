@@ -117,7 +117,7 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
         <Button
         variant="ghost"
         className="absolute top-6 right-6 text-red-500 hover:bg-red-100 p-2 rounded-full"
-        onClick={() => router.back()}
+        onClick={() => router.push("/adopter-adopsi")}
         >
         <X className="h-5 w-5" />
         </Button>
@@ -150,9 +150,12 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
 
           {/* Aksi */}
           <div className="flex justify-center gap-4 mt-4">
-            <Badge className="bg-primary text-white px-4 py-2 rounded-md cursor-pointer hover:bg-primary/100">
-              Pantau Kondisi Hewan
-            </Badge>
+           <Button
+            className="bg-primary text-white px-4 py-2 rounded-md cursor-pointer hover:bg-primary/100"
+            onClick={() => router.push(`/adopter-adopsi/kondisi/${animalId}`)}
+            >
+            Pantau Kondisi Hewan
+            </Button>
             <Badge
             className="bg-primary text-white px-4 py-2 rounded-md cursor-pointer hover:bg-primary/100"
             onClick={() => router.push(`/adopter-adopsi/sertifikat/${animal.id}`)}
@@ -172,9 +175,9 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
             variant="outline"
             className="bg-blue-500 text-white hover:bg-blue-600 hover:text-white"
             // masih hardocoded karena untuk demo (individu)
-            // onClick={() => handleExtendAdoption("d290f1ee-6c54-4b01-90e6-d701748f0851")}
+             onClick={() => handleExtendAdoption("d290f1ee-6c54-4b01-90e6-d701748f0851")}
             // masih hardocoded karena untuk demo (organisasi)
-            onClick={() => handleExtendAdoption("11d5b3ec-4513-476e-b5ee-7a9ecb2f13f2")}
+            //onClick={() => handleExtendAdoption("11d5b3ec-4513-476e-b5ee-7a9ecb2f13f2")}
             >
             Perpanjang Periode Adopsi
             </Button>

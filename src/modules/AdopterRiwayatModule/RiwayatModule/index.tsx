@@ -25,6 +25,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useRouter, useParams } from "next/navigation";
 
+
+interface RiwayatAdopsiModuleProps {
+  adopterId: string;
+}
+
 // Define interfaces for type safety
 interface Adopter {
   id: string;
@@ -46,10 +51,8 @@ interface AdoptionRecord {
   paymentStatus: "Paid" | "Pending";
 }
 
-const RiwayatAdopsiModule = () => {
+const RiwayatAdopsiModule: React.FC<RiwayatAdopsiModuleProps> = ({ adopterId }) => {
   const router = useRouter();
-  const params = useParams();
-  const adopterId = params.id as string;
   
   const [adopter, setAdopter] = useState<Adopter | null>(null);
   const [adoptionRecords, setAdoptionRecords] = useState<AdoptionRecord[]>([]);
@@ -59,8 +62,6 @@ const RiwayatAdopsiModule = () => {
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    // Fetch adopter data based on ID
-    // In a real app, this would be an API call
     setIsLoading(true);
     
     // Simulate API call with setTimeout

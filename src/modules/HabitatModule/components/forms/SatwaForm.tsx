@@ -131,7 +131,7 @@ export const SatwaForm: React.FC<SatwaFormProps> = ({
                         "w-full pl-3 text-left font-normal bg-white hover:bg-white",
                         !field.value && "ring-accent"
                       )}
-                      type="button"
+                      // variant={"default"}
                     >
                       {field.value ? (
                         format(field.value, "PPP")
@@ -228,7 +228,10 @@ export const SatwaForm: React.FC<SatwaFormProps> = ({
         />
 
         <div className="flex justify-end gap-2">
-          <Button type="submit" className="bg-primary text-primary-foreground">
+          <Button
+            variant={"default"}
+            className="bg-primary text-primary-foreground"
+          >
             {isEditing ? "Simpan Perubahan" : "Tambah"}
           </Button>
         </div>

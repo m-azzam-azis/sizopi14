@@ -91,7 +91,7 @@ export default function AdopterIndividuForm({
             type="button"
             variant="outline"
             className="bg-red-500 text-white hover:bg-red-600 hover:text-white"
-            onClick={() => router.back()}
+            onClick={() => router.push("/adopter-adopsi")}
           >
             Batal
           </Button>

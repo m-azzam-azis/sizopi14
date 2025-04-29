@@ -8,12 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarIcon, Plus, Search, Pencil, Trash2, X } from "lucide-react";
 
 // UI Components
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -89,21 +84,21 @@ const mockJadwalPemeriksaan: JadwalPemeriksaan[] = [
     id: "1",
     id_hewan: "H001",
     tanggal_pemeriksaan: new Date("2025-05-10"),
-    frekuensi_pemeriksaan: 30, // every 30 days
+    frekuensi_pemeriksaan: 3, // every 3 months
     created_at: new Date("2025-04-10"),
   },
   {
     id: "2",
     id_hewan: "H002",
     tanggal_pemeriksaan: new Date("2025-05-15"),
-    frekuensi_pemeriksaan: 14, // every 14 days
+    frekuensi_pemeriksaan: 4, // every 4 months
     created_at: new Date("2025-05-01"),
   },
   {
     id: "3",
     id_hewan: "H003",
     tanggal_pemeriksaan: new Date("2025-05-05"),
-    frekuensi_pemeriksaan: 7, // every 7 days
+    frekuensi_pemeriksaan: 1, // every 1 month
     created_at: new Date("2025-04-28"),
   },
 ];
@@ -116,18 +111,22 @@ const pemeriksaanFormSchema = z.object({
   }),
   frekuensi_pemeriksaan: z.coerce
     .number()
-    .min(1, "Frekuensi minimal 1 hari")
-    .max(365, "Frekuensi maksimal 365 hari"),
+    .min(1, "Frekuensi minimal 1 bulan")
+    .max(12, "Frekuensi maksimal 12 bulan"),
 });
 
 type PemeriksaanFormValues = z.infer<typeof pemeriksaanFormSchema>;
 
 export const JadwalPemeriksaanModule: React.FC = () => {
-  const [jadwalPemeriksaan, setJadwalPemeriksaan] = useState<JadwalPemeriksaan[]>(mockJadwalPemeriksaan);
+  const [jadwalPemeriksaan, setJadwalPemeriksaan] = useState<
+    JadwalPemeriksaan[]
+  >(mockJadwalPemeriksaan);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
-  const [editingItem, setEditingItem] = useState<JadwalPemeriksaan | null>(null);
+  const [editingItem, setEditingItem] = useState<JadwalPemeriksaan | null>(
+    null
+  );
 
   // Setup form with react-hook-form and zod validation
   const form = useForm<PemeriksaanFormValues>({
@@ -194,16 +193,17 @@ export const JadwalPemeriksaanModule: React.FC = () => {
   const filteredData = jadwalPemeriksaan.filter((item) => {
     const animal = hewan.find((h) => h.id === item.id_hewan);
     const animalName = animal ? animal.name : "";
-    
+
     const matchesSearch =
       search === "" ||
       item.id_hewan.toLowerCase().includes(search.toLowerCase()) ||
       animalName.toLowerCase().includes(search.toLowerCase());
-    
+
     const matchesDate =
       dateFilter === null ||
-      format(item.tanggal_pemeriksaan, "yyyy-MM-dd") === format(dateFilter, "yyyy-MM-dd");
-    
+      format(item.tanggal_pemeriksaan, "yyyy-MM-dd") ===
+        format(dateFilter, "yyyy-MM-dd");
+
     return matchesSearch && matchesDate;
   });
 
@@ -216,7 +216,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-6">Jadwal Pemeriksaan Kesehatan</h1>
-      
+
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Filter &amp; Pencarian</CardTitle>
@@ -232,7 +232,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            
+
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -242,7 +242,9 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                   }`}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateFilter ? format(dateFilter, "PPP") : "Filter Tanggal Pemeriksaan"}
+                  {dateFilter
+                    ? format(dateFilter, "PPP")
+                    : "Filter Tanggal Pemeriksaan"}
                   {dateFilter && (
                     <X
                       className="ml-auto h-4 w-4 opacity-50 hover:opacity-100"
@@ -266,7 +268,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-      
+
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Daftar Jadwal Pemeriksaan</h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -278,7 +280,9 @@ export const JadwalPemeriksaanModule: React.FC = () => {
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>
-                {editingItem ? "Edit Jadwal Pemeriksaan" : "Tambah Jadwal Pemeriksaan"}
+                {editingItem
+                  ? "Edit Jadwal Pemeriksaan"
+                  : "Tambah Jadwal Pemeriksaan"}
               </DialogTitle>
               <DialogDescription>
                 {editingItem
@@ -287,7 +291,10 @@ export const JadwalPemeriksaanModule: React.FC = () => {
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={form.control}
                   name="id_hewan"
@@ -315,7 +322,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="tanggal_pemeriksaan"
@@ -330,7 +337,9 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                               className={`w-full justify-start text-left font-normal`}
                             >
                               <CalendarIcon className="mr-2 h-4 w-4" />
-                              {field.value ? format(field.value, "PPP") : "Pilih tanggal"}
+                              {field.value
+                                ? format(field.value, "PPP")
+                                : "Pilih tanggal"}
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
@@ -351,28 +360,23 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="frekuensi_pemeriksaan"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Frekuensi Pemeriksaan (hari)</FormLabel>
+                      <FormLabel>Frekuensi Pemeriksaan (bulan)</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={365}
-                          {...field}
-                        />
+                        <Input type="number" min={1} max={365} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <DialogFooter>
-                  <Button type="submit" className="bg-primary text-white">
+                  <Button variant={"default"} className="bg-primary text-white">
                     {editingItem ? "Simpan Perubahan" : "Tambah Jadwal"}
                   </Button>
                 </DialogFooter>
@@ -381,7 +385,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
           </DialogContent>
         </Dialog>
       </div>
-      
+
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -390,7 +394,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                 <TableHead>ID Hewan</TableHead>
                 <TableHead>Nama Hewan</TableHead>
                 <TableHead>Tanggal Pemeriksaan</TableHead>
-                <TableHead>Frekuensi (hari)</TableHead>
+                <TableHead>Frekuensi (bulan)</TableHead>
                 <TableHead>Tanggal Dibuat</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
@@ -401,9 +405,13 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                   <TableRow key={item.id}>
                     <TableCell>{item.id_hewan}</TableCell>
                     <TableCell>{getAnimalName(item.id_hewan)}</TableCell>
-                    <TableCell>{format(new Date(item.tanggal_pemeriksaan), "dd/MM/yyyy")}</TableCell>
-                    <TableCell>{item.frekuensi_pemeriksaan} hari</TableCell>
-                    <TableCell>{format(new Date(item.created_at), "dd/MM/yyyy")}</TableCell>
+                    <TableCell>
+                      {format(new Date(item.tanggal_pemeriksaan), "dd/MM/yyyy")}
+                    </TableCell>
+                    <TableCell>{item.frekuensi_pemeriksaan} </TableCell>
+                    <TableCell>
+                      {format(new Date(item.created_at), "dd/MM/yyyy")}
+                    </TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button
                         variant="ghost"
@@ -414,15 +422,23 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-red-500">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500"
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
+                            <AlertDialogTitle>
+                              Konfirmasi Hapus
+                            </AlertDialogTitle>
                             <AlertDialogDescription>
-                              Apakah Anda yakin ingin menghapus jadwal pemeriksaan untuk {getAnimalName(item.id_hewan)}? Tindakan ini tidak dapat dibatalkan.
+                              Apakah Anda yakin ingin menghapus jadwal
+                              pemeriksaan untuk {getAnimalName(item.id_hewan)}?
+                              Tindakan ini tidak dapat dibatalkan.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>

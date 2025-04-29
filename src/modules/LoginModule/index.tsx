@@ -101,7 +101,7 @@ export const LoginModule: React.FC = () => {
                         Email
                       </FormLabel>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1.5 h-6 w-5 text-muted-foreground" />
+                        <Mail className="absolute left-3 top-4  h-6 w-5 text-muted-foreground" />
                         <FormControl>
                           <Input
                             {...field}
@@ -125,7 +125,7 @@ export const LoginModule: React.FC = () => {
                         Password
                       </FormLabel>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1.5 h-6 w-5 text-muted-foreground" />
+                        <Lock className="absolute left-3 top-4  h-6 w-5 text-muted-foreground" />
                         <FormControl>
                           <Input
                             {...field}
@@ -134,17 +134,17 @@ export const LoginModule: React.FC = () => {
                             className="pl-10 pr-10 bg-input/20 border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
                           />
                         </FormControl>
-                        <button
-                          type="button"
+                        <Button
+                          variant={"ghost"}
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1.5 text-6uted-foreground hover:text-foreground"
+                          className="absolute right-3 top-2.5 text-6uted-foreground hover:text-foreground"
                         >
                           {showPassword ? (
                             <EyeOff className="h-5 w-5" />
                           ) : (
                             <Eye className="h-5 w-5" />
                           )}
-                        </button>
+                        </Button>
                       </div>
                       <FormMessage className="text-destructive" />
                     </FormItem>
@@ -154,7 +154,7 @@ export const LoginModule: React.FC = () => {
 
               <motion.div variants={itemVariants}>
                 <Button
-                  type="submit"
+                  variant={"default"}
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded-md transition-colors mt-4"
                 >
                   Sign In

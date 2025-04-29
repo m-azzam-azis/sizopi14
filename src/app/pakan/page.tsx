@@ -1,8 +1,8 @@
 import React from "react";
-import { PemberianPakanModule } from "@/modules/PemberianPakanModule";
+import { AnimalSelectionModule } from "@/modules/PemberianPakanModule/AnimalSelectionModule";
 
-const index = () => {
-  return <PemberianPakanModule />;
+const PakanPage = () => {
+  return <AnimalSelectionModule />;
 };
 
-export default index;
+export default PakanPage;
