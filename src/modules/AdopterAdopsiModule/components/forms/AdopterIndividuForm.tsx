@@ -17,12 +17,12 @@ export default function AdopterIndividuForm({
   onSubmit: (data: { nominal: string; adoptionPeriod: string }) => void;
 }) {
   const router = useRouter();
-  const [showToast, setShowToast] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
   } = useForm<{ nominal: string; adoptionPeriod: string }>({
     defaultValues: {
       nominal: "",
@@ -30,16 +30,38 @@ export default function AdopterIndividuForm({
     },
   });
 
-  const validateNominal = (value: string) =>
-    /^\d+$/.test(value) && parseInt(value) > 0 || "Nominal harus berupa angka lebih dari 0";
+  // Calculate minimum contribution based on period
+  const watchPeriod = watch("adoptionPeriod");
+  const getMinimumContribution = () => {
+    switch (watchPeriod) {
+      case "3":
+        return 1000000; // 1 juta untuk 3 bulan
+      case "6":
+        return 1800000; // 1.8 juta untuk 6 bulan
+      case "12":
+        return 3500000; // 3.5 juta untuk 12 bulan
+      default:
+        return 1000000;
+    }
+  };
+
+  const validateNominal = (value: string) => {
+    if (!(/^\d+$/.test(value) && parseInt(value) > 0)) {
+      return "Nominal harus berupa angka lebih dari 0";
+    }
+    
+    // Check if contribution meets minimum requirement
+    const minimumContribution = getMinimumContribution();
+    if (parseInt(value) < minimumContribution) {
+      return `Minimal kontribusi untuk periode ${watchPeriod} bulan adalah Rp ${minimumContribution.toLocaleString('id-ID')}`;
+    }
+    
+    return true;
+  };
 
   const handleFormSubmit = (data: { nominal: string; adoptionPeriod: string }) => {
+    // Process the form submission
     onSubmit(data);
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-      router.push("/adopter-adopsi"); 
-    }, 2000);
   };
 
   return (
@@ -60,8 +82,12 @@ export default function AdopterIndividuForm({
           Adopter juga bersedia memberikan kontribusi finansial kepada pihak taman safari sebagai dukungan
           untuk pemeliharaan satwa:
         </p>
+
         <div>
-          <label className="block text-sm font-bold text-muted-foreground">Nominal (Rp):</label>
+          <label className="block text-sm font-bold text-muted-foreground">
+            Nominal (Rp): <span className="text-xs font-normal text-muted-foreground">
+            </span>
+          </label>
           <Input
             {...register("nominal", { validate: validateNominal })}
             placeholder="Masukkan Nominal"
@@ -69,9 +95,11 @@ export default function AdopterIndividuForm({
           />
           {errors.nominal && <p className="text-sm text-red-500">{errors.nominal.message}</p>}
         </div>
+        
         <div>
           <label className="block text-sm font-bold text-muted-foreground">Untuk Periode Adopsi Selama</label>
           <Select
+            defaultValue="3"
             onValueChange={(value) => {
               register("adoptionPeriod").onChange({ target: { value } });
             }}
@@ -86,6 +114,7 @@ export default function AdopterIndividuForm({
             </SelectContent>
           </Select>
         </div>
+        
         <div className="flex justify-end gap-4">
           <Button
             type="button"

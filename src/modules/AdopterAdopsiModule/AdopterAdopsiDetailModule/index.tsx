@@ -6,7 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription } from "@/components/ui/alert-dialog";
 import { X } from "lucide-react";
 import AdopterIndividuFormModal from "../components/modals/AdopterIndividuFormModal";
 import AdopterOrganisasiFormModal from "../components/modals/AdopterOrganisasiFormModal";
@@ -22,6 +22,7 @@ interface Animal {
   startDate: string;
   endDate: string;
   ownerId: string;
+  paymentStatus: "Paid" | "Pending"; // Add payment status field
 }
 
 const animals: Animal[] = [
@@ -33,7 +34,8 @@ const animals: Animal[] = [
     imageUrl: "https://images.unsplash.com/photo-1545006398-2cf48043d3f3?q=80&w=400",
     startDate: "2025-01-01",
     endDate: "2025-12-31",
-    ownerId: "d290f1ee-6c54-4b01-90e6-d701748f0851" // rajatacalista
+    ownerId: "d290f1ee-6c54-4b01-90e6-d701748f0851", // rajatacalista
+    paymentStatus: "Paid"
   },
   {
     id: "ani-102",
@@ -43,7 +45,8 @@ const animals: Animal[] = [
     imageUrl: "https://images.unsplash.com/photo-1549975248-52273875de73?q=80&w=400",
     startDate: "2025-02-01",
     endDate: "2025-11-30",
-    ownerId: "d290f1ee-6c54-4b01-90e6-d701748f0851" // rajatacalista
+    ownerId: "d290f1ee-6c54-4b01-90e6-d701748f0851", // rajatacalista
+    paymentStatus: "Pending" // Let's make one with Pending for testing
   },
   {
     id: "ani-103",
@@ -53,7 +56,8 @@ const animals: Animal[] = [
     imageUrl: "https://example.com/luna.jpg",
     startDate: "2025-02-01",
     endDate: "2025-11-30",
-    ownerId: "11d5b3ec-4513-476e-b5ee-7a9ecb2f13f2" // margana08
+    ownerId: "11d5b3ec-4513-476e-b5ee-7a9ecb2f13f2", // margana08
+    paymentStatus: "Paid"
   }
 ];
 
@@ -83,7 +87,9 @@ const adopters = [
 export default function AdopterAdopsiDetailModule({ animalId }: { animalId: string }) {
   const router = useRouter();
   const [showAlert, setShowAlert] = useState(false);
+  const [showPaymentAlert, setShowPaymentAlert] = useState(false); // Add alert for payment status
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState(""); // Dynamic toast message
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAdopter, setSelectedAdopter] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -110,6 +116,7 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
 
   const handleStopAdoption = () => {
     setShowAlert(false);
+    setToastMessage("Anda telah berhenti mengadopsi satwa ini!");
     setShowToast(true);
     setTimeout(() => {
       setShowToast(false);
@@ -118,13 +125,36 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
   };
 
   const handleExtendAdoption = () => {
+    // Check payment status first
+    if (animal.paymentStatus === "Pending") {
+      setShowPaymentAlert(true);
+      return;
+    }
+    
+    // If paid, proceed with extension
     setSelectedAdopter({...currentUser, animal});
     setIsModalOpen(true);
   };
 
-  const handleSuccess = () => {
+  const handlePayNow = () => {
+    setShowPaymentAlert(false);
+    setToastMessage("Redirecting to payment page...");
     setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
+    setTimeout(() => {
+      setShowToast(false);
+      // In real app, redirect to payment page
+      // For demo, just close the dialog
+    }, 3000);
+  };
+
+  const handleSuccess = (data: { nominal: string; adoptionPeriod: string }) => {
+    setIsModalOpen(false);
+    setToastMessage(`Perpanjangan periode adopsi berhasil selama ${data.adoptionPeriod} bulan dengan kontribusi Rp ${parseInt(data.nominal).toLocaleString('id-ID')}`);
+    setShowToast(true);
+    setTimeout(() => {
+      setShowToast(false);
+      router.push("/adopter-adopsi");
+    }, 3000);
   };
 
   return (
@@ -165,11 +195,6 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
             <p>
               <span className="font-semibold">Tanggal Akhir Adopsi:</span> {animal.endDate}
             </p>
-            <p>
-              <span className="font-semibold">Adopter:</span> {
-                currentUser.type === "individu" ? currentUser.name : currentUser.organizationName
-              }
-            </p>
           </div>
 
           {/* Aksi */}
@@ -206,7 +231,7 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
         </CardContent>
       </Card>
 
-      {/* Alert Dialog */}
+      {/* Alert Dialog for stopping adoption */}
       <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -224,7 +249,29 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Modal */}
+      {/* Alert Dialog for unpaid payments */}
+      <AlertDialog open={showPaymentAlert} onOpenChange={setShowPaymentAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Pembayaran Belum Lunas</AlertDialogTitle>
+            <AlertDialogDescription>
+              Anda belum melunasi pembayaran untuk periode adopsi saat ini. 
+              Perpanjangan periode adopsi hanya dapat dilakukan setelah pembayaran untuk periode saat ini telah lunas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Tutup</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-primary text-white hover:bg-primary/90"
+              onClick={handlePayNow}
+            >
+              Bayar Sekarang
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal for extending adoption period */}
       {isModalOpen && selectedAdopter && (
         <>
           {selectedAdopter.type === "individu" ? (
@@ -232,7 +279,7 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
               <AdopterIndividuForm
                 adopter={selectedAdopter}
                 animal={selectedAdopter.animal} 
-                onSubmit={(data) => console.log(data)}
+                onSubmit={handleSuccess}
               />
             </AdopterIndividuFormModal>
           ) : (
@@ -240,7 +287,7 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
               <AdopterOrganisasiForm
                 adopter={selectedAdopter}
                 animal={selectedAdopter.animal} 
-                onSubmit={(data) => console.log(data)}
+                onSubmit={handleSuccess}
               />
             </AdopterOrganisasiFormModal>
           )}
@@ -250,7 +297,7 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
       {/* Toast Notification */}
       {showToast && (
         <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
-          Anda telah berhenti mengadopsi satwa ini!
+          {toastMessage}
         </div>
       )}
       
