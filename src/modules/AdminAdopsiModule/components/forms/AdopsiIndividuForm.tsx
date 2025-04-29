@@ -4,15 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -40,7 +31,7 @@ export default function AdopsiIndividuForm({
     },
   });
 
-  const validateNIK = (value: string) => /^\d{16}$/.test(value) || "NIK harus berupa angka sepanjang 17 karakter";
+  const validateNIK = (value: string) => /^\d{16}$/.test(value) || "NIK harus berupa angka sepanjang 16 karakter";
   const validateNominal = (value: string) =>
     /^\d+$/.test(value) && parseInt(value) > 0 || "Nominal harus berupa angka lebih dari 0";
 
@@ -100,7 +91,7 @@ export default function AdopsiIndividuForm({
         <Button
           type="button"
           variant="outline"
-          onClick={() => setIsDialogOpen(true)}
+          onClick={() => router.push("/admin-adopsi")}
           className="bg-red-500 text-white hover:bg-red-600 hover:text-white"
         >
           Batal
@@ -109,27 +100,6 @@ export default function AdopsiIndividuForm({
           Submit Form
         </Button>
       </div>
-
-      {/* Alert Dialog */}
-      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Apakah Anda yakin ingin menghentikan adopsi ini?</AlertDialogTitle>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setIsDialogOpen(false);
-                router.push("/admin-adopsi"); 
-              }}
-              className="bg-red-500 text-white hover:bg-red-600"
-            >
-              Iya
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </form>
   );
 }

@@ -25,13 +25,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useRouter, useParams } from "next/navigation";
 
+interface RiwayatAdopsiModuleProps {
+  adopterId: string;
+}
+
 // Define interfaces for type safety
 interface Adopter {
   id: string;
   name: string;
   address: string;
   contact: string;
-  email: string;
   totalContribution: number;
 }
 
@@ -39,6 +42,7 @@ interface AdoptionRecord {
   id: string;
   animalName: string;
   animalSpecies: string;
+  animalHabitat: string;
   startDate: string;
   endDate: string;
   contributionAmount: number;
@@ -46,10 +50,219 @@ interface AdoptionRecord {
   paymentStatus: "Paid" | "Pending";
 }
 
-const RiwayatAdopsiModule = () => {
+// Database of all adopters
+const allAdopters: Adopter[] = [
+  {
+    id: "adp-001",
+    name: "Prasetya Andriani",
+    address: "Jl. Diponegoro No. 45, Surabaya",
+    contact: "089635460305",
+    totalContribution: 15000000,
+  },
+  {
+    id: "adp-010",
+    name: "Agus Januar",
+    address: "Jl. Sudirman No. 123, Jakarta",
+    contact: "083573452405",
+    totalContribution: 3200000,
+  },
+  {
+    id: "adp-011",
+    name: "Yayasan Margana Jaya",
+    address: "Jl. Merdeka No. 123, Jakarta Pusat",
+    contact: "080925544576",
+    totalContribution: 25000000,
+  },
+  {
+    id: "adp-012",
+    name: "Lembaga Dwinarno Mandiri",
+    address: "Jl. Pahlawan No. 55, Bandung",
+    contact: "080749318642",
+    totalContribution: 22000000,
+  },
+  {
+    id: "adp-013",
+    name: "Rika Sinaga Foundation",
+    address: "Jl. Gajah Mada No. 72, Medan",
+    contact: "087638079651",
+    totalContribution: 20500000,
+  },
+];
+
+// Database of all adoption records
+const allAdoptionRecords: Record<string, AdoptionRecord[]> = {
+  "adp-001": [
+    {
+      id: "adr-101",
+      animalName: "Nala",
+      animalSpecies: "African Lion",
+      animalHabitat: "Savanna Enclosure",
+      startDate: "2023-05-15",
+      endDate: "2024-05-15",
+      contributionAmount: 6000000,
+      status: "Active",
+      paymentStatus: "Paid",
+    },
+    {
+      id: "adr-102",
+      animalName: "Pumbaa",
+      animalSpecies: "Warthog",
+      animalHabitat: "Savanna Enclosure",
+      startDate: "2022-10-20",
+      endDate: "2023-10-20",
+      contributionAmount: 4000000,
+      status: "Expired",
+      paymentStatus: "Paid",
+    },
+    {
+      id: "adr-103",
+      animalName: "Rex",
+      animalSpecies: "Anjing",
+      animalHabitat: "Pegunungan Alpen",
+      startDate: "2023-08-05",
+      endDate: "2025-08-05",
+      contributionAmount: 5000000,
+      status: "Active",
+      paymentStatus: "Paid",
+    },
+  ],
+  
+  "adp-010": [
+    {
+      id: "adr-201",
+      animalName: "Verstappen", 
+      animalSpecies: "Singa",
+      animalHabitat: "Belanda",
+      startDate: "2023-09-01",
+      endDate: "2024-09-01",
+      contributionAmount: 3200000,
+      status: "Active",
+      paymentStatus: "Paid",
+    }
+  ],
+  
+  "adp-011": [
+    {
+      id: "adr-001",
+      animalName: "Simba",
+      animalSpecies: "African Lion",
+      animalHabitat: "Savanna Enclosure",
+      startDate: "2022-06-10",
+      endDate: "2023-06-10",
+      contributionAmount: 5000000,
+      status: "Expired",
+      paymentStatus: "Paid",
+    },
+    {
+      id: "adr-002",
+      animalName: "Zara",
+      animalSpecies: "Plains Zebra",
+      animalHabitat: "Savanna Enclosure",
+      startDate: "2023-03-15",
+      endDate: "2025-03-15",
+      contributionAmount: 4000000,
+      status: "Active",
+      paymentStatus: "Paid",
+    },
+    {
+      id: "adr-003",
+      animalName: "Rafiki",
+      animalSpecies: "Giraffe",
+      animalHabitat: "Savanna Enclosure",
+      startDate: "2023-01-20",
+      endDate: "2025-01-20",
+      contributionAmount: 6000000,
+      status: "Active",
+      paymentStatus: "Paid",
+    },
+    {
+      id: "adr-004",
+      animalName: "Frost",
+      animalSpecies: "Polar Bear",
+      animalHabitat: "Arctic Zone",
+      startDate: "2022-05-10",
+      endDate: "2023-05-10",
+      contributionAmount: 4500000,
+      status: "Expired",
+      paymentStatus: "Paid",
+    },
+    {
+      id: "adr-005",
+      animalName: "Flipper",
+      animalSpecies: "Bottlenose Dolphin",
+      animalHabitat: "Aquatic Center",
+      startDate: "2023-07-01",
+      endDate: "2025-07-01",
+      contributionAmount: 5500000,
+      status: "Active",
+      paymentStatus: "Paid",
+    },
+  ],
+  
+  "adp-012": [
+    {
+      id: "adr-301",
+      animalName: "Rex",
+      animalSpecies: "Anjing",
+      animalHabitat: "Pegunungan Alpen",
+      startDate: "2023-04-10",
+      endDate: "2025-04-10",
+      contributionAmount: 7000000,
+      status: "Active",
+      paymentStatus: "Paid",
+    },
+    {
+      id: "adr-302",
+      animalName: "Nala",
+      animalSpecies: "African Lion",
+      animalHabitat: "Savanna Enclosure",
+      startDate: "2022-08-15",
+      endDate: "2023-08-15",
+      contributionAmount: 8000000,
+      status: "Expired",
+      paymentStatus: "Paid",
+    },
+    {
+      id: "adr-303",
+      animalName: "Frost",
+      animalSpecies: "Polar Bear",
+      animalHabitat: "Arctic Zone",
+      startDate: "2023-02-20",
+      endDate: "2024-02-20",
+      contributionAmount: 7000000,
+      status: "Active",
+      paymentStatus: "Paid",
+    }
+  ],
+  
+  "adp-013": [
+    {
+      id: "adr-401",
+      animalName: "Verstappen", 
+      animalSpecies: "Singa",
+      animalHabitat: "Belanda",
+      startDate: "2022-11-05",
+      endDate: "2023-11-05",
+      contributionAmount: 8500000,
+      status: "Expired",
+      paymentStatus: "Paid",
+    },
+    {
+      id: "adr-402",
+      animalName: "Pumbaa",
+      animalSpecies: "Warthog",
+      animalHabitat: "Savanna Enclosure",
+      startDate: "2023-06-15",
+      endDate: "2024-06-15",
+      contributionAmount: 12000000,
+      status: "Active",
+      paymentStatus: "Paid",
+    }
+  ]
+};
+
+const RiwayatAdopsiModule: React.FC<RiwayatAdopsiModuleProps> = ({ adopterId }) => {
   const router = useRouter();
-  const params = useParams();
-  const adopterId = params.id as string;
   
   const [adopter, setAdopter] = useState<Adopter | null>(null);
   const [adoptionRecords, setAdoptionRecords] = useState<AdoptionRecord[]>([]);
@@ -59,78 +272,21 @@ const RiwayatAdopsiModule = () => {
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    // Fetch adopter data based on ID
-    // In a real app, this would be an API call
     setIsLoading(true);
     
     // Simulate API call with setTimeout
     setTimeout(() => {
-      // Sample adopter data
-      const sampleAdopter: Adopter = {
-        id: adopterId,
-        name: "Yayasan Margana Jaya",
-        address: "Jl. Merdeka No. 123, Jakarta Pusat",
-        contact: "(021) 3456789",
-        email: "contact@marganajaya.org",
-        totalContribution: 25000000,
-      };
+      // Find adopter by ID
+      const foundAdopter = allAdopters.find(a => a.id === adopterId);
       
-      // Sample adoption records
-      const sampleRecords: AdoptionRecord[] = [
-        {
-          id: "adr-001",
-          animalName: "Simba",
-          animalSpecies: "African Lion",
-          startDate: "2022-06-10",
-          endDate: "2023-06-10",
-          contributionAmount: 5000000,
-          status: "Expired",
-          paymentStatus: "Paid",
-        },
-        {
-          id: "adr-002",
-          animalName: "Zara",
-          animalSpecies: "Plains Zebra",
-          startDate: "2023-03-15",
-          endDate: "2025-03-15",
-          contributionAmount: 4000000,
-          status: "Active",
-          paymentStatus: "Paid",
-        },
-        {
-          id: "adr-003",
-          animalName: "Rafiki",
-          animalSpecies: "Giraffe",
-          startDate: "2023-01-20",
-          endDate: "2025-01-20",
-          contributionAmount: 6000000,
-          status: "Active",
-          paymentStatus: "Paid",
-        },
-        {
-          id: "adr-004",
-          animalName: "Frost",
-          animalSpecies: "Polar Bear",
-          startDate: "2022-05-10",
-          endDate: "2023-05-10",
-          contributionAmount: 4500000,
-          status: "Expired",
-          paymentStatus: "Paid",
-        },
-        {
-          id: "adr-005",
-          animalName: "Flipper",
-          animalSpecies: "Bottlenose Dolphin",
-          startDate: "2023-07-01",
-          endDate: "2025-07-01",
-          contributionAmount: 5500000,
-          status: "Active",
-          paymentStatus: "Paid",
-        },
-      ];
+      // Find adoption records for this adopter
+      const adopterRecords = allAdoptionRecords[adopterId] || [];
       
-      setAdopter(sampleAdopter);
-      setAdoptionRecords(sampleRecords);
+      if (foundAdopter) {
+        setAdopter(foundAdopter);
+        setAdoptionRecords(adopterRecords);
+      }
+      
       setIsLoading(false);
     }, 500);
   }, [adopterId]);
@@ -195,7 +351,7 @@ const RiwayatAdopsiModule = () => {
           variant="outline"
           size="sm"
           className="mr-4"
-          onClick={() => router.back()}
+          onClick={() => router.push('/adopter')}
         >
           <ArrowLeft className="h-4 w-4 mr-2" /> Kembali
         </Button>
@@ -215,9 +371,11 @@ const RiwayatAdopsiModule = () => {
                 <p className="font-semibold">{adopter.address}</p>
               </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Kontak Adopter:</p>
-              <p className="font-semibold">{adopter.contact}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Kontak Adopter:</p>
+                <p className="font-semibold">{adopter.contact}</p>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -241,31 +399,39 @@ const RiwayatAdopsiModule = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {adoptionRecords.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell className="font-medium">{record.animalName}</TableCell>
-                    <TableCell>{record.animalSpecies}</TableCell>
-                    <TableCell>{formatDate(record.startDate)}</TableCell>
-                    <TableCell>{formatDate(record.endDate)}</TableCell>
-                    <TableCell>{formatCurrency(record.contributionAmount)}</TableCell>
-                    <TableCell>
-                      {record.status === "Active" ? (
-                        <Badge className="bg-green-500">Sedang Berlangsung</Badge>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleDeleteClick(record.id)}
-                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                          disabled={!canDelete(record.status)}
-                          title={canDelete(record.status) ? "Hapus" : "Tidak dapat dihapus karena masih berlangsung"}
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      )}
+                {adoptionRecords.length > 0 ? (
+                  adoptionRecords.map((record) => (
+                    <TableRow key={record.id}>
+                      <TableCell className="font-medium">{record.animalName}</TableCell>
+                      <TableCell>{record.animalSpecies}</TableCell>
+                      <TableCell>{formatDate(record.startDate)}</TableCell>
+                      <TableCell>{formatDate(record.endDate)}</TableCell>
+                      <TableCell>{formatCurrency(record.contributionAmount)}</TableCell>
+                      <TableCell>
+                        {record.status === "Active" ? (
+                          <Badge className="bg-green-500">Sedang Berlangsung</Badge>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleDeleteClick(record.id)}
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                            disabled={!canDelete(record.status)}
+                            title={canDelete(record.status) ? "Hapus" : "Tidak dapat dihapus karena masih berlangsung"}
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-4">
+                      Tidak ada data adopsi untuk adopter ini.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>
