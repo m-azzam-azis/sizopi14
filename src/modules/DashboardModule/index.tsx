@@ -16,11 +16,14 @@ const mockUserData = {
   middleName: "",
   lastName: "Doe",
   phoneNumber: "+62123456789",
-  role: "admin" as UserRole, // Change this to test different dashboards
+  role: "caretaker" as UserRole, // Change this to test different dashboards
 
   // Role-specific fields
-  // For admin
+
+  // For staffs
   staffId: "STAFF-001",
+
+  // For admin
   todayTicketSales: 156,
   todayVisitors: 420,
   weeklyRevenue: 45000000,
@@ -33,6 +36,9 @@ const mockUserData = {
   // For visitor
   alamat: "123 Main St, Cityville",
   tanggalLahir: "1990-01-01",
+
+  // For caretaker
+  jumlahHewan: 50,
 };
 
 const DashboardModule: React.FC = () => {
@@ -66,6 +72,9 @@ const DashboardModule: React.FC = () => {
         role: user.role,
         ...(user.role === "visitor"
           ? { alamat: user.alamat, tanggalLahir: user.tanggalLahir }
+          : {}),
+        ...(user.role === "caretaker"
+          ? { jumlahHewan: user.jumlahHewan, staffId: user.staffId }
           : {}),
       }}
       roleSpecificContent={renderRoleSpecificContent()}
