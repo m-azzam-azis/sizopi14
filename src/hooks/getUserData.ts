@@ -22,7 +22,7 @@ export type ReturnType = {
     id_staf_LH: string;
     username_DH: string;
     no_str: string;
-    nama_spesialisasi: string;
+    nama_spesialisasi: string[];
     id_staf_sa: string;
   };
   isValid: boolean;
@@ -47,7 +47,7 @@ type sessionType = {
     id_staf_LH: string;
     username_DH: string;
     no_str: string;
-    nama_spesialisasi: string;
+    nama_spesialisasi: string[];
     id_staf_sa: string;
   };
   exp: number;
@@ -134,7 +134,7 @@ export const getUserData: () => ReturnType = () => {
         id_staf_LH: "",
         username_DH: "",
         no_str: "",
-        nama_spesialisasi: "",
+        nama_spesialisasi: [],
         id_staf_sa: "",
       },
       isValid: false,

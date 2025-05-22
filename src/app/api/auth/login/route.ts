@@ -8,6 +8,7 @@ import { PenjagaHewan } from "@/db/models/penjagaHewan";
 import { PelatihHewan } from "@/db/models/pelatihHewan";
 import { StafAdmin } from "@/db/models/stafAdmin";
 import { Spesialisasi } from "@/db/models/spesialisasi";
+import { SpesialisasiType } from "@/db/types";
 
 const SECRET_KEY = process.env.SECRET_KEY || "your_secret_key";
 
@@ -65,14 +66,22 @@ export async function POST(req: Request) {
 
     const dokterHewanModel = new DokterHewan();
     let dokterHewan;
-    let spesialisasi;
+    let specializationNames;
     if (role == "veterinarian") {
       dokterHewan = await dokterHewanModel.findByUsername(pengguna.username);
       if (dokterHewan) {
         const spesialisasiModel = new Spesialisasi();
-        spesialisasi = await spesialisasiModel.findByUsernameSH(
-          dokterHewan.username_DH
+
+        const specializations = await spesialisasiModel.findAllByUsernameSH(
+          pengguna.username
         );
+
+        specializationNames =
+          specializations && specializations.length > 0
+            ? specializations.map(
+                (spec: SpesialisasiType) => spec.nama_spesialisasi
+              )
+            : [];
       }
     }
 
@@ -104,26 +113,19 @@ export async function POST(req: Request) {
           nama_belakang: pengguna.nama_belakang,
           no_telepon: pengguna.no_telepon,
           role: role,
-          username_P: pengunjung ? pengunjung.username_P : null,
           alamat: pengunjung ? pengunjung.alamat : null,
           tgl_lahir: pengunjung ? pengunjung.tgl_lahir : null,
-          username_JH: penjagaHewan ? penjagaHewan.username_JH : null,
           id_staf_JH: penjagaHewan ? penjagaHewan.id_staf : null,
-          username_LH: pelatihHewan ? pelatihHewan.username_LH : null,
           id_staf_LH: pelatihHewan ? pelatihHewan.id_staf : null,
-          username_DH: dokterHewan ? dokterHewan.username_DH : null,
           no_str: dokterHewan ? dokterHewan.no_str : null,
-          nama_spesialisasi: spesialisasi
-            ? spesialisasi.nama_spesialisasi
-            : null,
-          id_staff_sa: staffAdmin ? staffAdmin.id_staf : null,
+          nama_spesialisasi: specializationNames,
+          id_staf_sa: staffAdmin ? staffAdmin.id_staf : null,
         },
       },
       SECRET_KEY,
       { expiresIn: "365d" }
     );
 
-    // Set cookies
     cookieStore.set("token", token, {
       httpOnly: true,
       secure: true,

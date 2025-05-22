@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Popover,
   PopoverContent,
@@ -19,34 +19,62 @@ import { CircleUserRound, LayoutDashboard, LogOut, X } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { getUserData } from "@/hooks/getUserData";
+import { toast } from "sonner";
 
 export const Navbar = () => {
   const pathname = usePathname();
+  const router = useRouter();
+  const { userData, isValid, isLoading } = getUserData();
 
-  const getUserRole = () => {
-    if (pathname.includes("rekam-medis") || pathname.includes("jadwal-pemeriksaan")) {
-      return "dokter";
-    } else if (pathname.includes("pakan")) {
-      return "penjaga";
-    } else if (pathname.includes("adopter-adopsi")) {
-      return "adopter";
-    } else if (pathname.includes("admin-adopsi") || pathname.includes("dashboard/admin/reservasi") || pathname.includes("adopter")) {
-      return "admin";
-    } else if (pathname.includes("atraksi")) {
-      return "pelatih";
+  const mapRoleToUIRole = (role: string): string => {
+    switch (role) {
+      case "visitor":
+        return "pengunjung";
+      case "veterinarian":
+        return "dokter";
+      case "caretaker":
+        return "penjaga";
+      case "trainer":
+        return "pelatih";
+      case "admin":
+        return "admin";
+      default:
+        return "";
     }
   };
 
-  // Use getUserRole instead of hardcoded role
-  const data = {
-    isLoggedIn: false,
-    user: {
-      role: getUserRole(),
-    },
+  const uiRole = mapRoleToUIRole(userData.role);
+
+  const logout = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        toast.success("Logged out successfully");
+        window.location.href = "/";
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Logout failed");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Logout failed. Please try again.");
+    }
   };
 
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [popoverOpen2, setPopoverOpen2] = useState(false);
+
+  const fullName =
+    userData.nama_depan && userData.nama_belakang
+      ? `${userData.nama_depan} ${userData.nama_belakang}`
+      : "User";
 
   return (
     <nav className="fixed top-0 p-5 px-5 sm:px-16 md:px-14 lg:px-20 w-full bg-accent/70 backdrop-blur-md z-50">
@@ -68,12 +96,12 @@ export const Navbar = () => {
             Sizopi
           </div>
         </Link>
-        {data?.isLoggedIn ? (
+        {isValid ? (
           <div className="flex gap-4 md:gap-8 lg:gap-11 items-center">
             {/* Role-specific navigation links */}
-            {data?.user.role == "dokter" ? (
-               <>
-               <Link
+            {uiRole === "dokter" ? (
+              <>
+                <Link
                   href="/rekam-medis"
                   className="max-md:hidden text-lg text-primary font-outfit font-medium"
                 >
@@ -84,24 +112,24 @@ export const Navbar = () => {
                   className="max-md:hidden text-lg text-primary font-outfit font-medium"
                 >
                   Jadwal Pemeriksaan
-               </Link>
+                </Link>
               </>
-            ) : data?.user.role == "penjaga" ? (
-              <> 
-                  <Link
-                      href="/catatan-perawatan-hewan"
-                      className="max-md:hidden text-base text-primary font-outfit font-medium"
-                    >
-                      Catatan Perawatan
-                    </Link>
-                    <Link
-                      href="/pakan"
-                      className="max-md:hidden text-base text-primary font-outfit font-medium"
-                    >
-                      Pemberian Pakan Hewan
-                  </Link>
+            ) : uiRole === "penjaga" ? (
+              <>
+                <Link
+                  href="/catatan-perawatan-hewan"
+                  className="max-md:hidden text-base text-primary font-outfit font-medium"
+                >
+                  Catatan Perawatan
+                </Link>
+                <Link
+                  href="/pakan"
+                  className="max-md:hidden text-base text-primary font-outfit font-medium"
+                >
+                  Pemberian Pakan Hewan
+                </Link>
               </>
-            ) : data?.user.role == "admin" ? (
+            ) : uiRole === "admin" ? (
               <>
                 <Link
                   href="/dashboard/admin/reservasi"
@@ -122,26 +150,19 @@ export const Navbar = () => {
                   Kelola Adopter
                 </Link>
               </>
-            ) : data?.user.role == "pelatih" ? (
+            ) : uiRole === "pelatih" ? (
               <Link
                 href="/atraksi"
                 className="max-md:hidden text-base text-primary font-outfit font-medium"
               >
                 Jadwal Pertunjukan
               </Link>
-            ) : data?.user.role == "pengunjung" ? (
+            ) : uiRole === "pengunjung" ? (
               <Link
-                href="/kebun-binatang"
+                href="/reservasi/dashboard"
                 className="max-md:hidden text-base text-primary font-outfit font-medium"
               >
-                Kebun Binatang
-              </Link>
-            ) : data?.user.role == "adopter" ? (
-              <Link
-                href="/adopter-adopsi"
-                className="max-md:hidden text-base text-primary font-outfit font-medium"
-              >
-                Hewan Adopsi
+                Reservasi Tiket
               </Link>
             ) : null}
 
@@ -149,7 +170,7 @@ export const Navbar = () => {
               <PopoverTrigger asChild className="max-md:hidden">
                 <button className="relative group flex gap-3 max-sm:gap-2 py-2 items-center text-foreground fill-primary group cursor-pointer">
                   <p className="text-lg text-primary max-sm:hidden font-outfit font-medium">
-                    Shaney Zoya
+                    {fullName}
                   </p>
                   <Chevron
                     className={`${
@@ -176,7 +197,7 @@ export const Navbar = () => {
                   Profil Diri
                 </Link>
                 <button
-                  // onClick={logout}
+                  onClick={logout}
                   className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl cursor-pointer font-outfit hover:text-primary"
                 >
                   <LogOut className="w-6 h-6" />
@@ -200,9 +221,9 @@ export const Navbar = () => {
                   </Link>
 
                   {/* Role-specific mobile menu items */}
-                  {data?.user.role == "dokter" ? (
+                  {uiRole === "dokter" ? (
                     <>
-                     <Link
+                      <Link
                         href="/rekam-medis"
                         className="text-lg text-primary font-outfit"
                       >
@@ -213,24 +234,24 @@ export const Navbar = () => {
                         className="text-lg text-primary font-outfit"
                       >
                         Jadwal Pemeriksaan
-                     </Link>
+                      </Link>
                     </>
-                  ) : data?.user.role == "penjaga" ? (
-                    <> 
-                    <Link
-                      href="/catatan-perawatan-hewan"
-                      className="text-base text-primary font-outfit"
-                    >
-                      Catatan Perawatan
-                    </Link>
-                    <Link
-                      href="/pakan"
-                      className="text-base text-primary font-outfit"
-                    >
-                      Pemberian Pakan Hewan
-                    </Link>
+                  ) : uiRole === "penjaga" ? (
+                    <>
+                      <Link
+                        href="/catatan-perawatan-hewan"
+                        className="text-base text-primary font-outfit"
+                      >
+                        Catatan Perawatan
+                      </Link>
+                      <Link
+                        href="/pakan"
+                        className="text-base text-primary font-outfit"
+                      >
+                        Pemberian Pakan Hewan
+                      </Link>
                     </>
-                  ) : data?.user.role == "admin" ? (
+                  ) : uiRole === "admin" ? (
                     <>
                       <Link
                         href="/dashboard/admin/reservasi"
@@ -251,33 +272,26 @@ export const Navbar = () => {
                         Kelola Adopter
                       </Link>
                     </>
-                  ) : data?.user.role == "pelatih" ? (
+                  ) : uiRole === "pelatih" ? (
                     <Link
                       href="/atraksi"
                       className="text-base text-primary font-outfit"
                     >
                       Jadwal Pertunjukan
                     </Link>
-                  ) : data?.user.role == "pengunjung" ? (
+                  ) : uiRole === "pengunjung" ? (
                     <Link
-                      href="/kebun-binatang"
+                      href="/reservasi/dashboard"
                       className="text-base text-primary font-outfit"
                     >
-                      Kebun Binatang
-                    </Link>
-                  ) : data?.user.role == "adopter" ? (
-                    <Link
-                      href="/adopter-adopsi"
-                      className="text-base text-primary font-outfit"
-                    >
-                      Hewan Adopsi
+                      Reservasi Tiket
                     </Link>
                   ) : null}
 
                   <Popover open={popoverOpen2} onOpenChange={setPopoverOpen2}>
                     <PopoverTrigger asChild>
                       <button className="relative group flex gap-3 max-sm:gap-2 py-2 items-center text-foreground fill-primary group cursor-pointer font-outfit">
-                        <p className="text-lg text-primary">Shaney Zoya</p>
+                        <p className="text-lg text-primary">{fullName}</p>
                         <Chevron
                           className={`${
                             popoverOpen ? "-rotate-180" : ""
@@ -303,7 +317,7 @@ export const Navbar = () => {
                         Profil Diri
                       </Link>
                       <button
-                        // onClick={logout}
+                        onClick={logout}
                         className="flex flex-row gap-2 text-lg w-full text-left duration-300 rounded-xl cursor-pointer font-outfit hover:text-primary"
                       >
                         <LogOut className="w-6 h-6" />

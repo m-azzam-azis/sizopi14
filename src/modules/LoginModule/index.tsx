@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -18,8 +17,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-// import { useAuthContext } from "@/components/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const loginFormSchema = z.object({
   email: z
@@ -36,6 +35,7 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 
 export const LoginModule: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -44,11 +44,57 @@ export const LoginModule: React.FC = () => {
       password: "",
     },
   });
-  // const { login } = useAuthContext();
-  // const onSubmit = (data: LoginFormValues) => {
-  //   login(data);
-  //   router.push("/dashboard");
-  // };
+
+  const onSubmit = async (data: LoginFormValues) => {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Login failed");
+      }
+
+      toast.success("Login successful!");
+
+      const role = result.data?.role || "visitor";
+
+      setTimeout(() => {
+        switch (role) {
+          case "visitor":
+            router.push("/reservasi/dashboard");
+            break;
+          case "admin":
+            router.push("/dashboard");
+            break;
+          case "veterinarian":
+            router.push("/rekam-medis");
+            break;
+          case "caretaker":
+            router.push("/pakan");
+            break;
+          case "trainer":
+            router.push("/atraksi");
+            break;
+          default:
+            router.push("/dashboard");
+        }
+      }, 1000);
+    } catch (error: any) {
+      console.error("Login error:", error);
+      toast.error(error.message || "Invalid credentials");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -87,35 +133,33 @@ export const LoginModule: React.FC = () => {
           </motion.div>
 
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit((data) => console.log(data))}
-              className="space-y-6"
-            >
-              <motion.div variants={itemVariants} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <motion.div variants={itemVariants}>
                 <FormField
-                  // control={form.control}
+                  control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm font-medium text-secondary-foreground">
                         Email
                       </FormLabel>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-4  h-6 w-5 text-muted-foreground" />
-                        <FormControl>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-5 h-6 w-5 text-muted-foreground" />
                           <Input
                             {...field}
-                            placeholder="you@example.com"
-                            type="email"
-                            className="pl-10 bg-input/20 border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
+                            placeholder="Enter your email"
+                            className="pl-10 bg-input/20 border-border text-foreground"
                           />
-                        </FormControl>
-                      </div>
+                        </div>
+                      </FormControl>
                       <FormMessage className="text-destructive" />
                     </FormItem>
                   )}
                 />
+              </motion.div>
 
+              <motion.div variants={itemVariants}>
                 <FormField
                   control={form.control}
                   name="password"
@@ -124,28 +168,30 @@ export const LoginModule: React.FC = () => {
                       <FormLabel className="text-sm font-medium text-secondary-foreground">
                         Password
                       </FormLabel>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-4  h-6 w-5 text-muted-foreground" />
-                        <FormControl>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-5 h-6 w-5 text-muted-foreground" />
                           <Input
                             {...field}
                             type={showPassword ? "text" : "password"}
-                            placeholder="••••••••"
-                            className="pl-10 pr-10 bg-input/20 border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
+                            placeholder="Enter your password"
+                            className="pl-10 bg-input/20 border-border text-foreground"
                           />
-                        </FormControl>
-                        <Button
-                          variant={"ghost"}
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-2.5 text-6uted-foreground hover:text-foreground"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-5 w-5" />
-                          ) : (
-                            <Eye className="h-5 w-5" />
-                          )}
-                        </Button>
-                      </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-2 top-4 h-8 w-8 p-0"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4 text-muted-foreground absolute" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-muted-foreground absolute" />
+                            )}
+                          </Button>
+                        </div>
+                      </FormControl>
                       <FormMessage className="text-destructive" />
                     </FormItem>
                   )}
@@ -154,10 +200,11 @@ export const LoginModule: React.FC = () => {
 
               <motion.div variants={itemVariants}>
                 <Button
-                  variant={"default"}
+                  type="submit"
+                  disabled={isLoading}
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded-md transition-colors mt-4"
                 >
-                  Sign In
+                  {isLoading ? "Signing in..." : "Sign In"}
                 </Button>
               </motion.div>
             </form>
