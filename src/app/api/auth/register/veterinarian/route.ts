@@ -1,10 +1,10 @@
 import { Pengguna } from "@/db/models/pengguna";
 import { DokterHewan } from "@/db/models/dokterHewan";
-import { PenggunaType, DokterHewanType } from "@/db/types";
+import { Spesialisasi } from "@/db/models/spesialisasi";
 
 export async function POST(req: Request) {
   try {
-    const body: PenggunaType & DokterHewanType = await req.json();
+    const body = await req.json();
     const {
       username,
       email,
@@ -14,6 +14,7 @@ export async function POST(req: Request) {
       nama_belakang,
       no_telepon,
       no_str,
+      specializations,
     } = body;
 
     if (
@@ -21,15 +22,16 @@ export async function POST(req: Request) {
       !email ||
       !password ||
       !nama_depan ||
-      !nama_tengah ||
       !nama_belakang ||
       !no_telepon ||
-      !no_str
+      !no_str ||
+      !specializations
     ) {
       return new Response(
         JSON.stringify({
           message: "Failed",
           error: "All fields are required",
+          body: body,
         }),
         { status: 400 }
       );
@@ -63,6 +65,18 @@ export async function POST(req: Request) {
       username_DH: username,
       no_str,
     });
+
+    const spesialisasiModel = new Spesialisasi();
+    const specsToAdd = Array.isArray(specializations)
+      ? specializations
+      : [specializations];
+
+    for (const spec of specsToAdd) {
+      await spesialisasiModel.create({
+        username_SH: username,
+        nama_spesialisasi: spec,
+      });
+    }
 
     return new Response(
       JSON.stringify({

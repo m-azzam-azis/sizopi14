@@ -2,7 +2,7 @@
 
 import React, { ReactNode, useState } from "react";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -47,7 +47,14 @@ export function mapToBackendPayload(data: any, role: string) {
     no_telepon: data.phoneNumber,
   };
 
+  console.log("Base Payload:", base);
+
   if (role === "visitor") {
+    console.log("Visitor Payload:", {
+      ...base,
+      alamat: data.address,
+      tgl_lahir: data.birthDate,
+    });
     return {
       ...base,
       alamat: data.address,
@@ -66,16 +73,18 @@ export function mapToBackendPayload(data: any, role: string) {
       id_staf: data.staffId,
     };
   }
+
+  console.log("RAHHHHHHHHHHHHHHH");
   return base;
 }
 
 interface BaseRegisterFormProps {
   onSubmit: (data: any) => void;
-  title: string;
-  description: string;
-  extraFields?: ReactNode;
-  extraSchema?: z.ZodObject<any>;
+  title?: string;
+  description?: string;
+  extraFields?: React.ReactNode;
   isLoading?: boolean;
+  form?: UseFormReturn<any>; // Add this line
 }
 
 const BaseRegisterForm: React.FC<BaseRegisterFormProps> = ({
@@ -83,29 +92,27 @@ const BaseRegisterForm: React.FC<BaseRegisterFormProps> = ({
   title,
   description,
   extraFields,
-  extraSchema,
   isLoading = false,
+  form: externalForm, // Receive the external form
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const formSchema = extraSchema
-    ? baseRegisterSchema.and(extraSchema)
-    : baseRegisterSchema;
-
-  const form = useForm({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      middleName: "",
-      email: "",
-      username: "",
-      phoneNumber: "",
-      password: "",
-      confirmPassword: "",
-    },
-  });
+  const form =
+    externalForm ||
+    useForm({
+      resolver: zodResolver(baseRegisterSchema),
+      defaultValues: {
+        firstName: "",
+        lastName: "",
+        middleName: "",
+        email: "",
+        username: "",
+        phoneNumber: "",
+        password: "",
+        confirmPassword: "",
+      },
+    });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-primary/30 flex items-center justify-center px-4 py-12">

@@ -74,7 +74,15 @@ export const VisitorRegisterModule: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const payload = mapToBackendPayload(data, "visitor");
+      const formattedData = {
+        ...data,
+        birthDate: data.birthDate
+          ? data.birthDate.toISOString().split("T")[0]
+          : null,
+      };
+
+      const payload = mapToBackendPayload(formattedData, "visitor");
+
       const res = await fetch("/api/auth/register/visitor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -166,6 +174,7 @@ export const VisitorRegisterModule: React.FC = () => {
 
   return (
     <BaseRegisterForm
+      form={form}
       onSubmit={handleSubmit}
       title="Register as Visitor"
       description="Create your visitor account to purchase tickets and access visitor features"

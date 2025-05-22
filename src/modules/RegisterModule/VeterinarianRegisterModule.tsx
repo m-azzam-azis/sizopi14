@@ -3,7 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import BaseRegisterForm from "./components/BaseRegisterForm";
+import BaseRegisterForm, {
+  BaseRegisterFormValues,
+  baseRegisterSchema,
+} from "./components/BaseRegisterForm";
 import {
   FormControl,
   FormField,
@@ -15,40 +18,87 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { mapToBackendPayload } from "./components/BaseRegisterForm";
-
-const specializations = [
-  { id: "large-mammals", label: "Large Mammals" },
-  { id: "reptiles", label: "Reptiles" },
-  { id: "exotic-birds", label: "Exotic Birds" },
-  { id: "primates", label: "Primates" },
-  { id: "other", label: "Other" },
-];
-
-const vetExtraSchema = z.object({
-  certificationNumber: z.string().min(1, "Certification number is required"),
-  specializations: z
-    .array(z.string())
-    .min(1, "Select at least one specialization"),
-  otherSpecialization: z.string().optional(),
-});
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export const VeterinarianRegisterModule: React.FC = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSpecs, setSelectedSpecs] = useState<string[]>([]);
   const [showOtherField, setShowOtherField] = useState(false);
+  const [availableSpecializations, setAvailableSpecializations] = useState<
+    string[]
+  >([]);
 
   useEffect(() => {
-    setShowOtherField(selectedSpecs.includes("other"));
-  }, [selectedSpecs]);
+    const fetchSpecializations = async () => {
+      try {
+        const response = await fetch("/api/specializations");
+        const data = await response.json();
+        if (data.specializations) {
+          setAvailableSpecializations(data.specializations);
+        }
+      } catch (error) {
+        console.error("Failed to fetch specializations:", error);
+      }
+    };
 
-  const handleSubmit = async (data: any) => {
+    fetchSpecializations();
+  }, []);
+
+  const specializations = [
+    ...availableSpecializations.map((spec) => ({
+      id: spec,
+      label: spec,
+    })),
+    { id: "other", label: "Other" },
+  ];
+
+  const vetExtraSchema = z.object({
+    certificationNumber: z.string().min(1, "Certification number is required"),
+    specializations: z
+      .array(z.string())
+      .min(1, "Select at least one specialization"),
+    otherSpecialization: z.string().optional(),
+  });
+
+  const vetRegisterSchema = z
+    .object({
+      ...baseRegisterSchema._def.schema.shape,
+      ...vetExtraSchema.shape,
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: "Passwords don't match",
+      path: ["confirmPassword"],
+    });
+
+  type VetRegisterFormValues = BaseRegisterFormValues &
+    z.infer<typeof vetExtraSchema>;
+
+  const form = useForm<VetRegisterFormValues>({
+    resolver: zodResolver(vetRegisterSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      phoneNumber: "",
+      certificationNumber: "",
+      specializations: [],
+      otherSpecialization: "",
+    },
+  });
+
+  const handleSubmit = async (data: VetRegisterFormValues) => {
     setIsLoading(true);
 
     try {
       const payload = {
         ...mapToBackendPayload(data, "veterinarian"),
-        no_str: data.certificationNumber,
+        specializations: data.specializations
+          .map((spec) => (spec === "other" ? data.otherSpecialization : spec))
+          .filter(Boolean),
       };
 
       const res = await fetch("/api/auth/register/veterinarian", {
@@ -109,6 +159,20 @@ export const VeterinarianRegisterModule: React.FC = () => {
                             selectedSpecs.filter((s) => s !== spec.id)
                           );
                         }
+
+                        const currentSpecializations =
+                          form.getValues("specializations") || [];
+                        if (checked) {
+                          form.setValue("specializations", [
+                            ...currentSpecializations,
+                            spec.id,
+                          ]);
+                        } else {
+                          form.setValue(
+                            "specializations",
+                            currentSpecializations.filter((s) => s !== spec.id)
+                          );
+                        }
                       }}
                     />
                   </FormControl>
@@ -140,11 +204,11 @@ export const VeterinarianRegisterModule: React.FC = () => {
 
   return (
     <BaseRegisterForm
+      form={form}
       onSubmit={handleSubmit}
       title="Register as Veterinarian"
       description="Create your veterinarian account to manage animal healthcare"
       extraFields={extraFields}
-      extraSchema={vetExtraSchema}
       isLoading={isLoading}
     />
   );

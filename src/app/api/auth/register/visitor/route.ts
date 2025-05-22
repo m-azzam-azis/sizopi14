@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       no_telepon,
       alamat,
       tgl_lahir,
-    }: PenggunaType & PengunjungType = await req.json();
+    }: PenggunaType & PengunjungType = body;
 
     if (
       !username ||

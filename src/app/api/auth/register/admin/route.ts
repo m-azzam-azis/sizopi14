@@ -1,10 +1,10 @@
 import { Pengguna } from "@/db/models/pengguna";
 import { StafAdmin } from "@/db/models/stafAdmin";
-import { PenggunaType, StafAdminType } from "@/db/types";
+import { v4 as uuidv4 } from "uuid"; // Make sure to add this package with: pnpm add uuid
 
 export async function POST(req: Request) {
   try {
-    const body: PenggunaType & StafAdminType = await req.json();
+    const body = await req.json();
     const {
       username,
       email,
@@ -13,7 +13,6 @@ export async function POST(req: Request) {
       nama_tengah,
       nama_belakang,
       no_telepon,
-      id_staf,
     } = body;
 
     if (
@@ -21,10 +20,8 @@ export async function POST(req: Request) {
       !email ||
       !password ||
       !nama_depan ||
-      !nama_tengah ||
       !nama_belakang ||
-      !no_telepon ||
-      !id_staf
+      !no_telepon
     ) {
       return new Response(
         JSON.stringify({
@@ -58,16 +55,22 @@ export async function POST(req: Request) {
       no_telepon,
     });
 
+    // Generate a random UUID instead of using the one from the request
+    const id_staf = uuidv4();
+
     const stafAdminModel = new StafAdmin();
     await stafAdminModel.create({
-      id_staf,
       username_sa: username,
+      id_staf,
     });
 
     return new Response(
       JSON.stringify({
         message: "Success",
-        data: newUser,
+        data: {
+          ...newUser,
+          id_staf, // Include the generated UUID in the response
+        },
       }),
       { status: 201 }
     );

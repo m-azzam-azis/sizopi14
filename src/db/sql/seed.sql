@@ -79,6 +79,13 @@ CREATE TABLE STAF_ADMIN (
   id_staf UUID NOT NULL
 );
 
+CREATE TABLE HABITAT (
+  nama VARCHAR(50) PRIMARY KEY,
+  luas_area DECIMAL NOT NULL,
+  kapasitas INT NOT NULL,
+  status VARCHAR(100) NOT NULL
+);
+
 CREATE TABLE HEWAN (
   id UUID PRIMARY KEY,
   nama VARCHAR(100),
@@ -99,13 +106,6 @@ CREATE TABLE CATATAN_MEDIS (
   status_kesehatan VARCHAR(50) NOT NULL,
   catatan_tindak_lanjut VARCHAR(100),
   PRIMARY KEY (id_hewan, tanggal_pemeriksaan)
-);
-
-CREATE TABLE HABITAT (
-  nama VARCHAR(50) PRIMARY KEY,
-  luas_area DECIMAL NOT NULL,
-  kapasitas INT NOT NULL,
-  status VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE PAKAN (
@@ -437,6 +437,15 @@ INSERT INTO staf_admin VALUES ('wijayatirtayasa', '1a2b3c4d-0008-0000-0000-00000
 INSERT INTO staf_admin VALUES ('ghutasoit', '1a2b3c4d-0009-0000-0000-000000000009');
 INSERT INTO staf_admin VALUES ('dartono24', '1a2b3c4d-0010-0000-0000-000000000010');
 
+INSERT INTO habitat VALUES ('Padang Pasir', 5000.00, 10, 'Aktif');
+INSERT INTO habitat VALUES ('Sabana Afrika', 7500.50, 15, 'Aktif');
+INSERT INTO habitat VALUES ('Hutan Hujan Tropis', 6200.75, 12, 'Renovasi');
+INSERT INTO habitat VALUES ('Pegunungan Alpen', 4200.00, 8, 'Aktif');
+INSERT INTO habitat VALUES ('Danau Arktik', 3100.30, 6, 'Aktif');
+INSERT INTO habitat VALUES ('Lembah Amazon', 9100.00, 20, 'Aktif');
+INSERT INTO habitat VALUES ('Hutan Bambu', 2800.20, 7, 'Penuh');
+INSERT INTO habitat VALUES ('Rawa Kalimantan', 3900.00, 9, 'Aktif');
+
 INSERT INTO hewan VALUES ('d84d43b2-441d-450d-b58e-12fbbf49c88c', 'Simba', 'Singa', 'Padang Pasir', '2017-03-12', 'Sehat', 'Padang Pasir', 'https://example.com/simba.jpg');
 INSERT INTO hewan VALUES ('b2a95b99-5821-45b7-b493-17b79d914ef5', 'Luna', 'Kucing', 'Sabana Afrika', '2019-07-23', 'Sedang Sakit', 'Sabana Afrika', 'https://example.com/luna.jpg');
 INSERT INTO hewan VALUES ('98b765a7-6a04-4b3d-b118-c8f26d72e433', 'Rex', 'Anjing', 'Pegunungan Alpen', '2018-01-09', 'Sehat', 'Pegunungan Alpen', 'https://example.com/rex.jpg');
@@ -488,15 +497,6 @@ INSERT INTO catatan_medis VALUES ('054e0e4d-9b2b-45ae-88d7-3cf983849953', 'mumpu
 INSERT INTO catatan_medis VALUES ('003417f2-cf99-4dff-b42b-4167e5a09a31', 'mutiayuniar', '2023-04-25', 'Sakit Kepala', 'Obat Penurun Panas', 'Sembuh', 'Kontrol dalam 1 bulan');
 INSERT INTO catatan_medis VALUES ('d3f0c021-bb7f-44e9-a31f-2304ef6b34a0', 'yuniarganda', '2023-11-11', 'Muntah', 'Obat Pencernaan', 'Sembuh', 'Periksa dalam 2 minggu');
 INSERT INTO catatan_medis VALUES ('54dbb957-d7b1-4094-8084-9a2a33a4f7be', 'ppuspasari', '2023-07-05', 'Gigi Sakit', 'Obat Kumur', 'Sembuh', 'Tidak ada tindak lanjut');
-
-INSERT INTO habitat VALUES ('Padang Pasir', 5000.00, 10, 'Aktif');
-INSERT INTO habitat VALUES ('Sabana Afrika', 7500.50, 15, 'Aktif');
-INSERT INTO habitat VALUES ('Hutan Hujan Tropis', 6200.75, 12, 'Renovasi');
-INSERT INTO habitat VALUES ('Pegunungan Alpen', 4200.00, 8, 'Aktif');
-INSERT INTO habitat VALUES ('Danau Arktik', 3100.30, 6, 'Aktif');
-INSERT INTO habitat VALUES ('Lembah Amazon', 9100.00, 20, 'Aktif');
-INSERT INTO habitat VALUES ('Hutan Bambu', 2800.20, 7, 'Penuh');
-INSERT INTO habitat VALUES ('Rawa Kalimantan', 3900.00, 9, 'Aktif');
 
 INSERT INTO pakan VALUES ('d84d43b2-441d-450d-b58e-12fbbf49c88c', '2023-10-01 08:00:00', 'Daging Sapi', 5, 'Tersedia');
 INSERT INTO pakan VALUES ('b2a95b99-5821-45b7-b493-17b79d914ef5', '2023-09-22 07:00:00', 'Ikan', 3, 'Tersedia');
