@@ -13,6 +13,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { mapToBackendPayload } from "./components/BaseRegisterForm";
 
 // Extra schema for all staff types
 const staffExtraSchema = z.object({
@@ -33,15 +35,35 @@ export const StaffRegisterModule: React.FC<StaffRegisterModuleProps> = ({
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const handleSubmit = (data: any) => {
+  const handleSubmit = async (data: any) => {
     setIsLoading(true);
-    console.log(`${role} registration:`, { ...data, role });
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const payload = {
+        ...mapToBackendPayload(data, role),
+        id_staf: data.staffId,
+      };
+
+      const res = await fetch(`/api/auth/register/${role}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || "Registration failed");
+      }
+
+      toast.success("Registration successful!");
       router.push("/login");
-    }, 1000);
+    } catch (error: any) {
+      toast.error(error.message || "Registration failed. Please try again.");
+      console.error("Registration error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -51,6 +73,20 @@ export const StaffRegisterModule: React.FC<StaffRegisterModuleProps> = ({
       description={description}
       extraSchema={staffExtraSchema}
       isLoading={isLoading}
+      extraFields={
+        <FormField
+          name="staffId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Staff ID</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter your staff ID" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      }
     />
   );
 };

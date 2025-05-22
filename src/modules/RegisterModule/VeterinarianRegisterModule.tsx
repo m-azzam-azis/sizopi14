@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import BaseRegisterForm from "./components/BaseRegisterForm";
@@ -13,8 +13,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import { mapToBackendPayload } from "./components/BaseRegisterForm";
 
-// Specializations options
 const specializations = [
   { id: "large-mammals", label: "Large Mammals" },
   { id: "reptiles", label: "Reptiles" },
@@ -23,7 +24,6 @@ const specializations = [
   { id: "other", label: "Other" },
 ];
 
-// Extra schema for veterinarian-specific fields
 const vetExtraSchema = z.object({
   certificationNumber: z.string().min(1, "Certification number is required"),
   specializations: z
@@ -34,29 +34,44 @@ const vetExtraSchema = z.object({
 
 export const VeterinarianRegisterModule: React.FC = () => {
   const router = useRouter();
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [selectedSpecs, setSelectedSpecs] = React.useState<string[]>([]);
-  const [showOtherField, setShowOtherField] = React.useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedSpecs, setSelectedSpecs] = useState<string[]>([]);
+  const [showOtherField, setShowOtherField] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setShowOtherField(selectedSpecs.includes("other"));
   }, [selectedSpecs]);
 
-  const handleSubmit = (data: any) => {
+  const handleSubmit = async (data: any) => {
     setIsLoading(true);
-    console.log("Veterinarian registration:", {
-      ...data,
-      role: "veterinarian",
-    });
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const payload = {
+        ...mapToBackendPayload(data, "veterinarian"),
+        no_str: data.certificationNumber,
+      };
+
+      const res = await fetch("/api/auth/register/veterinarian", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || "Registration failed");
+      }
+
+      toast.success("Registration successful!");
       router.push("/login");
-    }, 1000);
+    } catch (error: any) {
+      toast.error(error.message || "Registration failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Additional fields specific to veterinarians
   const extraFields = (
     <>
       <FormField
@@ -65,7 +80,7 @@ export const VeterinarianRegisterModule: React.FC = () => {
           <FormItem>
             <FormLabel>Professional Certification Number</FormLabel>
             <FormControl>
-              <Input placeholder="VET-12345" {...field} />
+              <Input placeholder="STR-12345" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>

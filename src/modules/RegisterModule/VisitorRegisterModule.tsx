@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import BaseRegisterForm, {
   baseRegisterSchema,
   BaseRegisterFormValues,
+  mapToBackendPayload,
 } from "./components/BaseRegisterForm";
 import {
   FormControl,
@@ -29,7 +30,6 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-// Extra schema for visitor-specific fields
 const visitorExtraSchema = z.object({
   address: z.string().min(1, "Address is required"),
   birthDate: z.date({
@@ -37,48 +37,65 @@ const visitorExtraSchema = z.object({
   }),
 });
 
-type VisitorRegisterFormValues = z.infer<typeof visitorExtraSchema>;
+const visitorRegisterSchema = z
+  .object({
+    ...baseRegisterSchema._def.schema.shape,
+    ...visitorExtraSchema.shape,
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+type VisitorRegisterFormValues = BaseRegisterFormValues &
+  z.infer<typeof visitorExtraSchema>;
 
 export const VisitorRegisterModule: React.FC = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+
   const form = useForm<VisitorRegisterFormValues>({
-    resolver: zodResolver(visitorExtraSchema),
+    resolver: zodResolver(visitorRegisterSchema),
     defaultValues: {
-      name: "",
+      firstName: "",
+      lastName: "",
+      middleName: "",
       email: "",
+      username: "",
+      phoneNumber: "",
       password: "",
       confirmPassword: "",
       address: "",
+      birthDate: undefined,
     },
   });
 
-  const handleSubmit = async (
-    data: BaseRegisterFormValues & { address?: string; birthDate?: Date }
-  ) => {
+  const handleSubmit = async (data: VisitorRegisterFormValues) => {
     setIsLoading(true);
 
     try {
-      // In a real app, this would make an API call to register the user
-      console.log("Registration submitted:", {
-        ...data,
-        role: "visitor",
+      const payload = mapToBackendPayload(data, "visitor");
+      const res = await fetch("/api/auth/register/visitor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || "Registration failed");
+      }
 
       toast.success("Registration successful!");
       router.push("/login");
-    } catch (error) {
-      console.error("Registration failed:", error);
-      toast.error("Registration failed. Please try again.");
+    } catch (error: any) {
+      toast.error(error.message || "Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Additional fields specific to visitors
   const extraFields = (
     <>
       <FormField
@@ -150,8 +167,8 @@ export const VisitorRegisterModule: React.FC = () => {
   return (
     <BaseRegisterForm
       onSubmit={handleSubmit}
-      roleTitle="Register as Visitor"
-      roleDescription="Create your visitor account to purchase tickets and access visitor features"
+      title="Register as Visitor"
+      description="Create your visitor account to purchase tickets and access visitor features"
       extraFields={extraFields}
       isLoading={isLoading}
     />

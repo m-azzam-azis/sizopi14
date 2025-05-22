@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-// Base schema for all registration forms
 export const baseRegisterSchema = z
   .object({
     firstName: z.string().min(1, "First name is required"),
@@ -36,6 +35,39 @@ export const baseRegisterSchema = z
   });
 
 export type BaseRegisterFormValues = z.infer<typeof baseRegisterSchema>;
+
+export function mapToBackendPayload(data: any, role: string) {
+  const base = {
+    username: data.username,
+    email: data.email,
+    password: data.password,
+    nama_depan: data.firstName,
+    nama_tengah: data.middleName || "",
+    nama_belakang: data.lastName,
+    no_telepon: data.phoneNumber,
+  };
+
+  if (role === "visitor") {
+    return {
+      ...base,
+      alamat: data.address,
+      tgl_lahir: data.birthDate,
+    };
+  }
+  if (role === "veterinarian") {
+    return {
+      ...base,
+      no_str: data.certificationNumber,
+    };
+  }
+  if (role === "caretaker" || role === "trainer" || role === "admin") {
+    return {
+      ...base,
+      id_staf: data.staffId,
+    };
+  }
+  return base;
+}
 
 interface BaseRegisterFormProps {
   onSubmit: (data: any) => void;
@@ -57,7 +89,6 @@ const BaseRegisterForm: React.FC<BaseRegisterFormProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Combine base schema with any extra fields
   const formSchema = extraSchema
     ? baseRegisterSchema.and(extraSchema)
     : baseRegisterSchema;
@@ -202,7 +233,6 @@ const BaseRegisterForm: React.FC<BaseRegisterFormProps> = ({
                       />
                     </FormControl>
                     <Button
-                      // variant={"default"}
                       variant="ghost"
                       size="icon"
                       className="absolute top-0 right-0 h-full px-3"
@@ -235,7 +265,6 @@ const BaseRegisterForm: React.FC<BaseRegisterFormProps> = ({
                       />
                     </FormControl>
                     <Button
-                      // variant={"default"}
                       variant="ghost"
                       size="icon"
                       className="absolute top-0 right-0 h-full px-3"

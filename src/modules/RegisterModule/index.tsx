@@ -11,14 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UserRole } from "@/types/user";
-import {
-  Users,
-  User,
-  Stethoscope,
-  Bone,
-  ShieldCheck,
-  Theater,
-} from "lucide-react";
+import { Users, Stethoscope, Bone, ShieldCheck, Theater } from "lucide-react";
 
 const roles: {
   id: UserRole;
