@@ -39,7 +39,7 @@ export const Navbar = () => {
 
   // Use getUserRole instead of hardcoded role
   const data = {
-    isLoggedIn: true,
+    isLoggedIn: false,
     user: {
       role: getUserRole(),
     },

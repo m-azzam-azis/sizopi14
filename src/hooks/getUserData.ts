@@ -54,7 +54,15 @@ type sessionType = {
   iat: number;
 };
 
-const nonAuthenticatedRoutes = ["/login", "/register"];
+const nonAuthenticatedRoutes = [
+  "/login",
+  "/register",
+  "/register/visitor",
+  "/register/veterinarian",
+  "/register/caretaker",
+  "/register/trainer",
+  "/register/admin",
+];
 
 export const getUserData: () => ReturnType = () => {
   const [token, setToken] = useState<string | null>(null);
@@ -101,9 +109,7 @@ export const getUserData: () => ReturnType = () => {
 
   useEffect(() => {
     if (!isLoading) {
-      if (!token && !nonAuthenticatedRoutes.includes(pathname)) {
-        router.push("/login");
-      } else if (token && nonAuthenticatedRoutes.includes(pathname)) {
+      if (token && nonAuthenticatedRoutes.includes(pathname)) {
         router.push("/");
       }
     }
