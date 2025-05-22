@@ -1,6 +1,5 @@
 import { Pengguna } from "@/db/models/pengguna";
 import { PenjagaHewan } from "@/db/models/penjagaHewan";
-import { PenggunaType, PenjagaHewanType } from "@/db/types";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: Request) {

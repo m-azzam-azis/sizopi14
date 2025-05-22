@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { UserRole } from "@/types/user";
 import BaseRegisterForm from "./components/BaseRegisterForm";

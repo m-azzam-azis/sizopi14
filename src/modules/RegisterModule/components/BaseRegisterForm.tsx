@@ -6,7 +6,7 @@ import { useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Eye, EyeOff, Lock, Mail, User, ChevronLeft } from "lucide-react";
+import { Eye, EyeOff, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
