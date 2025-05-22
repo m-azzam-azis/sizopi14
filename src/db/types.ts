@@ -34,7 +34,7 @@ export interface CatatanMedisType {
 }
 
 export interface DokterHewanType {
-  username_dh: string;
+  username_DH: string;
   no_str: string;
 }
 
@@ -101,7 +101,7 @@ export interface PakanType {
 }
 
 export interface PelatihHewanType {
-  username_lh: string;
+  username_LH: string;
   id_staf: string;
 }
 
@@ -116,18 +116,18 @@ export interface PenggunaType {
 }
 
 export interface PengunjungType {
-  username_p: string;
+  username_P: string;
   alamat: string;
   tgl_lahir: Date;
 }
 
 export interface PenjagaHewanType {
-  username_jh: string;
+  username_JH: string;
   id_staf: string;
 }
 
 export interface ReservasiType {
-  username_p: string;
+  username_P: string;
   nama_fasilitas: string;
   tanggal_kunjungan: Date;
   jumlah_tiket: number;
@@ -135,7 +135,7 @@ export interface ReservasiType {
 }
 
 export interface SpesialisasiType {
-  username_sh: string;
+  username_SH: string;
   nama_spesialisasi: string;
 }
 
