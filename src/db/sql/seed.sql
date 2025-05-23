@@ -1,26 +1,26 @@
-DROP TABLE IF EXISTS pengguna;
-DROP TABLE IF EXISTS pengunjung;
-DROP TABLE IF EXISTS dokter_hewan;
-DROP TABLE IF EXISTS spesialisasi;
-DROP TABLE IF EXISTS penjaga_hewan;
-DROP TABLE IF EXISTS pelatih_hewan;
-DROP TABLE IF EXISTS staf_admin;
-DROP TABLE IF EXISTS hewan;
-DROP TABLE IF EXISTS catatan_medis;
-DROP TABLE IF EXISTS habitat;
-DROP TABLE IF EXISTS pakan;
-DROP TABLE IF EXISTS memberi;
-DROP TABLE IF EXISTS fasilitas;
-DROP TABLE IF EXISTS atraksi;
-DROP TABLE IF EXISTS jadwal_penugasan;
-DROP TABLE IF EXISTS berpartisipasi;
-DROP TABLE IF EXISTS jadwal_pemeriksaan_kesehatan;
-DROP TABLE IF EXISTS wahana;
-DROP TABLE IF EXISTS adopter;
-DROP TABLE IF EXISTS individu;
-DROP TABLE IF EXISTS organisasi;
-DROP TABLE IF EXISTS adopsi;
-DROP TABLE IF EXISTS reservasi;
+DROP TABLE IF EXISTS pengguna CASCADE;
+DROP TABLE IF EXISTS pengunjung CASCADE;
+DROP TABLE IF EXISTS dokter_hewan  CASCADE;
+DROP TABLE IF EXISTS spesialisasi CASCADE;
+DROP TABLE IF EXISTS penjaga_hewan CASCADE;
+DROP TABLE IF EXISTS pelatih_hewan CASCADE;
+DROP TABLE IF EXISTS staf_admin CASCADE;
+DROP TABLE IF EXISTS hewan CASCADE;
+DROP TABLE IF EXISTS catatan_medis CASCADE;
+DROP TABLE IF EXISTS habitat CASCADE;
+DROP TABLE IF EXISTS pakan CASCADE;
+DROP TABLE IF EXISTS memberi CASCADE;
+DROP TABLE IF EXISTS fasilitas CASCADE;
+DROP TABLE IF EXISTS atraksi CASCADE;
+DROP TABLE IF EXISTS jadwal_penugasan CASCADE;
+DROP TABLE IF EXISTS berpartisipasi CASCADE;
+DROP TABLE IF EXISTS jadwal_pemeriksaan_kesehatan CASCADE;
+DROP TABLE IF EXISTS wahana CASCADE;
+DROP TABLE IF EXISTS adopter CASCADE;
+DROP TABLE IF EXISTS individu CASCADE;
+DROP TABLE IF EXISTS organisasi CASCADE;
+DROP TABLE IF EXISTS adopsi CASCADE;
+DROP TABLE IF EXISTS reservasi CASCADE;
 
 CREATE TABLE PENGGUNA (
   username VARCHAR(50) PRIMARY KEY,
@@ -118,10 +118,12 @@ CREATE TABLE PAKAN (
 );
 
 CREATE TABLE MEMBERI (
-  id_hewan UUID REFERENCES HEWAN(id),
-  jadwal TIMESTAMP NOT NULL,
+  id_hewan UUID,
+  jadwal TIMESTAMP,
   username_jh VARCHAR(50) REFERENCES PENJAGA_HEWAN(username_jh),
-  PRIMARY KEY (id_hewan)
+  
+  PRIMARY KEY (id_hewan, jadwal),
+  FOREIGN KEY (id_hewan, jadwal) REFERENCES PAKAN (id_hewan, jadwal) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE FASILITAS (
@@ -161,7 +163,7 @@ CREATE TABLE BERPARTISIPASI (
 CREATE TABLE JADWAL_PEMERIKSAAN_KESEHATAN (
 	id_hewan UUID,
 	tgl_pemeriksaan_selanjutnya DATE,
-	freq_pemeriksaan_rutin INT NOT NULL,
+	freq_pemeriksaan_rutin INT NOT NULL DEFAULT 3,
 	PRIMARY KEY (id_hewan, tgl_pemeriksaan_selanjutnya),
 	CONSTRAINT fk_jpk_hewan FOREIGN KEY (id_hewan)
     	REFERENCES hewan(id)
@@ -219,15 +221,15 @@ CREATE TABLE ADOPSI (
 
 CREATE TABLE RESERVASI (
    username_P VARCHAR(50) NOT NULL,
-   nama_fasilitas VARCHAR(50) NOT NULL,
+   nama_atraksi VARCHAR(50) NOT NULL,
    tanggal_kunjungan DATE NOT NULL,
    jumlah_tiket INT NOT NULL,
    status VARCHAR(50) NOT NULL,
 
 
-   PRIMARY KEY (username_P, nama_fasilitas, tanggal_kunjungan),
+   PRIMARY KEY (username_P, nama_atraksi, tanggal_kunjungan),
    FOREIGN KEY (username_P) REFERENCES PENGUNJUNG(username_P) ON UPDATE CASCADE ON DELETE CASCADE,
-   FOREIGN KEY (nama_fasilitas) REFERENCES FASILITAS(nama) ON UPDATE CASCADE ON DELETE CASCADE
+   FOREIGN KEY (nama_atraksi) REFERENCES ATRAKSI(nama_atraksi) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 INSERT INTO pengguna VALUES ('rajatacalista', 'ywaskita@example.com', 'P5hX6Syg*A', 'Prasetya', 'NULL', 'Andriani', '089635460305');
@@ -503,17 +505,22 @@ INSERT INTO pakan VALUES ('b2a95b99-5821-45b7-b493-17b79d914ef5', '2023-09-22 07
 INSERT INTO pakan VALUES ('98b765a7-6a04-4b3d-b118-c8f26d72e433', '2023-08-30 08:30:00', 'Sayuran', 2, 'Tersedia');
 INSERT INTO pakan VALUES ('b8c4d74f-239f-4e16-a109-f24b263eb4e5', '2023-09-05 09:00:00', 'Daging Ayam', 4, 'Tersedia');
 INSERT INTO pakan VALUES ('cfbd3c9b-4733-4a9f-8a37-d85a1ea38d2b', '2023-07-20 08:45:00', 'Roti', 1, 'Tersedia');
+INSERT INTO pakan VALUES ('1787f195-1111-4e53-8a7d-dfded104abef', '2023-12-01 10:00:00', 'Wortel', 3, 'Tersedia');
+INSERT INTO pakan VALUES ('054e0e4d-9b2b-45ae-88d7-3cf983849953', '2023-11-20 09:30:00', 'Buah-buahan', 2, 'Tersedia');
+INSERT INTO pakan VALUES ('003417f2-cf99-4dff-b42b-4167e5a09a31', '2023-10-15 07:45:00', 'Biji-bijian', 4, 'Tersedia');
+INSERT INTO pakan VALUES ('d3f0c021-bb7f-44e9-a31f-2304ef6b34a0', '2023-09-18 08:15:00', 'Rumput Segar', 6, 'Tersedia');
+INSERT INTO pakan VALUES ('54dbb957-d7b1-4094-8084-9a2a33a4f7be', '2023-08-22 10:30:00', 'Ikan Kecil', 3, 'Tersedia');
 
-INSERT INTO memberi VALUES ('d84d43b2-441d-450d-b58e-12fbbf49c88c', '2023-10-01 09:00:00', 'jailanikenes');
-INSERT INTO memberi VALUES ('b2a95b99-5821-45b7-b493-17b79d914ef5', '2023-09-23 08:00:00', 'pratiwicornelia');
-INSERT INTO memberi VALUES ('98b765a7-6a04-4b3d-b118-c8f26d72e433', '2023-08-15 07:30:00', 'limarmaryati');
-INSERT INTO memberi VALUES ('b8c4d74f-239f-4e16-a109-f24b263eb4e5', '2023-09-08 08:15:00', 'omaryadi');
-INSERT INTO memberi VALUES ('cfbd3c9b-4733-4a9f-8a37-d85a1ea38d2b', '2023-06-25 09:00:00', 'knababan');
-INSERT INTO memberi VALUES ('1787f195-1111-4e53-8a7d-dfded104abef', '2023-07-12 08:45:00', 'rahmiardianto');
-INSERT INTO memberi VALUES ('054e0e4d-9b2b-45ae-88d7-3cf983849953', '2023-05-17 07:00:00', 'darmaji97');
-INSERT INTO memberi VALUES ('003417f2-cf99-4dff-b42b-4167e5a09a31', '2023-10-10 09:30:00', 'aswanilazuardi');
-INSERT INTO memberi VALUES ('d3f0c021-bb7f-44e9-a31f-2304ef6b34a0', '2023-08-20 07:45:00', 'qhidayat');
-INSERT INTO memberi VALUES ('54dbb957-d7b1-4094-8084-9a2a33a4f7be', '2023-09-13 08:30:00', 'ianhastuti');
+INSERT INTO memberi VALUES ('1787f195-1111-4e53-8a7d-dfded104abef', '2023-12-01 10:00:00', 'rahmiardianto');
+INSERT INTO memberi VALUES ('054e0e4d-9b2b-45ae-88d7-3cf983849953', '2023-11-20 09:30:00', 'darmaji97');
+INSERT INTO memberi VALUES ('003417f2-cf99-4dff-b42b-4167e5a09a31', '2023-10-15 07:45:00', 'aswanilazuardi');
+INSERT INTO memberi VALUES ('d3f0c021-bb7f-44e9-a31f-2304ef6b34a0', '2023-09-18 08:15:00', 'qhidayat');
+INSERT INTO memberi VALUES ('54dbb957-d7b1-4094-8084-9a2a33a4f7be', '2023-08-22 10:30:00', 'ianhastuti');
+INSERT INTO memberi VALUES ('d84d43b2-441d-450d-b58e-12fbbf49c88c', '2023-10-01 08:00:00', 'jailanikenes');
+INSERT INTO memberi VALUES ('b2a95b99-5821-45b7-b493-17b79d914ef5', '2023-09-22 07:00:00', 'pratiwicornelia');
+INSERT INTO memberi VALUES ('98b765a7-6a04-4b3d-b118-c8f26d72e433', '2023-08-30 08:30:00', 'limarmaryati');
+INSERT INTO memberi VALUES ('b8c4d74f-239f-4e16-a109-f24b263eb4e5', '2023-09-05 09:00:00', 'omaryadi');
+INSERT INTO memberi VALUES ('cfbd3c9b-4733-4a9f-8a37-d85a1ea38d2b', '2023-07-20 08:45:00', 'knababan');
 
 INSERT INTO fasilitas VALUES ('Kolam Renang', '2024-05-01 10:00:00', 50);
 INSERT INTO fasilitas VALUES ('Teater Satwa', '2024-05-01 13:30:00', 100);
@@ -523,6 +530,11 @@ INSERT INTO fasilitas VALUES ('Kebun Mini', '2024-05-03 08:00:00', 20);
 INSERT INTO fasilitas VALUES ('Galeri Satwa', '2024-05-03 11:00:00', 40);
 INSERT INTO fasilitas VALUES ('Taman Reptil', '2024-05-04 14:00:00', 35);
 INSERT INTO fasilitas VALUES ('Pojok Burung', '2024-05-04 10:30:00', 25);
+INSERT INTO fasilitas VALUES ('Zona Air', '2024-05-05 12:00:00', 60);
+INSERT INTO fasilitas VALUES ('Zona Tengah', '2024-05-05 15:00:00', 80);
+INSERT INTO fasilitas VALUES ('Zona Hutan', '2024-05-06 09:30:00', 70);
+INSERT INTO fasilitas VALUES ('Zona Tropis', '2024-05-06 13:00:00', 40);
+INSERT INTO fasilitas VALUES ('Zona Hiburan', '2024-05-07 11:30:00', 90);
 
 INSERT INTO atraksi VALUES ('Kolam Renang', 'Zona Air');
 INSERT INTO atraksi VALUES ('Teater Satwa', 'Zona Edukasi');
@@ -566,11 +578,11 @@ INSERT INTO jadwal_penugasan VALUES ('oni40', '2024-05-04 14:00:00', 'Pojok Buru
 INSERT INTO jadwal_penugasan VALUES ('padmarahayu', '2024-05-05 08:00:00', 'Kolam Renang');
 INSERT INTO jadwal_penugasan VALUES ('kayun17', '2024-05-05 10:00:00', 'Teater Satwa');
 
-INSERT INTO wahana VALUES ('Kolam Renang', 'Gunakan pakaian renang yang sesuai dan dilarang berlari di area kolam.');
-INSERT INTO wahana VALUES ('Teater Satwa', 'Dilarang memberi makan hewan selama pertunjukan.');
-INSERT INTO wahana VALUES ('Zona Edukasi', 'Anak-anak harus didampingi oleh orang dewasa.');
-INSERT INTO wahana VALUES ('Panggung Musik', 'Dilarang membawa makanan dan minuman ke area pertunjukan.');
-INSERT INTO wahana VALUES ('Kebun Mini', 'Pengunjung wajib menjaga kebersihan dan tidak merusak tanaman.');
+INSERT INTO wahana VALUES ('Zona Air', 'Pengunjung dilarang berlari di area kolam renang.');
+INSERT INTO wahana VALUES ('Zona Tengah', 'Dilarang membawa makanan dan minuman ke dalam kolam renang.');
+INSERT INTO wahana VALUES ('Zona Hutan', 'Pengunjung dilarang merusak tanaman dan hewan di area hutan.');
+INSERT INTO wahana VALUES ('Zona Tropis', 'Pengunjung dilarang memberi makan hewan di luar jam yang ditentukan.');
+INSERT INTO wahana VALUES ('Zona Hiburan', 'Pengunjung dilarang merokok di area hiburan.');
 
 INSERT INTO adopter VALUES ('rajatacalista', 'd290f1ee-6c54-4b01-90e6-d701748f0851', 15000000);
 INSERT INTO adopter VALUES ('nsihotang', 'c9bf9e57-1685-4c89-bafb-ff5af830be8a', 12500000);
@@ -645,3 +657,10 @@ INSERT INTO adopsi VALUES ('b16b00b5-1234-4dbb-9f91-a1f9a1f9a1f9', '2558cd3c-77f
 INSERT INTO adopsi VALUES ('e743ed82-42a5-43a4-9e35-328cd7ff0e09', '398638ba-97de-4950-83bb-1ec84321498a', 'Belum', '2025-04-01', '2025-12-31', 700000);
 INSERT INTO adopsi VALUES ('aab11cc7-317d-42e8-bb91-8fc64517efab', 'c84949f2-643a-4441-b982-c9dae4915925', 'Lunas', '2025-05-01', '2025-12-31', 650000);
 INSERT INTO adopsi VALUES ('d111b1c5-8e1a-4c0f-bbcd-7f8ccfe7b3e3', '9b8720a0-2f01-44ab-b1dc-77ecdd5f8cf4', 'Belum', '2025-06-01', '2025-12-31', 600000);
+
+INSERT INTO reservasi VALUES ('rajatacalista', 'Kolam Renang', '2024-05-15', 2, 'Aktif');
+INSERT INTO reservasi VALUES ('nsihotang', 'Teater Satwa', '2024-05-16', 4, 'Aktif');
+INSERT INTO reservasi VALUES ('margana08', 'Kolam Renang', '2024-04-25', 2, 'Batal');
+INSERT INTO reservasi VALUES ('dartono24', 'Kolam Renang', '2024-04-10', 3, 'Selesai');
+INSERT INTO reservasi VALUES ('mandalagada', 'Panggung Musik', '2024-04-12', 4, 'Selesai');
+INSERT INTO reservasi VALUES ('rikasinaga', 'Zona Edukasi', '2024-06-05', 2, 'Aktif');
