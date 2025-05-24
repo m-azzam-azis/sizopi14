@@ -75,7 +75,7 @@ CREATE TABLE PELATIH_HEWAN (
 );
 
 CREATE TABLE STAF_ADMIN (
-  username_sa VARCHAR(50) PRIMARY KEY REFERENCES PENGGUNA(username),
+  username_sa VARCHAR(50) PRIMARY KEY REFERENCES PENGGUNA(username) ON UPDATE CASCADE ON DELETE CASCADE,
   id_staf UUID NOT NULL
 );
 
@@ -93,13 +93,13 @@ CREATE TABLE HEWAN (
   asal_hewan VARCHAR(100) NOT NULL,
   tanggal_lahir DATE,
   status_kesehatan VARCHAR(50) NOT NULL,
-  nama_habitat VARCHAR(100) REFERENCES HABITAT(nama),
+  nama_habitat VARCHAR(100) REFERENCES HABITAT(nama) ON UPDATE CASCADE ON DELETE CASCADE,
   url_foto VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE CATATAN_MEDIS (
-  id_hewan UUID REFERENCES HEWAN(id),
-  username_dh VARCHAR(50) REFERENCES DOKTER_HEWAN(username_dh),
+  id_hewan UUID REFERENCES HEWAN(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  username_dh VARCHAR(50) REFERENCES DOKTER_HEWAN(username_dh) ON UPDATE CASCADE ON DELETE CASCADE,
   tanggal_pemeriksaan DATE,
   diagnosis VARCHAR(100),
   pengobatan VARCHAR(100),
@@ -109,7 +109,7 @@ CREATE TABLE CATATAN_MEDIS (
 );
 
 CREATE TABLE PAKAN (
-  id_hewan UUID REFERENCES HEWAN(id),
+  id_hewan UUID REFERENCES HEWAN(id) ON UPDATE CASCADE ON DELETE CASCADE,
   jadwal TIMESTAMP,
   jenis VARCHAR(50) NOT NULL,
   jumlah INT NOT NULL,
@@ -120,7 +120,7 @@ CREATE TABLE PAKAN (
 CREATE TABLE MEMBERI (
   id_hewan UUID,
   jadwal TIMESTAMP,
-  username_jh VARCHAR(50) REFERENCES PENJAGA_HEWAN(username_jh),
+  username_jh VARCHAR(50) REFERENCES PENJAGA_HEWAN(username_jh) ON UPDATE CASCADE ON DELETE CASCADE,
   
   PRIMARY KEY (id_hewan, jadwal),
   FOREIGN KEY (id_hewan, jadwal) REFERENCES PAKAN (id_hewan, jadwal) ON UPDATE CASCADE ON DELETE CASCADE
@@ -136,7 +136,7 @@ CREATE TABLE ATRAKSI (
 	nama_atraksi VARCHAR(50) PRIMARY KEY,
 	lokasi VARCHAR(100) NOT NULL,
 	CONSTRAINT fk_nama_atraksi FOREIGN KEY (nama_atraksi)
-    	REFERENCES fasilitas(nama)
+    	REFERENCES fasilitas(nama) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE JADWAL_PENUGASAN (
@@ -145,9 +145,9 @@ CREATE TABLE JADWAL_PENUGASAN (
 	nama_atraksi VARCHAR(50),
 	PRIMARY KEY (username_lh, tgl_penugasan),
 	CONSTRAINT fk_username_lh FOREIGN KEY (username_lh)
-    	REFERENCES pelatih_hewan(username_lh),
+    	REFERENCES pelatih_hewan(username_lh) ON UPDATE CASCADE ON DELETE CASCADE,
 	CONSTRAINT fk_nama_atraksi_jadwal FOREIGN KEY (nama_atraksi)
-    	REFERENCES atraksi(nama_atraksi)
+    	REFERENCES atraksi(nama_atraksi) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE BERPARTISIPASI (
@@ -155,9 +155,9 @@ CREATE TABLE BERPARTISIPASI (
 	id_hewan UUID,
 	PRIMARY KEY (nama_fasilitas, id_hewan),
 	CONSTRAINT fk_berpartisipasi_fasilitas
-    	FOREIGN KEY (nama_fasilitas) REFERENCES fasilitas(nama),
+    	FOREIGN KEY (nama_fasilitas) REFERENCES fasilitas(nama) ON UPDATE CASCADE ON DELETE CASCADE,
 	CONSTRAINT fk_berpartisipasi_hewan
-    	FOREIGN KEY (id_hewan) REFERENCES hewan(id)
+    	FOREIGN KEY (id_hewan) REFERENCES hewan(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE JADWAL_PEMERIKSAAN_KESEHATAN (
@@ -166,7 +166,7 @@ CREATE TABLE JADWAL_PEMERIKSAAN_KESEHATAN (
 	freq_pemeriksaan_rutin INT NOT NULL DEFAULT 3,
 	PRIMARY KEY (id_hewan, tgl_pemeriksaan_selanjutnya),
 	CONSTRAINT fk_jpk_hewan FOREIGN KEY (id_hewan)
-    	REFERENCES hewan(id)
+    	REFERENCES hewan(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE WAHANA (
@@ -174,7 +174,7 @@ CREATE TABLE WAHANA (
 	peraturan TEXT NOT NULL,
 	CONSTRAINT fk_wahana_fasilitas
     	FOREIGN KEY (nama_wahana)
-    	REFERENCES fasilitas(nama)
+    	REFERENCES fasilitas(nama) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE ADOPTER (

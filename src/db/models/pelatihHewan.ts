@@ -9,4 +9,14 @@ export class PelatihHewan extends BaseModel<PelatihHewanType> {
   async findByUsername(username: string) {
     return this.findBy("username_LH", username);
   }
+
+  async getAllWithUserDetails() {
+    const query = `
+      SELECT ph.*, p.nama_depan, p.nama_belakang, p.username
+      FROM PELATIH_HEWAN ph
+      JOIN PENGGUNA p ON ph.username_lh = p.username
+    `;
+
+    return this.customQuery(query);
+  }
 }
