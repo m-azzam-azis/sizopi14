@@ -13,14 +13,10 @@ export type ReturnType = {
     nama_belakang: string;
     no_telepon: string;
     role: "visitor" | "veterinarian" | "caretaker" | "trainer" | "admin" | "";
-    username_P: string;
     alamat: string;
     tgl_lahir: string;
-    username_JH: string;
     id_staf_JH: string;
-    username_LH: string;
     id_staf_LH: string;
-    username_DH: string;
     no_str: string;
     nama_spesialisasi: string[];
     id_staf_sa: string;
@@ -38,14 +34,10 @@ type sessionType = {
     nama_belakang: string;
     no_telepon: string;
     role: "visitor" | "veterinarian" | "caretaker" | "trainer" | "admin" | "";
-    username_P: string;
     alamat: string;
     tgl_lahir: string;
-    username_JH: string;
     id_staf_JH: string;
-    username_LH: string;
     id_staf_LH: string;
-    username_DH: string;
     no_str: string;
     nama_spesialisasi: string[];
     id_staf_sa: string;
@@ -125,14 +117,10 @@ export const getUserData: () => ReturnType = () => {
         nama_belakang: "",
         no_telepon: "",
         role: "",
-        username_P: "",
         alamat: "",
         tgl_lahir: "",
-        username_JH: "",
         id_staf_JH: "",
-        username_LH: "",
         id_staf_LH: "",
-        username_DH: "",
         no_str: "",
         nama_spesialisasi: [],
         id_staf_sa: "",
@@ -151,14 +139,10 @@ export const getUserData: () => ReturnType = () => {
       nama_belakang: decodedToken.data.nama_belakang,
       no_telepon: decodedToken.data.no_telepon,
       role: decodedToken.data.role,
-      username_P: decodedToken.data.username_P,
       alamat: decodedToken.data.alamat,
       tgl_lahir: decodedToken.data.tgl_lahir,
-      username_JH: decodedToken.data.username_JH,
       id_staf_JH: decodedToken.data.id_staf_JH,
-      username_LH: decodedToken.data.username_LH,
       id_staf_LH: decodedToken.data.id_staf_LH,
-      username_DH: decodedToken.data.username_DH,
       no_str: decodedToken.data.no_str,
       nama_spesialisasi: decodedToken.data.nama_spesialisasi,
       id_staf_sa: decodedToken.data.id_staf_sa,
