@@ -221,15 +221,15 @@ CREATE TABLE ADOPSI (
 
 CREATE TABLE RESERVASI (
    username_P VARCHAR(50) NOT NULL,
-   nama_atraksi VARCHAR(50) NOT NULL,
+   nama_fasilitas VARCHAR(50) NOT NULL,
    tanggal_kunjungan DATE NOT NULL,
    jumlah_tiket INT NOT NULL,
    status VARCHAR(50) NOT NULL,
 
 
-   PRIMARY KEY (username_P, nama_atraksi, tanggal_kunjungan),
+   PRIMARY KEY (username_P, nama_fasilitas, tanggal_kunjungan),
    FOREIGN KEY (username_P) REFERENCES PENGUNJUNG(username_P) ON UPDATE CASCADE ON DELETE CASCADE,
-   FOREIGN KEY (nama_atraksi) REFERENCES ATRAKSI(nama_atraksi) ON UPDATE CASCADE ON DELETE CASCADE
+   FOREIGN KEY (nama_fasilitas) REFERENCES FASILITAS(nama) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 INSERT INTO pengguna VALUES ('rajatacalista', 'ywaskita@example.com', 'P5hX6Syg*A', 'Prasetya', 'NULL', 'Andriani', '089635460305');
@@ -661,6 +661,6 @@ INSERT INTO adopsi VALUES ('d111b1c5-8e1a-4c0f-bbcd-7f8ccfe7b3e3', '9b8720a0-2f0
 INSERT INTO reservasi VALUES ('rajatacalista', 'Kolam Renang', '2024-05-15', 2, 'Aktif');
 INSERT INTO reservasi VALUES ('nsihotang', 'Teater Satwa', '2024-05-16', 4, 'Aktif');
 INSERT INTO reservasi VALUES ('margana08', 'Kolam Renang', '2024-04-25', 2, 'Batal');
-INSERT INTO reservasi VALUES ('dartono24', 'Kolam Renang', '2024-04-10', 3, 'Selesai');
+INSERT INTO reservasi VALUES ('dartono24', 'Zona Tropis', '2024-04-10', 3, 'Selesai');
 INSERT INTO reservasi VALUES ('mandalagada', 'Panggung Musik', '2024-04-12', 4, 'Selesai');
 INSERT INTO reservasi VALUES ('rikasinaga', 'Zona Edukasi', '2024-06-05', 2, 'Aktif');
