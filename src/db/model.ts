@@ -94,7 +94,7 @@ export abstract class BaseModel<T extends QueryParams> {
       column
     )} = $1 RETURNING *`;
     const result = await pool.query(query, [value]);
-    return result.rows[0] ? (result.rows[0] as T) : null;
+    return result.rows[0] ? (result.rows[0] as T) : null;``
   }
 
   async customQuery(query: string, values?: any[]): Promise<any[]> {

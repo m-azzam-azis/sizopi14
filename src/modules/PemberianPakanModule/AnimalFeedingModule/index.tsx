@@ -77,7 +77,6 @@ type PemberianPakan = {
   jenis: string;
   jumlah: number;
   status: "pending" | "completed" | "canceled";
-  username_jh: string;
 };
 
 // Use the same validation schema
@@ -92,155 +91,38 @@ const pakanFormSchema = z.object({
     .min(1, "Jumlah pakan minimal 1")
     .max(10000000, "Jumlah pakan maksimal 10000000"),
   status: z.enum(["pending", "completed", "canceled"]),
-  username_jh: z.string().min(1, "Penjaga hewan harus diisi"),
 });
 
 type PakanFormValues = z.infer<typeof pakanFormSchema>;
 
-// Mock data
-const mockPemberianPakan: PemberianPakan[] = [
-  {
-    id: "1",
-    id_hewan: "H001",
-    jadwal: new Date("2025-04-25T08:00:00"),
-    jenis: "Rumput",
-    jumlah: 200,
-    status: "completed",
-    username_jh: "jh_bambang",
-  },
-  {
-    id: "2",
-    id_hewan: "H002",
-    jadwal: new Date("2025-04-25T09:30:00"),
-    jenis: "Daging",
-    jumlah: 350,
-    status: "pending",
-    username_jh: "jh_sarah",
-  },
-  {
-    id: "3",
-    id_hewan: "H003",
-    jadwal: new Date("2025-04-26T10:00:00"),
-    jenis: "Buah-buahan",
-    jumlah: 100,
-    status: "canceled",
-    username_jh: "jh_ahmad",
-  },
-  {
-    id: "4",
-    id_hewan: "H001",
-    jadwal: new Date("2025-04-26T14:00:00"),
-    jenis: "Rumput",
-    jumlah: 250,
-    status: "pending",
-    username_jh: "jh_sarah",
-  },
-  {
-    id: "5",
-    id_hewan: "H001",
-    jadwal: new Date("2025-04-27T08:00:00"),
-    jenis: "Rumput",
-    jumlah: 200,
-    status: "pending",
-    username_jh: "jh_bambang",
-  },
-  {
-    id: "6",
-    id_hewan: "H002",
-    jadwal: new Date("2025-04-26T16:30:00"),
-    jenis: "Daging",
-    jumlah: 300,
-    status: "pending",
-    username_jh: "jh_sarah",
-  },
-];
-
-const jenisPakan = [
-  "Rumput",
-  "Daging",
-  "Buah-buahan",
-  "Sayuran",
-  "Biji-bijian",
-];
-
-const penjagaHewan = [
-  { username: "jh_bambang", name: "Bambang" },
-  { username: "jh_sarah", name: "Sarah" },
-  { username: "jh_ahmad", name: "Ahmad" },
-];
-
-const hewanExtended = [
-  {
-    id: "H001",
-    name: "Gajah Sumatran",
-    species: "Elephas maximus sumatranus",
-    origin: "Sumatera",
-    birthDate: new Date("2015-06-12"),
-    habitat: "Hutan Hujan Tropis",
-    healthStatus: "Sehat",
-    imageUrl: "https://images.unsplash.com/photo-1557050543-4162f98e2c54?q=80&w=1000&auto=format&fit=crop"
-  },
-  {
-    id: "H002",
-    name: "Harimau Benggala",
-    species: "Panthera tigris tigris",
-    origin: "India",
-    birthDate: new Date("2018-03-24"),
-    habitat: "Hutan Tropis",
-    healthStatus: "Sakit",
-    imageUrl: "https://images.unsplash.com/photo-1561731216-c3a4d99437d5?q=80&w=1000&auto=format&fit=crop"
-  },
-  {
-    id: "H003", 
-    name: "Orangutan",
-    species: "Pongo pygmaeus",
-    origin: "Kalimantan",
-    birthDate: new Date("2017-09-30"),
-    habitat: "Hutan Hujan Tropis",
-    healthStatus: "Sehat",
-    imageUrl: "https://images.unsplash.com/photo-1544715608-1cc9d0a10011?q=80&w=1000&auto=format&fit=crop"
-  },
-  {
-    id: "H004",
-    name: "Komodo",
-    species: "Varanus komodoensis",
-    origin: "Pulau Komodo",
-    birthDate: new Date("2019-11-05"),
-    habitat: "Savana",
-    healthStatus: "Sehat",
-    imageUrl: "https://images.unsplash.com/photo-1585080797525-6830941059c3?q=80&w=1000&auto=format&fit=crop"
-  },
-];
-
 export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
   const router = useRouter();
-  const [pemberianPakan, setPemberianPakan] = useState<PemberianPakan[]>(mockPemberianPakan);
+  const [pemberianPakan, setPemberianPakan] = useState<PemberianPakan[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [editingItem, setEditingItem] = useState<PemberianPakan | null>(null);
-  
-  // Find the animal data
-  const animal = hewanExtended.find(h => h.id === animalId) || {
-    id: animalId,
-    name: "Unknown Animal",
-    species: "Unknown",
-    origin: "Unknown",
-    birthDate: new Date(),
-    habitat: "Unknown",
-    healthStatus: "Unknown",
-    imageUrl: ""
+  const [editingItem, setEditingItem] = useState<PemberianPakan | null>(null);  const [animal, setAnimal] = useState<any>(null);
+  const [jenisPakan, setJenisPakan] = useState<string[]>(["Rumput", "Daging", "Buah-buahan", "Sayuran", "Biji-bijian"]);
+  // Fetch animal and pakan data
+  const fetchData = async () => {
+    try {
+      // Fetch animal data
+      const animalRes = await fetch(`/api/hewan?id=${animalId}`);
+      const animalData = await animalRes.json();
+      setAnimal(animalData[0]);
+
+      // Fetch pakan data for the specific animal
+      const pakanRes = await fetch(`/api/pakan?id_hewan=${animalId}`);
+      const pakanData = await pakanRes.json();
+      setPemberianPakan(pakanData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
   };
 
-  // Filter data for this specific animal
-  const animalFeedingSchedule = pemberianPakan.filter(item => 
-    item.id_hewan === animalId &&
-    (search === "" || 
-     item.jenis.toLowerCase().includes(search.toLowerCase()) ||
-     item.username_jh.toLowerCase().includes(search.toLowerCase())) &&
-    (statusFilter === null || item.status === statusFilter)
-  );
-
+  useEffect(() => {
+    fetchData();
+  }, [animalId]);
   // Setup form with react-hook-form and zod validation
   const form = useForm<PakanFormValues>({
     resolver: zodResolver(pakanFormSchema),
@@ -250,10 +132,8 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
       jenis: "",
       jumlah: 1,
       status: "pending",
-      username_jh: "",
     },
   });
-
   // Reset form when dialog is closed
   useEffect(() => {
     if (!isDialogOpen) {
@@ -263,12 +143,10 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
         jenis: "",
         jumlah: 1,
         status: "pending",
-        username_jh: "",
       });
       setEditingItem(null);
     }
   }, [isDialogOpen, form, animalId]);
-
   // Update form values when editing
   useEffect(() => {
     if (editingItem) {
@@ -278,37 +156,77 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
         jenis: editingItem.jenis,
         jumlah: editingItem.jumlah,
         status: editingItem.status,
-        username_jh: editingItem.username_jh,
       });
       setIsDialogOpen(true);
     }
   }, [editingItem, form]);
-
-  // Handle form submission
-  const onSubmit = (data: PakanFormValues) => {
-    if (editingItem) {
-      // Update existing item
-      setPemberianPakan(
-        pemberianPakan.map((item) =>
-          item.id === editingItem.id ? { ...data, id: item.id } as PemberianPakan : item
-        )
-      );
-    } else {
-      // Create new item
-      const newItem: PemberianPakan = {
-        id: `${pemberianPakan.length + 1}`,
-        ...data,
-      };
-      setPemberianPakan([...pemberianPakan, newItem]);
+  // Filter data for this specific animal
+  const animalFeedingSchedule = pemberianPakan.filter(item => 
+    item.id_hewan === animalId &&
+    (search === "" || 
+     item.jenis.toLowerCase().includes(search.toLowerCase())) &&
+    (statusFilter === null || item.status === statusFilter)
+  );// Handle form submission
+  const onSubmit = async (data: PakanFormValues) => {
+    console.log("Form submitted with data:", data);
+    console.log("Form validation state:", form.formState.isValid);
+    console.log("Form errors:", form.formState.errors);
+    
+    try {
+      if (editingItem) {
+        // Update existing item
+        const response = await fetch(`/api/pakan?id_hewan=${editingItem.id_hewan}&jadwal=${editingItem.jadwal}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error("Error response:", errorData);
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        setPemberianPakan(pemberianPakan.map((item) =>
+          item.id_hewan === editingItem.id_hewan && String(item.jadwal) === String(editingItem.jadwal)
+            ? { ...data, id: item.id, jadwal: data.jadwal }
+            : item
+        ));
+      } else {
+        // Create new item
+        console.log("Creating new pakan with data:", data);
+        const response = await fetch(`/api/pakan`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error("Error response:", errorData);
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const newItem = await response.json();
+        console.log("New item created:", newItem);
+        setPemberianPakan([...pemberianPakan, newItem]);
+      }
+      setIsDialogOpen(false);
+      fetchData(); // Refresh data
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      // You can add a toast notification here to show the error to the user
     }
-    setIsDialogOpen(false);
   };
 
   // Delete an item
-  const handleDelete = (id: string) => {
-    setPemberianPakan(pemberianPakan.filter((item) => item.id !== id));
+  const handleDelete = async (id_hewan: string, jadwal: Date) => {
+    await fetch(`/api/pakan?id_hewan=${id_hewan}&jadwal=${jadwal.toISOString()}`, {
+      method: "DELETE",
+    });
+    setPemberianPakan(pemberianPakan.filter((item) => !(item.id_hewan === id_hewan && String(item.jadwal) === String(jadwal))));
+    fetchData(); // Refresh data
   };
-
   // Get status badge color
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -323,21 +241,7 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
     }
   };
 
-  // Helper to get caretaker name from username
-  const getCaretakerName = (username: string) => {
-    const caretaker = penjagaHewan.find(p => p.username === username);
-    return caretaker ? caretaker.name : username;
-  };
-
-  const getStatusKesehatanColor = (status: string) => {
-    
-    switch(status) {
-      case "Sehat": return "bg-green-100 text-green-800";
-      case "Pemulihan": return "bg-yellow-100 text-yellow-800";
-      case "Sakit": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  }
+  if (!animal) return <div>Loading...</div>;
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -351,41 +255,31 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
       </Button>
       
       <div className="flex flex-col md:flex-row gap-6 mb-8">
-        <div className="relative h-40 w-40 rounded-lg overflow-hidden shadow-md">
-          {animal.imageUrl && (
-            <img
-              src={animal.imageUrl}
-              alt={animal.name}
-              className="object-cover w-full h-full"
-            />
-          )}
-        </div>
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold flex items-center gap-2">
-            {animal.name} 
+            {animal.nama} 
             <Badge className="ml-2 text-sm">
               {animal.id}
             </Badge>
           </h1>
-          <p className="text-muted-foreground italic mb-2">{animal.species}</p>
-          
+          <p className="text-muted-foreground italic mb-2">{animal.spesies}</p>
           <div className="grid grid-cols-2 gap-x-12 gap-y-1 mt-4">
             <div>
               <span className="text-sm font-semibold">Asal:</span>
-              <span className="ml-2">{animal.origin}</span>
+              <span className="ml-2">{animal.asal_hewan}</span>
             </div>
             <div>
               <span className="text-sm font-semibold">Habitat:</span>
-              <span className="ml-2">{animal.habitat}</span>
+              <span className="ml-2">{animal.nama_habitat}</span>
             </div>
             <div>
               <span className="text-sm font-semibold">Tanggal Lahir:</span>
-              <span className="ml-2">{format(animal.birthDate, "dd/MM/yyyy")}</span>
+              <span className="ml-2">{format(new Date(animal.tanggal_lahir), "dd/MM/yyyy")}</span>
             </div>
             <div>
               <span className="text-sm font-semibold">Status Kesehatan:</span>
-              <Badge className="ml-2" variant={animal.healthStatus === "Sehat" ? "outline" : "secondary"}>
-                {animal.healthStatus}
+              <Badge className="ml-2" variant={animal.status_kesehatan === "Sehat" ? "outline" : "secondary"}>
+                {animal.status_kesehatan}
               </Badge>
             </div>
           </div>
@@ -400,7 +294,7 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Cari jenis pakan, penjaga..."
+                  placeholder="Cari jenis pakan..."
                   className="pl-10 w-full md:w-64"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -429,7 +323,6 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
             <p className="text-muted-foreground text-sm">
               Menampilkan {animalFeedingSchedule.length} jadwal pemberian pakan
             </p>
-            
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
@@ -444,13 +337,18 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
                   <DialogDescription>
                     {editingItem
                       ? "Ubah detail pemberian pakan yang ada"
-                      : `Masukkan detail jadwal pemberian pakan baru untuk ${animal.name}`}
+                      : `Masukkan detail jadwal pemberian pakan baru untuk ${animal.nama}`}
                   </DialogDescription>
-                </DialogHeader>
-                <Form {...form}>
+                </DialogHeader>                <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     {/* ID Hewan is pre-selected and hidden */}
-                    <input type="hidden" {...form.register("id_hewan")} />
+                    <FormField
+                      control={form.control}
+                      name="id_hewan"
+                      render={({ field }) => (
+                        <input type="hidden" {...field} />
+                      )}
+                    />
                     
                     <FormField
                       control={form.control}
@@ -458,70 +356,29 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
                           <FormLabel>Jadwal</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={`w-full pl-3 text-left font-normal ${
-                                    !field.value ? "text-muted-foreground" : ""
-                                  }`}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP HH:mm")
-                                  ) : (
-                                    <span>Pilih tanggal dan waktu</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={(date) => {
-                                  if (date) {
-                                    const currentValue = field.value;
-                                    date.setHours(
-                                      currentValue.getHours(),
-                                      currentValue.getMinutes()
-                                    );
-                                    field.onChange(date);
-                                  }
-                                }}
-                                initialFocus
-                              />
-                              <div className="p-3 border-t border-border">
-                                <Input
-                                  type="time"
-                                  onChange={(e) => {
-                                    const [hours, minutes] = e.target.value
-                                      .split(":")
-                                      .map(Number);
-                                    const date = new Date(field.value);
-                                    date.setHours(hours, minutes);
-                                    field.onChange(date);
-                                  }}
-                                  defaultValue={format(field.value, "HH:mm")}
-                                />
-                              </div>
-                            </PopoverContent>
-                          </Popover>
+                          <FormControl>
+                            <Input
+                              type="datetime-local"
+                              value={field.value ? format(field.value, "yyyy-MM-dd'T'HH:mm") : ""}
+                              onChange={(e) => {
+                                const date = e.target.value ? new Date(e.target.value) : undefined;
+                                field.onChange(date);
+                              }}
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
-                    <FormField
+                      <FormField
                       control={form.control}
                       name="jenis"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Jenis Pakan</FormLabel>
                           <Select
-                            onValueChange={field.onChange as unknown as (value: string) => void}
-                            defaultValue={field.value}
+                            onValueChange={field.onChange}
+                            value={field.value}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -539,9 +396,7 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
                           <FormMessage />
                         </FormItem>
                       )}
-                    />
-                    
-                    <FormField
+                    />                    <FormField
                       control={form.control}
                       name="jumlah"
                       render={({ field }) => (
@@ -587,40 +442,12 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
                         )}
                     />
                     )}
-                    
-                    <FormField
-                      control={form.control}
-                      name="username_jh"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Penjaga Hewan</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Pilih penjaga hewan" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {penjagaHewan.map((penjaga) => (
-                                <SelectItem
-                                  key={penjaga.username}
-                                  value={penjaga.username}
-                                >
-                                  {penjaga.name} ({penjaga.username})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <DialogFooter>
-                      <Button type="submit">
+                      <DialogFooter>
+                      <Button 
+                        type="submit" 
+                        className="bg-green-500 text-white hover:bg-green-600"
+                        onClick={() => console.log("Submit button clicked")}
+                      >
                         {editingItem ? "Simpan Perubahan" : "Tambah Jadwal"}
                       </Button>
                     </DialogFooter>
@@ -638,7 +465,6 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
                   <TableHead>Jenis Pakan</TableHead>
                   <TableHead>Jumlah (gram)</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Penjaga Hewan</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
@@ -650,7 +476,6 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
                       <TableCell>{item.jenis}</TableCell>
                       <TableCell>{item.jumlah}</TableCell>
                       <TableCell>{getStatusBadge(item.status)}</TableCell>
-                      <TableCell>{getCaretakerName(item.username_jh)}</TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button
                           variant="ghost"
@@ -669,13 +494,13 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Hapus Jadwal Pemberian Pakan</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Apakah Anda yakin ingin menghapus jadwal pemberian pakan untuk {animal.name} pada {format(new Date(item.jadwal), "dd/MM/yyyy HH:mm")}? Tindakan ini tidak dapat dibatalkan.
+                                Apakah Anda yakin ingin menghapus jadwal pemberian pakan untuk {animal.nama} pada {format(new Date(item.jadwal), "dd/MM/yyyy HH:mm")}? Tindakan ini tidak dapat dibatalkan.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Batal</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleDelete(item.id)}
+                                onClick={() => handleDelete(item.id_hewan, new Date(item.jadwal))}
                                 className="bg-red-500 text-white hover:bg-red-600"
                               >
                                 Hapus
@@ -688,7 +513,7 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
+                    <TableCell colSpan={5} className="text-center py-8">
                       Tidak ada jadwal pemberian pakan untuk hewan ini.
                     </TableCell>
                   </TableRow>

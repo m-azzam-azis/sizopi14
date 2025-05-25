@@ -1,8 +1,7 @@
 import React from "react";
 import { AnimalFeedingModule } from "@/modules/PemberianPakanModule/AnimalFeedingModule";
 
-const AnimalFeedingPage = ({ params }: { params: { id: string } }) => {
-  return <AnimalFeedingModule animalId={params.id} />;
-};
-
-export default AnimalFeedingPage;
+export default async function AnimalFeedingPage({ params }: { params: { id: string } }) {
+  const { id } = params;
+  return <AnimalFeedingModule animalId={id} />;
+}
