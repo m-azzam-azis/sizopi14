@@ -47,7 +47,7 @@ export default function DesignSytemModule() {
 
       <div className="grid grid-cols-3 gap-4 py-5">
         <Button
-          variant={"primary"}
+          variant={"default"}
           onClick={() => {
             toast({
               title: "Loading",
@@ -58,7 +58,7 @@ export default function DesignSytemModule() {
           Loading toast
         </Button>
         <Button
-          variant={"primary"}
+          variant={"default"}
           onClick={() => {
             toast({
               title: "Error message",
@@ -69,7 +69,7 @@ export default function DesignSytemModule() {
           Error toast
         </Button>
         <Button
-          variant={"primary"}
+          variant={"default"}
           onClick={() => {
             toast({
               title: "Success message",
@@ -127,7 +127,7 @@ export default function DesignSytemModule() {
       </div>
 
       <div className="w-1/5 space-y-3">
-        <Input placeholder="Search..." label="Full Name" desc="Desc" required />
+        <Input placeholder="Search..." required />
         <Input
           icon={<Search />}
           placeholder="Search..."
@@ -159,7 +159,7 @@ export default function DesignSytemModule() {
 
       <div className="flex flex-col gap-1 w-fit">
         <div className="flex flex-rpw gap-1 w-fit">
-          <Button>
+          <Button variant="default">
             <UserCircle2 />
             Register
             <UserCircle2 />
@@ -169,14 +169,19 @@ export default function DesignSytemModule() {
             Register
             <UserCircle2 />
           </Button>
-          <Button variant="ghost">
+          <Button variant="outline">
+            <UserCircle2 />
+            Register
+            <UserCircle2 />
+          </Button>
+          <Button variant="link">
             <UserCircle2 />
             Register
             <UserCircle2 />
           </Button>
         </div>
         <div className="flex flex-row gap-1">
-          <Button disabled>
+          <Button variant="default" disabled>
             <UserCircle2 />
             Register
             <UserCircle2 />
@@ -186,7 +191,12 @@ export default function DesignSytemModule() {
             Register
             <UserCircle2 />
           </Button>
-          <Button variant="ghost" disabled>
+          <Button variant="outline" disabled>
+            <UserCircle2 />
+            Register
+            <UserCircle2 />
+          </Button>
+          <Button variant="link" disabled>
             <UserCircle2 />
             Register
             <UserCircle2 />
