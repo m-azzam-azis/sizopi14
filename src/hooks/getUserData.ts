@@ -46,15 +46,9 @@ type sessionType = {
   iat: number;
 };
 
-const nonAuthenticatedRoutes = [
-  "/login",
-  "/register",
-  "/register/visitor",
-  "/register/veterinarian",
-  "/register/caretaker",
-  "/register/trainer",
-  "/register/admin",
-];
+const nonAuthenticatedRoutes = ["/login", "/register", "/api/auth"];
+
+const adminOnlyRoutes = ["/atraksi", "/api/atraksi"];
 
 export const getUserData: () => ReturnType = () => {
   const [token, setToken] = useState<string | null>(null);
@@ -101,11 +95,24 @@ export const getUserData: () => ReturnType = () => {
 
   useEffect(() => {
     if (!isLoading) {
-      if (token && nonAuthenticatedRoutes.includes(pathname)) {
+      if (
+        token &&
+        nonAuthenticatedRoutes.some((route) => pathname.startsWith(route))
+      ) {
         router.push("/");
       }
+
+      if (
+        token &&
+        adminOnlyRoutes.some((route) => pathname.startsWith(route))
+      ) {
+        if (decodedToken && decodedToken.data.role !== "admin") {
+          router.push("/");
+          return;
+        }
+      }
     }
-  }, [isLoading, token, pathname, router]);
+  }, [isLoading, token, pathname, router, decodedToken]);
 
   if (isLoading || !decodedToken) {
     return {
