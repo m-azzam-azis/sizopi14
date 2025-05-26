@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -21,277 +22,81 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
 
-interface RiwayatAdopsiModuleProps {
+interface AdopterDetail {
+  id: string;
+  name: string;
+  type: string;
+  address: string;
+  contact: string;
+  total_kontribusi: number;
+}
+
+interface Adoption {
+  id_hewan: string;
+  nama_hewan: string;
+  spesies: string;
+  status_kesehatan: string;
+  status_pembayaran: string;
+  kontribusi_finansial: number;
+  tgl_mulai_adopsi: string;
+  tgl_berhenti_adopsi: string;
+}
+
+interface AdopterDetailProps {
   adopterId: string;
 }
 
-// Define interfaces for type safety
-interface Adopter {
-  id: string;
-  name: string;
-  address: string;
-  contact: string;
-  totalContribution: number;
-}
-
-interface AdoptionRecord {
-  id: string;
-  animalName: string;
-  animalSpecies: string;
-  animalHabitat: string;
-  startDate: string;
-  endDate: string;
-  contributionAmount: number;
-  status: "Active" | "Expired";
-  paymentStatus: "Paid" | "Pending";
-}
-
-// Database of all adopters
-const allAdopters: Adopter[] = [
-  {
-    id: "adp-001",
-    name: "Prasetya Andriani",
-    address: "Jl. Diponegoro No. 45, Surabaya",
-    contact: "089635460305",
-    totalContribution: 15000000,
-  },
-  {
-    id: "adp-010",
-    name: "Agus Januar",
-    address: "Jl. Sudirman No. 123, Jakarta",
-    contact: "083573452405",
-    totalContribution: 3200000,
-  },
-  {
-    id: "adp-011",
-    name: "Yayasan Margana Jaya",
-    address: "Jl. Merdeka No. 123, Jakarta Pusat",
-    contact: "080925544576",
-    totalContribution: 25000000,
-  },
-  {
-    id: "adp-012",
-    name: "Lembaga Dwinarno Mandiri",
-    address: "Jl. Pahlawan No. 55, Bandung",
-    contact: "080749318642",
-    totalContribution: 22000000,
-  },
-  {
-    id: "adp-013",
-    name: "Rika Sinaga Foundation",
-    address: "Jl. Gajah Mada No. 72, Medan",
-    contact: "087638079651",
-    totalContribution: 20500000,
-  },
-];
-
-// Database of all adoption records
-const allAdoptionRecords: Record<string, AdoptionRecord[]> = {
-  "adp-001": [
-    {
-      id: "adr-101",
-      animalName: "Nala",
-      animalSpecies: "African Lion",
-      animalHabitat: "Savanna Enclosure",
-      startDate: "2023-05-15",
-      endDate: "2024-05-15",
-      contributionAmount: 6000000,
-      status: "Active",
-      paymentStatus: "Paid",
-    },
-    {
-      id: "adr-102",
-      animalName: "Pumbaa",
-      animalSpecies: "Warthog",
-      animalHabitat: "Savanna Enclosure",
-      startDate: "2022-10-20",
-      endDate: "2023-10-20",
-      contributionAmount: 4000000,
-      status: "Expired",
-      paymentStatus: "Paid",
-    },
-    {
-      id: "adr-103",
-      animalName: "Rex",
-      animalSpecies: "Anjing",
-      animalHabitat: "Pegunungan Alpen",
-      startDate: "2023-08-05",
-      endDate: "2025-08-05",
-      contributionAmount: 5000000,
-      status: "Active",
-      paymentStatus: "Paid",
-    },
-  ],
-  
-  "adp-010": [
-    {
-      id: "adr-201",
-      animalName: "Verstappen", 
-      animalSpecies: "Singa",
-      animalHabitat: "Belanda",
-      startDate: "2023-09-01",
-      endDate: "2024-09-01",
-      contributionAmount: 3200000,
-      status: "Active",
-      paymentStatus: "Paid",
-    }
-  ],
-  
-  "adp-011": [
-    {
-      id: "adr-001",
-      animalName: "Simba",
-      animalSpecies: "African Lion",
-      animalHabitat: "Savanna Enclosure",
-      startDate: "2022-06-10",
-      endDate: "2023-06-10",
-      contributionAmount: 5000000,
-      status: "Expired",
-      paymentStatus: "Paid",
-    },
-    {
-      id: "adr-002",
-      animalName: "Zara",
-      animalSpecies: "Plains Zebra",
-      animalHabitat: "Savanna Enclosure",
-      startDate: "2023-03-15",
-      endDate: "2025-03-15",
-      contributionAmount: 4000000,
-      status: "Active",
-      paymentStatus: "Paid",
-    },
-    {
-      id: "adr-003",
-      animalName: "Rafiki",
-      animalSpecies: "Giraffe",
-      animalHabitat: "Savanna Enclosure",
-      startDate: "2023-01-20",
-      endDate: "2025-01-20",
-      contributionAmount: 6000000,
-      status: "Active",
-      paymentStatus: "Paid",
-    },
-    {
-      id: "adr-004",
-      animalName: "Frost",
-      animalSpecies: "Polar Bear",
-      animalHabitat: "Arctic Zone",
-      startDate: "2022-05-10",
-      endDate: "2023-05-10",
-      contributionAmount: 4500000,
-      status: "Expired",
-      paymentStatus: "Paid",
-    },
-    {
-      id: "adr-005",
-      animalName: "Flipper",
-      animalSpecies: "Bottlenose Dolphin",
-      animalHabitat: "Aquatic Center",
-      startDate: "2023-07-01",
-      endDate: "2025-07-01",
-      contributionAmount: 5500000,
-      status: "Active",
-      paymentStatus: "Paid",
-    },
-  ],
-  
-  "adp-012": [
-    {
-      id: "adr-301",
-      animalName: "Rex",
-      animalSpecies: "Anjing",
-      animalHabitat: "Pegunungan Alpen",
-      startDate: "2023-04-10",
-      endDate: "2025-04-10",
-      contributionAmount: 7000000,
-      status: "Active",
-      paymentStatus: "Paid",
-    },
-    {
-      id: "adr-302",
-      animalName: "Nala",
-      animalSpecies: "African Lion",
-      animalHabitat: "Savanna Enclosure",
-      startDate: "2022-08-15",
-      endDate: "2023-08-15",
-      contributionAmount: 8000000,
-      status: "Expired",
-      paymentStatus: "Paid",
-    },
-    {
-      id: "adr-303",
-      animalName: "Frost",
-      animalSpecies: "Polar Bear",
-      animalHabitat: "Arctic Zone",
-      startDate: "2023-02-20",
-      endDate: "2024-02-20",
-      contributionAmount: 7000000,
-      status: "Active",
-      paymentStatus: "Paid",
-    }
-  ],
-  
-  "adp-013": [
-    {
-      id: "adr-401",
-      animalName: "Verstappen", 
-      animalSpecies: "Singa",
-      animalHabitat: "Belanda",
-      startDate: "2022-11-05",
-      endDate: "2023-11-05",
-      contributionAmount: 8500000,
-      status: "Expired",
-      paymentStatus: "Paid",
-    },
-    {
-      id: "adr-402",
-      animalName: "Pumbaa",
-      animalSpecies: "Warthog",
-      animalHabitat: "Savanna Enclosure",
-      startDate: "2023-06-15",
-      endDate: "2024-06-15",
-      contributionAmount: 12000000,
-      status: "Active",
-      paymentStatus: "Paid",
-    }
-  ]
-};
-
-const RiwayatAdopsiModule: React.FC<RiwayatAdopsiModuleProps> = ({ adopterId }) => {
+export default function AdopterDetailModule({ adopterId }: AdopterDetailProps) {
   const router = useRouter();
-  
-  const [adopter, setAdopter] = useState<Adopter | null>(null);
-  const [adoptionRecords, setAdoptionRecords] = useState<AdoptionRecord[]>([]);
-  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-  const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [adopter, setAdopter] = useState<AdopterDetail | null>(null);
+  const [adoptions, setAdoptions] = useState<Adoption[]>([]);
+  const [error, setError] = useState("");
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [adoptionToDelete, setAdoptionToDelete] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
   useEffect(() => {
-    setIsLoading(true);
-    
-    // Simulate API call with setTimeout
-    setTimeout(() => {
-      // Find adopter by ID
-      const foundAdopter = allAdopters.find(a => a.id === adopterId);
-      
-      // Find adoption records for this adopter
-      const adopterRecords = allAdoptionRecords[adopterId] || [];
-      
-      if (foundAdopter) {
-        setAdopter(foundAdopter);
-        setAdoptionRecords(adopterRecords);
+    const fetchAdopterDetail = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/adopter/${adopterId}`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Error response:", errorText);
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log("Fetched adopter data:", data);
+        
+        if (data.adopter) {
+          setAdopter(data.adopter);
+          
+          // Filter adoptions to only show those that are paid in full (status_pembayaran = "Lunas")
+          const paidAdoptions = (data.adoptions || []).filter(
+            (adoption: Adoption) => adoption.status_pembayaran === "Lunas"
+          );
+          
+          setAdoptions(paidAdoptions);
+        } else {
+          setError("Data adopter tidak ditemukan");
+        }
+      } catch (error) {
+        console.error("Error fetching adopter details:", error);
+        setError("Gagal memuat data adopter");
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
-    }, 500);
+    };
+
+    fetchAdopterDetail();
   }, [adopterId]);
 
-  // Function to format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -299,172 +104,163 @@ const RiwayatAdopsiModule: React.FC<RiwayatAdopsiModuleProps> = ({ adopterId }) 
       minimumFractionDigits: 0,
     }).format(amount);
   };
-  
-  // Function to format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("id-ID", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
 
-  const handleDeleteClick = (id: string) => {
-    // Check if the record is eligible for deletion (expired)
-    const record = adoptionRecords.find((r) => r.id === id);
-    if (record && record.status === "Expired") {
-      setRecordToDelete(id);
-      setShowDeleteAlert(true);
+  const handleDelete = async (id_hewan: string) => {
+    try {
+      const response = await fetch(`/api/adopsi/${id_hewan}?id_adopter=${adopterId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      // Update local state to remove the deleted adoption
+      setAdoptions(adoptions.filter((adoption) => adoption.id_hewan !== id_hewan));
+      
+      showToastMessage("Data adopsi berhasil dihapus");
+    } catch (error) {
+      console.error("Error deleting adoption:", error);
+      showToastMessage("Gagal menghapus data adopsi");
     }
   };
 
-  const handleDelete = () => {
-    if (recordToDelete) {
-      setAdoptionRecords(adoptionRecords.filter((record) => record.id !== recordToDelete));
-      console.log(`Delete adoption record with ID: ${recordToDelete}`);
-    }
-    setShowDeleteAlert(false);
-    setRecordToDelete(null);
-  
-    // Tampilkan toast
+  // Function to check if an adoption is ongoing
+  const isAdoptionOngoing = (adoption: Adoption) => {
+    const today = new Date();
+    const endDate = new Date(adoption.tgl_berhenti_adopsi);
+    return endDate >= today;
+  };
+
+  // Function to show toast message
+  const showToastMessage = (message: string) => {
+    setToastMessage(message);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  // Function to determine if a record can be deleted
-  const canDelete = (status: string) => {
-    return status === "Expired";
-  };
-
   if (isLoading) {
-    return <div className="container mx-auto py-10 px-4">Memuat data...</div>;
+    return (
+      <div className="container mx-auto py-10 px-4 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
-  if (!adopter) {
-    return <div className="container mx-auto py-10 px-4">Data adopter tidak ditemukan</div>;
+  if (error || !adopter) {
+    return (
+      <div className="container mx-auto py-10 px-4">
+        <div className="bg-white p-8 rounded-lg border">
+          <p className="text-red-500 mb-4">{error || "Data tidak ditemukan"}</p>
+          <Link href="/adopter" className="inline-flex items-center gap-2 text-blue-500 px-4 py-2 rounded-md border border-blue-500 hover:bg-blue-50 transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+            Kembali
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto py-10 px-4">
-      <div className="flex items-center mb-6">
-        <Button
-          variant="outline"
-          size="sm"
-          className="mr-4"
-          onClick={() => router.push('/adopter')}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" /> Kembali
-        </Button>
-        <h1 className="text-2xl font-bold">Riwayat Adopsi</h1>
-      </div>
+      <div className="bg-white p-8 rounded-lg border shadow-sm">
+        {/* Back button */}
+        <div className="mb-8">
+          <Link 
+            href="/adopter" 
+            className="inline-flex items-center gap-2 text-blue-500 px-4 py-2 rounded-md border border-blue-500 hover:bg-blue-50 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" /> Kembali
+          </Link>
+        </div>
 
-      <Card className="mb-8">
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Nama Adopter:</p>
-                <p className="font-semibold">{adopter.name}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Alamat Adopter:</p>
-                <p className="font-semibold">{adopter.address}</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Kontak Adopter:</p>
-                <p className="font-semibold">{adopter.contact}</p>
-              </div>
-            </div>
+        {/* Main Title */}
+        <h2 className="text-2xl font-bold text-center mb-8">Riwayat Adopsi</h2>
+
+        {/* Adopter information */}
+        <div className="mb-8 p-6 border rounded-lg bg-gray-50">
+          <div className="mb-2">
+            <span className="font-bold">Nama Adopter:</span> {adopter.name}
           </div>
-        </CardContent>
-      </Card>
+          <div className="mb-2">
+            <span className="font-bold">Alamat Adopter:</span> {adopter.address || "[alamat]"}
+          </div>
+          <div className="mb-2">
+            <span className="font-bold">Kontak Adopter:</span> {adopter.contact || "[no telepon]"}
+          </div>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Data Adopsi</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
+        {/* Adoption history table */}
+        <div className="overflow-x-auto">
+          <Table className="w-full border-collapse border border-slate-300">
+            <TableHeader>
+              <TableRow className="bg-gray-100">
+                <TableHead className="border border-slate-300 text-center font-bold p-3">Nama Hewan</TableHead>
+                <TableHead className="border border-slate-300 text-center font-bold p-3">Jenis Hewan</TableHead>
+                <TableHead className="border border-slate-300 text-center font-bold p-3">Tanggal Mulai Adopsi</TableHead>
+                <TableHead className="border border-slate-300 text-center font-bold p-3">Tanggal Akhir Adopsi</TableHead>
+                <TableHead className="border border-slate-300 text-center font-bold p-3">Nominal Kontribusi</TableHead>
+                <TableHead className="border border-slate-300 text-center font-bold p-3">Aksi</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {adoptions.length === 0 ? (
                 <TableRow>
-                  <TableHead>Nama Hewan</TableHead>
-                  <TableHead>Jenis Hewan</TableHead>
-                  <TableHead>Tanggal Mulai Adopsi</TableHead>
-                  <TableHead>Tanggal Akhir Adopsi</TableHead>
-                  <TableHead>Nominal Kontribusi</TableHead>
-                  <TableHead>Aksi</TableHead>
+                  <TableCell colSpan={6} className="border border-slate-300 text-center p-4">
+                    Tidak ada riwayat adopsi
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {adoptionRecords.length > 0 ? (
-                  adoptionRecords.map((record) => (
-                    <TableRow key={record.id}>
-                      <TableCell className="font-medium">{record.animalName}</TableCell>
-                      <TableCell>{record.animalSpecies}</TableCell>
-                      <TableCell>{formatDate(record.startDate)}</TableCell>
-                      <TableCell>{formatDate(record.endDate)}</TableCell>
-                      <TableCell>{formatCurrency(record.contributionAmount)}</TableCell>
-                      <TableCell>
-                        {record.status === "Active" ? (
-                          <Badge className="bg-green-500">Sedang Berlangsung</Badge>
+              ) : (
+                adoptions.map((adoption) => {
+                  const ongoing = isAdoptionOngoing(adoption);
+                  
+                  return (
+                    <TableRow key={adoption.id_hewan} className="hover:bg-gray-50">
+                      <TableCell className="border border-slate-300 p-3">
+                        {adoption.nama_hewan}
+                      </TableCell>
+                      <TableCell className="border border-slate-300 p-3 text-center">
+                        {adoption.spesies}
+                      </TableCell>
+                      <TableCell className="border border-slate-300 p-3 text-center">
+                        {adoption.tgl_mulai_adopsi}
+                      </TableCell>
+                      <TableCell className="border border-slate-300 p-3 text-center">
+                        {adoption.tgl_berhenti_adopsi}
+                      </TableCell>
+                      <TableCell className="border border-slate-300 p-3 text-center font-medium">
+                        {formatCurrency(adoption.kontribusi_finansial).replace("Rp", "Rp")}
+                      </TableCell>
+                      <TableCell className="border border-slate-300 p-3 text-center">
+                        {ongoing ? (
+                          <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full border border-green-500 font-medium">
+                            Sedang Berlangsung
+                          </span>
                         ) : (
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleDeleteClick(record.id)}
-                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                            disabled={!canDelete(record.status)}
-                            title={canDelete(record.status) ? "Hapus" : "Tidak dapat dihapus karena masih berlangsung"}
+                          <button
+                            onClick={() => handleDelete(adoption.id_hewan)}
+                            className="inline-block px-3 py-1 bg-red-50 text-red-600 rounded-full border border-red-500 hover:bg-red-100 transition-colors"
                           >
-                            <Trash className="h-4 w-4" />
-                          </Button>
+                            Hapus
+                          </button>
                         )}
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-4">
-                      Tidak ada data adopsi untuk adopter ini.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tindakan ini tidak dapat dibatalkan. Data riwayat adopsi ini akan dihapus secara permanen.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-white hover:bg-destructive/90 hover:text-white"
-            >
-              Hapus
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Toast Notification */}
       {showToast && (
-        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
-          Aksi berhasil dilakukan!
+        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center">
+          <div className="mr-2">✓</div> 
+          {toastMessage}
         </div>
       )}
     </div>
   );
-};
-
-export default RiwayatAdopsiModule;
+}

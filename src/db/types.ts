@@ -148,3 +148,17 @@ export interface WahanaType {
   nama_wahana: string;
   peraturan: string;
 }
+
+export interface AnimalDisplayType {
+  id_hewan: string;
+  nama_hewan: string;
+  spesies: string;
+  status_kesehatan: string;
+  url_foto: string;
+  id_adopsi?: string;
+  nama_adopter?: string;
+  kontribusi_finansial?: number;
+  status_pembayaran?: string;
+  tgl_mulai_adopsi?: Date;
+  tgl_berhenti_adopsi?: Date;
+}

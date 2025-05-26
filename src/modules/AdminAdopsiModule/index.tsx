@@ -7,66 +7,33 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye, PlusCircle, AlertTriangle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AnimalDisplayType } from "@/db/types";
 
-interface Animal {
-  id: string;
-  name: string;
-  species: string;
-  condition: string;
-  imageUrl: string;
+interface AnimalDisplay extends AnimalDisplayType {
   isAdopted: boolean;
 }
 
 export default function AdminAdopsiModule() {
   const router = useRouter();
-  const [animals, setAnimals] = useState<Animal[]>([]);
+  const [animals, setAnimals] = useState<AnimalDisplay[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchAnimals = async () => {
       setIsLoading(true);
       try {
-        const data = [
-          {
-            id: "ani-101",
-            name: "Simba",
-            species: "African Lion",
-            condition: "Sehat",
-            imageUrl: "https://images.unsplash.com/photo-1545006398-2cf48043d3f3?q=80&w=400",
-            isAdopted: true,
-          },
-          {
-            id: "ani-104",
-            name: "Nala",
-            species: "African Lion",
-            condition: "Sakit",
-            imageUrl: "https://images.unsplash.com/photo-1534628526458-a8de087b1123?q=80&w=400",
-            isAdopted: false,
-          },
-          {
-            id: "ani-102",
-            name: "Zara",
-            species: "Plains Zebra",
-            condition: "Sehat",
-            imageUrl: "https://images.unsplash.com/photo-1549975248-52273875de73?q=80&w=400",
-            isAdopted: true,
-          },
-          {
-            id: "ani-103",
-            name: "Rafiki",
-            species: "Giraffe",
-            condition: "Dalam pemantauan",
-            imageUrl: "https://images.unsplash.com/photo-1534567059665-cbcfe2e19af4?q=80&w=400",
-            isAdopted: true,
-          },
-        ];
+        const response = await fetch("/api/adopsi");
+        const data: AnimalDisplayType[] = await response.json();
         
-        setTimeout(() => {
-          setAnimals(data);
-          setIsLoading(false);
-        }, 500);
+        const formattedData: AnimalDisplay[] = data.map(animal => ({
+          ...animal,
+          isAdopted: !!animal.id_adopsi 
+        }));
+        
+        setAnimals(formattedData);
       } catch (error) {
         console.error("Error fetching animals:", error);
+      } finally {
         setIsLoading(false);
       }
     };
@@ -79,16 +46,17 @@ export default function AdminAdopsiModule() {
   };
 
   const handleRegisterAdmin = (animalId: string) => {
-    const animalData = animals.find((animal) => animal.id === animalId);
+    const animalData = animals.find((animal) => animal.id_hewan === animalId);
     if (animalData) {
-      router.push(`/admin-adopsi/register/${animalId}?name=${animalData.name}&species=${animalData.species}`);
+      router.push(`/admin-adopsi/register/${animalId}?name=${animalData.nama_hewan}&species=${animalData.spesies}`);
     }
   };
+  
   const getConditionBadgeStyle = (condition: string) => {
     switch (condition) {
       case "Sehat":
         return "bg-green-500 hover:bg-green-600 text-white";
-      case "Sakit":
+      case "Sedang Sakit":
         return "bg-red-500 hover:bg-red-600 text-white";
       case "Dalam pemantauan":
         return "bg-amber-500 hover:bg-amber-600 text-white";
@@ -97,7 +65,6 @@ export default function AdminAdopsiModule() {
     }
   };
 
-  // Function to get icon based on condition
   const getConditionIcon = (condition: string) => {
     if (condition === "Dalam pemantauan") {
       return <AlertTriangle className="mr-1 h-3 w-3" />;
@@ -131,25 +98,25 @@ export default function AdminAdopsiModule() {
       ) : (
         <div className="grid gap-4">
           {animals.map((animal) => (
-            <Card key={animal.id} className="overflow-hidden border-border shadow-sm relative">
+            <Card key={animal.id_hewan} className="overflow-hidden border-border shadow-sm relative">
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row gap-4">
                 {/* Avatar Image */}
                 <Avatar className="h-32 w-32 rounded-md">
-                  <AvatarImage src={animal.imageUrl} alt={animal.name} />
+                  <AvatarImage src={animal.url_foto} alt={animal.nama_hewan} />
                   <AvatarFallback className="rounded-md">
-                    {animal.name.substring(0, 2).toUpperCase()}
+                    {animal.nama_hewan?.substring(0, 2).toUpperCase() || "AN"}
                   </AvatarFallback>
                 </Avatar>
           
                 {/* Animal Details */}
                 <div className="flex flex-col justify-center">
-                  <p className="font-medium text-xl font-outfit">{animal.name || "[Tanpa nama]"}</p>
-                  <p className="text-base text-muted-foreground">{animal.species}</p>
+                  <p className="font-medium text-xl font-outfit">{animal.nama_hewan || "[Tanpa nama]"}</p>
+                  <p className="text-base text-muted-foreground">{animal.spesies}</p>
                   <Badge
-                    className={`mt-2 px-3 py-1 text-sm rounded-full ${getConditionBadgeStyle(animal.condition)}`}
+                    className={`mt-2 px-3 py-1 text-sm rounded-full ${getConditionBadgeStyle(animal.status_kesehatan)}`}
                   >
-                    {animal.condition}
+                    {animal.status_kesehatan}
                   </Badge>
                 </div>
               </div>
@@ -169,7 +136,7 @@ export default function AdminAdopsiModule() {
                   <Button
                     variant="outline"
                     className="text-primary border-primary hover:bg-primary/10 text-base font-medium"
-                    onClick={() => handleViewDetail(animal.id)}
+                    onClick={() => handleViewDetail(animal.id_hewan)}
                   >
                     <Eye className="mr-2 h-5 w-5" /> Lihat Detail
                   </Button>
@@ -177,7 +144,7 @@ export default function AdminAdopsiModule() {
                   <Button
                     variant="default"
                     className="bg-primary text-primary-foreground hover:bg-primary/90 text-base font-medium"
-                    onClick={() => handleRegisterAdmin(animal.id)}
+                    onClick={() => handleRegisterAdmin(animal.id_hewan)}
                   >
                     <PlusCircle className="mr-2 h-5 w-5" /> Daftarkan Adopter
                   </Button>
