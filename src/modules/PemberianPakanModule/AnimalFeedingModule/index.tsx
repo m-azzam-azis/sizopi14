@@ -68,41 +68,53 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { getUserData } from "@/hooks/getUserData";
 
-// Use the same data types as the original module
+// Update PemberianPakan type and status values
 type PemberianPakan = {
   id: string;
   id_hewan: string;
-  jadwal: Date;
+  jadwal: string; // now date string 'YYYY-MM-DD'
   jenis: string;
   jumlah: number;
-  status: "pending" | "completed" | "canceled";
+  status: "tersedia" | "menunggu" | "dibatalkan";
 };
 
-// Use the same validation schema
+// Update validation schema for date-only and new status values
 const pakanFormSchema = z.object({
   id_hewan: z.string().min(1, "ID Hewan harus diisi"),
-  jadwal: z.date({
-    required_error: "Jadwal harus diisi",
-  }),
+  jadwal: z.string().min(1, "Jadwal harus diisi"), // date string
   jenis: z.string().min(1, "Jenis pakan harus diisi"),
   jumlah: z.coerce
     .number()
     .min(1, "Jumlah pakan minimal 1")
     .max(10000000, "Jumlah pakan maksimal 10000000"),
-  status: z.enum(["pending", "completed", "canceled"]),
+  status: z.enum(["tersedia", "menunggu", "dibatalkan"]),
 });
 
 type PakanFormValues = z.infer<typeof pakanFormSchema>;
 
+// Helper function to convert any date format to local date string YYYY-MM-DD
+const getLocalDateString = (jadwal: string): string => {
+  if (jadwal.includes('T') || jadwal.includes('Z')) {
+    const date = new Date(jadwal);
+    // Convert to local date to avoid timezone issues
+    const localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+    return localDate.toISOString().slice(0, 10);
+  } else if (jadwal.length > 10) {
+    return jadwal.slice(0, 10);
+  }
+  return jadwal;
+};
+
 export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
   const router = useRouter();
+  const { userData } = getUserData();
   const [pemberianPakan, setPemberianPakan] = useState<PemberianPakan[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<PemberianPakan | null>(null);  const [animal, setAnimal] = useState<any>(null);
-  const [jenisPakan, setJenisPakan] = useState<string[]>(["Rumput", "Daging", "Buah-buahan", "Sayuran", "Biji-bijian"]);
   // Fetch animal and pakan data
   const fetchData = async () => {
     try {
@@ -128,10 +140,10 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
     resolver: zodResolver(pakanFormSchema),
     defaultValues: {
       id_hewan: animalId,
-      jadwal: new Date(),
+      jadwal: new Date().toISOString().slice(0, 10), // YYYY-MM-DD
       jenis: "",
       jumlah: 1,
-      status: "pending",
+      status: "tersedia",
     },
   });
   // Reset form when dialog is closed
@@ -139,20 +151,19 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
     if (!isDialogOpen) {
       form.reset({
         id_hewan: animalId,
-        jadwal: new Date(),
+        jadwal: new Date().toISOString().slice(0, 10),
         jenis: "",
         jumlah: 1,
-        status: "pending",
+        status: "tersedia",
       });
       setEditingItem(null);
     }
-  }, [isDialogOpen, form, animalId]);
-  // Update form values when editing
+  }, [isDialogOpen, form, animalId]);  // Update form values when editing
   useEffect(() => {
     if (editingItem) {
       form.reset({
         id_hewan: editingItem.id_hewan,
-        jadwal: new Date(editingItem.jadwal),
+        jadwal: getLocalDateString(editingItem.jadwal), // Use helper function
         jenis: editingItem.jenis,
         jumlah: editingItem.jumlah,
         status: editingItem.status,
@@ -168,47 +179,39 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
     (statusFilter === null || item.status === statusFilter)
   );// Handle form submission
   const onSubmit = async (data: PakanFormValues) => {
-    console.log("Form submitted with data:", data);
-    console.log("Form validation state:", form.formState.isValid);
-    console.log("Form errors:", form.formState.errors);
-    
     try {
       if (editingItem) {
-        // Update existing item
-        const response = await fetch(`/api/pakan?id_hewan=${editingItem.id_hewan}&jadwal=${editingItem.jadwal}`, {
+        // Update existing item - use consistent date formatting
+        const jadwalForUpdate = getLocalDateString(editingItem.jadwal);
+        const response = await fetch(`/api/pakan?id_hewan=${editingItem.id_hewan}&jadwal=${jadwalForUpdate}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
-        
         if (!response.ok) {
           const errorData = await response.text();
           console.error("Error response:", errorData);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        setPemberianPakan(pemberianPakan.map((item) =>
-          item.id_hewan === editingItem.id_hewan && String(item.jadwal) === String(editingItem.jadwal)
+        setPemberianPakan(pemberianPakan.map((item) => {
+          const itemJadwal = getLocalDateString(item.jadwal);
+          return item.id_hewan === editingItem.id_hewan && itemJadwal === jadwalForUpdate
             ? { ...data, id: item.id, jadwal: data.jadwal }
-            : item
-        ));
+            : item;
+        }));
       } else {
-        // Create new item
-        console.log("Creating new pakan with data:", data);
+        // Create new item, do NOT send username_jh to /api/pakan (handled by backend)
         const response = await fetch(`/api/pakan`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
-        
         if (!response.ok) {
           const errorData = await response.text();
           console.error("Error response:", errorData);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
         const newItem = await response.json();
-        console.log("New item created:", newItem);
         setPemberianPakan([...pemberianPakan, newItem]);
       }
       setIsDialogOpen(false);
@@ -217,29 +220,55 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
       console.error("Error submitting form:", error);
       // You can add a toast notification here to show the error to the user
     }
-  };
-
-  // Delete an item
-  const handleDelete = async (id_hewan: string, jadwal: Date) => {
-    await fetch(`/api/pakan?id_hewan=${id_hewan}&jadwal=${jadwal.toISOString()}`, {
-      method: "DELETE",
-    });
-    setPemberianPakan(pemberianPakan.filter((item) => !(item.id_hewan === id_hewan && String(item.jadwal) === String(jadwal))));
-    fetchData(); // Refresh data
+  };  // Delete an item
+  const handleDelete = async (id_hewan: string, jadwal: string) => {
+    try {
+      const jadwalForDelete = getLocalDateString(jadwal);
+      
+      console.log("Original jadwal:", jadwal);
+      console.log("Converted jadwal for delete:", jadwalForDelete);
+      
+      const response = await fetch(`/api/pakan?id_hewan=${id_hewan}&jadwal=${encodeURIComponent(jadwalForDelete)}`, {
+        method: "DELETE",
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log("Delete response:", result);      // Update the local state directly after successful deletion
+      setPemberianPakan(prevState => 
+        prevState.filter(item => {
+          const itemJadwal = getLocalDateString(item.jadwal);
+          return !(item.id_hewan === id_hewan && itemJadwal === jadwalForDelete);
+        })
+      );
+      
+      // Additional fetch to ensure data consistency
+      await fetchData();
+    } catch (error) {
+      console.error("Error deleting item:", error);
+    }
   };
   // Get status badge color
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "completed":
-        return <Badge className="bg-green-500">Selesai</Badge>;
-      case "pending":
+      case "tersedia":
+        return <Badge className="bg-green-500">Tersedia</Badge>;
+      case "menunggu":
         return <Badge className="bg-yellow-500">Menunggu</Badge>;
-      case "canceled":
+      case "dibatalkan":
         return <Badge className="bg-red-500">Dibatalkan</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
   };
+
+  // Only caretaker can add/edit/delete
+  const isCaretaker = userData.role === "caretaker";
 
   if (!animal) return <div>Loading...</div>;
 
@@ -310,9 +339,9 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="all">Semua Status</SelectItem>
-                    <SelectItem value="pending">Menunggu</SelectItem>
-                    <SelectItem value="completed">Selesai</SelectItem>
-                    <SelectItem value="canceled">Dibatalkan</SelectItem>
+                    <SelectItem value="tersedia">Tersedia</SelectItem>
+                    <SelectItem value="menunggu">Menunggu</SelectItem>
+                    <SelectItem value="dibatalkan">Dibatalkan</SelectItem>
                 </SelectContent>
                 </Select>
             </div>
@@ -323,138 +352,126 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
             <p className="text-muted-foreground text-sm">
               Menampilkan {animalFeedingSchedule.length} jadwal pemberian pakan
             </p>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-1" size={16} /> Tambah Jadwal
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingItem ? "Edit Pemberian Pakan" : "Tambah Jadwal Pemberian Pakan"}
-                  </DialogTitle>
-                  <DialogDescription>
-                    {editingItem
-                      ? "Ubah detail pemberian pakan yang ada"
-                      : `Masukkan detail jadwal pemberian pakan baru untuk ${animal.nama}`}
-                  </DialogDescription>
-                </DialogHeader>                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    {/* ID Hewan is pre-selected and hidden */}
-                    <FormField
-                      control={form.control}
-                      name="id_hewan"
-                      render={({ field }) => (
-                        <input type="hidden" {...field} />
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="jadwal"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Jadwal</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="datetime-local"
-                              value={field.value ? format(field.value, "yyyy-MM-dd'T'HH:mm") : ""}
-                              onChange={(e) => {
-                                const date = e.target.value ? new Date(e.target.value) : undefined;
-                                field.onChange(date);
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+            {isCaretaker && (
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="mr-1" size={16} /> Tambah Jadwal
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px]">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingItem ? "Edit Pemberian Pakan" : "Tambah Jadwal Pemberian Pakan"}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {editingItem
+                        ? "Ubah detail pemberian pakan yang ada"
+                        : `Masukkan detail jadwal pemberian pakan baru untuk ${animal.nama}`}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      {/* ID Hewan is pre-selected and hidden */}
                       <FormField
-                      control={form.control}
-                      name="jenis"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Jenis Pakan</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Pilih jenis pakan" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {jenisPakan.map((jenis) => (
-                                <SelectItem key={jenis} value={jenis}>
-                                  {jenis}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />                    <FormField
-                      control={form.control}
-                      name="jumlah"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Jumlah (gram)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min={1}
-                              max={100000}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    {editingItem && (
-                    <FormField
                         control={form.control}
-                        name="status"
+                        name="id_hewan"
                         render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Status</FormLabel>
-                            <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                            >
-                            <FormControl>
-                                <SelectTrigger>
-                                <SelectValue placeholder="Pilih status" />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <SelectItem value="pending">Menunggu</SelectItem>
-                                <SelectItem value="completed">Selesai</SelectItem>
-                                <SelectItem value="canceled">Dibatalkan</SelectItem>
-                            </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
+                          <input type="hidden" {...field} />
                         )}
-                    />
-                    )}
-                      <DialogFooter>
-                      <Button 
-                        type="submit" 
-                        className="bg-green-500 text-white hover:bg-green-600"
-                        onClick={() => console.log("Submit button clicked")}
-                      >
-                        {editingItem ? "Simpan Perubahan" : "Tambah Jadwal"}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="jadwal"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Jadwal</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="date"
+                                value={field.value || ""}
+                                onChange={e => field.onChange(e.target.value)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />                      <FormField
+                        control={form.control}
+                        name="jenis"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Jenis Pakan</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Masukkan jenis pakan" 
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      /><FormField
+                        control={form.control}
+                        name="jumlah"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Jumlah (gram)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={100000}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      {editingItem && (
+                      <FormField
+                          control={form.control}
+                          name="status"
+                          render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Status</FormLabel>
+                              <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                              >
+                              <FormControl>
+                                  <SelectTrigger>
+                                  <SelectValue placeholder="Pilih status" />
+                                  </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                  <SelectItem value="tersedia">Tersedia</SelectItem>
+                                  <SelectItem value="menunggu">Menunggu</SelectItem>
+                                  <SelectItem value="dibatalkan">Dibatalkan</SelectItem>
+                              </SelectContent>
+                              </Select>
+                              <FormMessage />
+                          </FormItem>
+                          )}
+                      />
+                      )}
+                        <DialogFooter>
+                        <Button 
+                          type="submit" 
+                          className="bg-green-500 text-white hover:bg-green-600"
+                          onClick={() => console.log("Submit button clicked")}
+                        >
+                          {editingItem ? "Simpan Perubahan" : "Tambah Jadwal"}
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
           
           <div className="rounded-md border overflow-hidden">
@@ -472,42 +489,46 @@ export const AnimalFeedingModule = ({ animalId }: { animalId: string }) => {
                 {animalFeedingSchedule.length > 0 ? (
                   animalFeedingSchedule.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell>{format(new Date(item.jadwal), "dd/MM/yyyy HH:mm")}</TableCell>
+                      <TableCell>{format(new Date(item.jadwal), "dd/MM/yyyy")}</TableCell>
                       <TableCell>{item.jenis}</TableCell>
                       <TableCell>{item.jumlah}</TableCell>
                       <TableCell>{getStatusBadge(item.status)}</TableCell>
                       <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingItem(item)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-red-500">
-                              <Trash2 className="h-4 w-4" />
+                        {isCaretaker && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingItem(item)}
+                            >
+                              <Pencil className="h-4 w-4" />
                             </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Hapus Jadwal Pemberian Pakan</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Apakah Anda yakin ingin menghapus jadwal pemberian pakan untuk {animal.nama} pada {format(new Date(item.jadwal), "dd/MM/yyyy HH:mm")}? Tindakan ini tidak dapat dibatalkan.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Batal</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(item.id_hewan, new Date(item.jadwal))}
-                                className="bg-red-500 text-white hover:bg-red-600"
-                              >
-                                Hapus
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="text-red-500">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Hapus Jadwal Pemberian Pakan</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Apakah Anda yakin ingin menghapus jadwal pemberian pakan untuk {animal.nama} pada {format(new Date(item.jadwal), "dd/MM/yyyy HH:mm")}? Tindakan ini tidak dapat dibatalkan.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Batal</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete(item.id_hewan, item.jadwal)}
+                                    className="bg-red-500 text-white hover:bg-red-600"
+                                  >
+                                    Hapus
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))

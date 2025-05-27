@@ -1,4 +1,8 @@
 import { Pakan } from "@/db/models/pakan";
+import { Memberi } from "@/db/models/memberi";
+import { cookies } from "next/headers";
+import { decode } from "jsonwebtoken";
+
 
 export async function GET(request: Request) {
   try {
@@ -32,13 +36,50 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const data = await request.json();
+    // Set status default ke 'tersedia' jika tidak dikirim dari frontend
+    if (!data.status) {
+      data.status = 'tersedia';
+    }
     const pakanModel = new Pakan();
     const created = await pakanModel.create(data);
+
+    // Insert into MEMBERI table for relationship
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+    let username_jh = null;
+    if (token) {
+      const decoded: any = decode(token);
+      username_jh = decoded?.data?.username;
+    }
+    if (username_jh) {
+      const memberiModel = new Memberi();
+      let jadwalValue: Date;
+      if (created.jadwal instanceof Date) {
+        jadwalValue = created.jadwal;
+      } else if (typeof created.jadwal === "string") {
+        jadwalValue = new Date(created.jadwal);
+      } else {
+        jadwalValue = new Date(); // fallback, should not happen
+      }
+      const memberiPayload = {
+        id_hewan: created.id_hewan,
+        jadwal: jadwalValue,
+        username_jh,
+      };
+      console.log("[MEMBERI INSERT] Payload:", memberiPayload);
+      try {
+        await memberiModel.create(memberiPayload);
+        console.log("[MEMBERI INSERT] Success");
+      } catch (err) {
+        console.error("Failed to insert into MEMBERI:", err);
+      }
+    }
     return new Response(JSON.stringify(created), {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    console.error("POST /api/pakan error:", error);
     return new Response(JSON.stringify({ error: "Failed to create pakan" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
@@ -82,9 +123,19 @@ export async function DELETE(request: Request) {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
+    }    const pakanModel = new Pakan();
+    console.log("DELETE request received for: ", { id_hewan, jadwal });
+    // Using the new deleteByPrimaryKey method specifically designed for the composite primary key
+    const deleted = await pakanModel.deleteByPrimaryKey(id_hewan, jadwal);
+    console.log("Delete result: ", deleted);
+    
+    if (!deleted) {
+      return new Response(JSON.stringify({ error: "Record not found or could not be deleted" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
     }
-    const pakanModel = new Pakan();
-    const deleted = await pakanModel.deleteMultiple(["id_hewan", "jadwal"], [id_hewan, jadwal]);
+    
     return new Response(JSON.stringify(deleted), {
       status: 200,
       headers: { "Content-Type": "application/json" },
