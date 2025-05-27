@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -10,8 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Pencil, Trash } from "lucide-react";
+import { PlusCircle, Pencil, Trash, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,119 +28,175 @@ import {
   CreateWahanaFormValues,
   EditWahanaFormValues,
 } from "./forms/WahanaForm";
-
-interface Fasilitas {
-  nama: string;
-  jadwal: Date;
-  kapasitas_max: number;
-}
-
-interface Wahana {
-  nama_wahana: string;
-  peraturan: string[];
-}
+import { toast } from "sonner";
+import { getUserData } from "@/hooks/getUserData";
 
 interface WahanaData {
-  id: string;
+  id?: string;
   nama_wahana: string;
-  kapasitas: number;
+  kapasitas_max: number;
   jadwal: Date;
   peraturan: string[];
 }
 
 const WahanaModule = () => {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const { userData, isValid, isLoading: authLoading } = getUserData();
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [wahanaToDelete, setWahanaToDelete] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentWahana, setCurrentWahana] = useState<WahanaData | null>(null);
+  const [wahanaData, setWahanaData] = useState<WahanaData[]>([]);
 
-  const [wahanaData, setWahanaData] = useState<WahanaData[]>([
-    {
-      id: "whn-001",
-      nama_wahana: "Taman Air Mini",
-      kapasitas: 100,
-      jadwal: new Date("2025-05-15T10:00:00"),
-      peraturan: ["Dilarang Berenang", "Dilarang membawa makanan"],
-    },
-    {
-      id: "whn-002",
-      nama_wahana: "Roller Coaster Jungle",
-      kapasitas: 30,
-      jadwal: new Date("2025-05-15T11:30:00"),
-      peraturan: [
-        "Minimal tinggi 120 cm",
-        "Tidak untuk penderita jantung",
-        "Dilarang menggunakan ponsel",
-      ],
-    },
-    {
-      id: "whn-003",
-      nama_wahana: "Kapal Gantung",
-      kapasitas: 80,
-      jadwal: new Date("2025-05-16T09:00:00"),
-      peraturan: [
-        "Anak-anak wajib didampingi",
-        "Dilarang berdiri selama atraksi berjalan",
-      ],
-    },
-  ]);
+  const fetchWahanaData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/wahana");
+      if (!response.ok) {
+        throw new Error("Failed to fetch wahana data");
+      }
+
+      const { data } = await response.json();
+
+      const formattedData = data.map((wahana: any) => ({
+        id: `whn-${wahana.nama_wahana}`,
+        nama_wahana: wahana.nama_wahana,
+        kapasitas_max: wahana.kapasitas_max,
+        jadwal: new Date(wahana.jadwal),
+        peraturan: Array.isArray(wahana.peraturan)
+          ? wahana.peraturan
+          : [wahana.peraturan],
+      }));
+
+      setWahanaData(formattedData);
+    } catch (error) {
+      console.error("Error fetching wahana data:", error);
+      toast.error("Failed to load wahana data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWahanaData();
+  }, []);
 
   const handleEditClick = (wahana: WahanaData) => {
     setCurrentWahana(wahana);
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteClick = (id: string) => {
-    setWahanaToDelete(id);
+  const handleDeleteClick = (wahana: WahanaData) => {
+    setWahanaToDelete(wahana.nama_wahana);
     setShowDeleteAlert(true);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (wahanaToDelete) {
-      setWahanaData(
-        wahanaData.filter((wahana) => wahana.id !== wahanaToDelete)
-      );
-      console.log(`Delete wahana with ID: ${wahanaToDelete}`);
+      try {
+        const response = await fetch(
+          `/api/wahana?nama_wahana=${encodeURIComponent(wahanaToDelete)}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to delete wahana");
+        }
+
+        setWahanaData(
+          wahanaData.filter((w) => w.nama_wahana !== wahanaToDelete)
+        );
+        toast.success("Wahana berhasil dihapus");
+      } catch (error) {
+        console.error("Error deleting wahana:", error);
+        toast.error("Gagal menghapus wahana");
+      }
+
+      setShowDeleteAlert(false);
+      setWahanaToDelete(null);
     }
-    setShowDeleteAlert(false);
-    setWahanaToDelete(null);
   };
 
-  const handleEditWahana = (data: EditWahanaFormValues) => {
-    if (currentWahana) {
+  const handleEditWahana = async (data: EditWahanaFormValues) => {
+    if (!currentWahana) return;
+
+    try {
+      const response = await fetch("/api/wahana", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nama_wahana: currentWahana.nama_wahana,
+          kapasitas_max: data.kapasitas,
+          jadwal: data.jadwal,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update wahana");
+      }
+
       const updatedWahanaData = wahanaData.map((wahana) => {
-        if (wahana.id === currentWahana.id) {
+        if (wahana.nama_wahana === currentWahana.nama_wahana) {
           return {
             ...wahana,
             jadwal: data.jadwal,
-            kapasitas: data.kapasitas,
+            kapasitas_max: data.kapasitas,
           };
         }
         return wahana;
       });
 
       setWahanaData(updatedWahanaData);
-      console.log("Updated wahana:", currentWahana.id);
+      toast.success("Wahana berhasil diperbarui");
+    } catch (error) {
+      console.error("Error updating wahana:", error);
+      toast.error("Gagal memperbarui wahana");
     }
+
     setIsEditModalOpen(false);
     setCurrentWahana(null);
   };
 
-  const handleAddWahana = (data: CreateWahanaFormValues) => {
-    const newId = `whn-00${wahanaData.length + 1}`;
+  const handleAddWahana = async (data: CreateWahanaFormValues) => {
+    try {
+      const response = await fetch("/api/wahana", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nama_wahana: data.nama_wahana,
+          kapasitas_max: data.kapasitas,
+          jadwal: data.jadwal,
+          peraturan: data.peraturan,
+        }),
+      });
 
-    const newWahana: WahanaData = {
-      id: newId,
-      nama_wahana: data.nama_wahana,
-      kapasitas: data.kapasitas,
-      jadwal: data.jadwal,
-      peraturan: data.peraturan,
-    };
+      const result = await response.json();
 
-    setWahanaData([...wahanaData, newWahana]);
-    console.log("Added new wahana:", newWahana);
+      if (!response.ok) {
+        if (result.error === "Duplicate name") {
+          toast.error(
+            "Nama wahana sudah digunakan. Silakan gunakan nama lain."
+          );
+        } else {
+          toast.error("Gagal menambahkan wahana");
+        }
+        throw new Error(result.message);
+      }
+
+      await fetchWahanaData();
+      toast.success("Wahana berhasil ditambahkan");
+    } catch (error) {
+      console.error("Error creating wahana:", error);
+    }
+
     setIsAddModalOpen(false);
   };
 
@@ -156,17 +211,33 @@ const WahanaModule = () => {
   };
 
   const formatRegulations = (peraturan: string[]) => {
-    if (peraturan.length === 0) return "-";
+    if (!peraturan || peraturan.length === 0) return "-";
+
     return (
-      <ul className="list-inside">
+      <ul className="list-disc list-inside">
         {peraturan.map((rule, index) => (
           <li key={index} className="text-sm">
-            {index + 1}. {rule}
+            {rule}
           </li>
         ))}
       </ul>
     );
   };
+
+  if (authLoading) {
+    return (
+      <div className="flex h-screen w-full justify-center items-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-lg font-medium">Memverifikasi akses...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isValid || userData.role !== "admin") {
+    return router.push("/");
+  }
 
   return (
     <div className="container mx-auto py-10 px-4">
@@ -183,51 +254,68 @@ const WahanaModule = () => {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border border-border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nama Wahana</TableHead>
-                  <TableHead>Kapasitas</TableHead>
-                  <TableHead>Jadwal</TableHead>
-                  <TableHead>Peraturan</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {wahanaData.map((wahana) => (
-                  <TableRow key={wahana.id}>
-                    <TableCell className="font-medium">
-                      {wahana.nama_wahana}
-                    </TableCell>
-                    <TableCell>{wahana.kapasitas} orang</TableCell>
-                    <TableCell>{formatDateTime(wahana.jadwal)}</TableCell>
-                    <TableCell>{formatRegulations(wahana.peraturan)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleEditClick(wahana)}
-                          className="h-8 w-8"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleDeleteClick(wahana.id)}
-                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+          {isLoading ? (
+            <div className="flex justify-center items-center p-8">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              <p>Memuat data wahana...</p>
+            </div>
+          ) : (
+            <div className="rounded-md border border-border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nama Wahana</TableHead>
+                    <TableHead>Kapasitas</TableHead>
+                    <TableHead>Jadwal</TableHead>
+                    <TableHead>Peraturan</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {wahanaData.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8">
+                        Tidak ada data wahana
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    wahanaData.map((wahana) => (
+                      <TableRow key={wahana.id || wahana.nama_wahana}>
+                        <TableCell className="font-medium">
+                          {wahana.nama_wahana}
+                        </TableCell>
+                        <TableCell>{wahana.kapasitas_max} orang</TableCell>
+                        <TableCell>{formatDateTime(wahana.jadwal)}</TableCell>
+                        <TableCell>
+                          {formatRegulations(wahana.peraturan)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleEditClick(wahana)}
+                              className="h-8 w-8"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleDeleteClick(wahana)}
+                              className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -248,7 +336,7 @@ const WahanaModule = () => {
           onSubmit={handleEditWahana}
           initialData={{
             jadwal: currentWahana.jadwal,
-            kapasitas: currentWahana.kapasitas,
+            kapasitas: currentWahana.kapasitas_max,
           }}
           isEditing={true}
           nama_wahana={currentWahana.nama_wahana}

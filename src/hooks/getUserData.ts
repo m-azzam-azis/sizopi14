@@ -48,8 +48,6 @@ type sessionType = {
 
 const nonAuthenticatedRoutes = ["/login", "/register", "/api/auth"];
 
-const adminOnlyRoutes = ["/atraksi", "/api/atraksi"];
-
 export const getUserData: () => ReturnType = () => {
   const [token, setToken] = useState<string | null>(null);
   const [decodedToken, setDecodedToken] = useState<sessionType | null>(null);
@@ -101,18 +99,8 @@ export const getUserData: () => ReturnType = () => {
       ) {
         router.push("/");
       }
-
-      if (
-        token &&
-        adminOnlyRoutes.some((route) => pathname.startsWith(route))
-      ) {
-        if (decodedToken && decodedToken.data.role !== "admin") {
-          router.push("/");
-          return;
-        }
-      }
     }
-  }, [isLoading, token, pathname, router, decodedToken]);
+  }, [isLoading, token, pathname, router]);
 
   if (isLoading || !decodedToken) {
     return {

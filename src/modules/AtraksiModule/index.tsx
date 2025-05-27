@@ -26,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AtraksiFormModal from "./modals/AtraksiFormModal";
 import { AtraksiFormValues, EditAtraksiFormValues } from "./forms/AtraksiForm";
 import { toast } from "sonner";
+import { getUserData } from "@/hooks/getUserData";
 
 interface Fasilitas {
   nama: string;
@@ -72,6 +73,7 @@ interface AtraksiData {
 const AtraksiModule = () => {
   const router = useRouter();
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const { userData, isValid, isLoading: authLoading } = getUserData();
   const [atraksiToDelete, setAtraksiToDelete] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -305,6 +307,21 @@ const AtraksiModule = () => {
       minute: "2-digit",
     });
   };
+
+  if (authLoading) {
+    return (
+      <div className="flex h-screen w-full justify-center items-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-lg font-medium">Memverifikasi akses...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isValid || userData.role !== "admin") {
+    return router.push("/");
+  }
 
   return (
     <div className="container mx-auto py-10 px-4">

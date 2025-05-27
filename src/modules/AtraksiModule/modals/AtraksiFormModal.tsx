@@ -57,7 +57,7 @@ const AtraksiFormModal: React.FC<AtraksiFormModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[525px] max-h-[95vh] md:max-h-[90vh] overflow-y-auto scrollbar-hide">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Edit Atraksi" : "Tambah Atraksi"}
