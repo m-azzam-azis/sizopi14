@@ -16,6 +16,9 @@ if (isDebug) {
     database: process.env.DB_NAME,
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
+    ssl: {
+      rejectUnauthorized: false,
+    },
   });
 }
 
