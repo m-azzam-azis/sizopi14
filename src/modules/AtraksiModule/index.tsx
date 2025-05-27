@@ -27,6 +27,7 @@ import AtraksiFormModal from "./modals/AtraksiFormModal";
 import { AtraksiFormValues, EditAtraksiFormValues } from "./forms/AtraksiForm";
 import { toast } from "sonner";
 import { getUserData } from "@/hooks/getUserData";
+import Link from "next/link";
 
 interface Fasilitas {
   nama: string;
@@ -73,7 +74,12 @@ interface AtraksiData {
 const AtraksiModule = () => {
   const router = useRouter();
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-  const { userData, isValid, isLoading: authLoading } = getUserData();
+  const {
+    userData,
+    isValid,
+    isLoading: authLoading,
+    authState,
+  } = getUserData();
   const [atraksiToDelete, setAtraksiToDelete] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -308,7 +314,12 @@ const AtraksiModule = () => {
     });
   };
 
-  if (authLoading) {
+  if (
+    authLoading ||
+    authState === "initializing" ||
+    authState === "loading" ||
+    authState === "unauthenticated"
+  ) {
     return (
       <div className="flex h-screen w-full justify-center items-center">
         <div className="text-center">
@@ -319,12 +330,19 @@ const AtraksiModule = () => {
     );
   }
 
-  if (!isValid || userData.role !== "admin") {
-    return router.push("/");
-  }
-
   return (
     <div className="container mx-auto py-10 px-4">
+      <div className="flex justify-center items-center gap-5 p-4">
+        <Link href="/kelola-pengunjung/">
+          <Button variant="outline">Reservasi</Button>
+        </Link>
+        <Link href="/kelola-pengunjung/atraksi">
+          <Button variant="secondary">Atraksi</Button>
+        </Link>
+        <Link href="/kelola-pengunjung/wahana">
+          <Button variant="outline">Wahana</Button>
+        </Link>
+      </div>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-h3 font-bold text-foreground">

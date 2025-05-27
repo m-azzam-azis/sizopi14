@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash } from "lucide-react";
+import { Loader2, Pencil, Trash } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -23,9 +23,17 @@ import {
   ReservasiTiket,
 } from "@/types/schema";
 import ReservasiCancelModal from "../modals/ReservasiCancelModal";
+import Link from "next/link";
+import { getUserData } from "@/hooks/getUserData";
 
 const ReservasiTiketAdmin = () => {
   const { toast } = useToast();
+  const {
+    userData,
+    isValid,
+    isLoading: authLoading,
+    authState,
+  } = getUserData();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [currentReservasi, setCurrentReservasi] =
@@ -155,8 +163,35 @@ const ReservasiTiketAdmin = () => {
     return format(date, "dd-MM-yyyy");
   };
 
+  if (
+    authLoading ||
+    authState === "initializing" ||
+    authState === "loading" ||
+    authState === "unauthenticated"
+  ) {
+    return (
+      <div className="flex h-screen w-full justify-center items-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-lg font-medium">Memverifikasi akses...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-10 px-4">
+      <div className="flex justify-center items-center gap-5 p-4">
+        <Link href="/kelola-pengunjung/">
+          <Button variant="secondary">Reservasi</Button>
+        </Link>
+        <Link href="/kelola-pengunjung/atraksi">
+          <Button variant="outline">Atraksi</Button>
+        </Link>
+        <Link href="/kelola-pengunjung/wahana">
+          <Button variant="outline">Wahana</Button>
+        </Link>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle className="text-h3 font-bold text-foreground">

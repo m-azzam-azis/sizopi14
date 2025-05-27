@@ -30,6 +30,7 @@ import {
 } from "./forms/WahanaForm";
 import { toast } from "sonner";
 import { getUserData } from "@/hooks/getUserData";
+import Link from "next/link";
 
 interface WahanaData {
   id?: string;
@@ -42,7 +43,12 @@ interface WahanaData {
 const WahanaModule = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const { userData, isValid, isLoading: authLoading } = getUserData();
+  const {
+    userData,
+    isValid,
+    isLoading: authLoading,
+    authState,
+  } = getUserData();
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [wahanaToDelete, setWahanaToDelete] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -224,7 +230,12 @@ const WahanaModule = () => {
     );
   };
 
-  if (authLoading) {
+  if (
+    authLoading ||
+    authState === "initializing" ||
+    authState === "loading" ||
+    authState === "unauthenticated"
+  ) {
     return (
       <div className="flex h-screen w-full justify-center items-center">
         <div className="text-center">
@@ -235,12 +246,19 @@ const WahanaModule = () => {
     );
   }
 
-  if (!isValid || userData.role !== "admin") {
-    return router.push("/");
-  }
-
   return (
     <div className="container mx-auto py-10 px-4">
+      <div className="flex justify-center items-center gap-5 p-4">
+        <Link href="/kelola-pengunjung/">
+          <Button variant="outline">Reservasi</Button>
+        </Link>
+        <Link href="/kelola-pengunjung/atraksi">
+          <Button variant="outline">Atraksi</Button>
+        </Link>
+        <Link href="/kelola-pengunjung/wahana">
+          <Button variant="secondary">Wahana</Button>
+        </Link>
+      </div>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-h3 font-bold text-foreground">

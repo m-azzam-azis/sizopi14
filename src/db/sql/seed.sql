@@ -428,16 +428,16 @@ INSERT INTO pelatih_hewan VALUES ('oni40', '1cb101a3-ed8f-4334-b4f7-70a28e75fc05
 INSERT INTO pelatih_hewan VALUES ('padmarahayu', '608b1e9a-6923-4c0f-b425-225f9abb5c93');
 INSERT INTO pelatih_hewan VALUES ('kayun17', 'be1319d1-81ac-4775-8358-47534d97d9b0');
 
-INSERT INTO staf_admin VALUES ('liman61', '1a2b3c4d-0001-0000-0000-000000000001');
-INSERT INTO staf_admin VALUES ('hpuspita', '1a2b3c4d-0002-0000-0000-000000000002');
-INSERT INTO staf_admin VALUES ('pratamapadmi', '1a2b3c4d-0003-0000-0000-000000000003');
-INSERT INTO staf_admin VALUES ('margana08', '1a2b3c4d-0004-0000-0000-000000000004');
-INSERT INTO staf_admin VALUES ('pertiwicemeti', '1a2b3c4d-0005-0000-0000-000000000005');
-INSERT INTO staf_admin VALUES ('dwinarno', '1a2b3c4d-0006-0000-0000-000000000006');
-INSERT INTO staf_admin VALUES ('rikasinaga', '1a2b3c4d-0007-0000-0000-000000000007');
-INSERT INTO staf_admin VALUES ('wijayatirtayasa', '1a2b3c4d-0008-0000-0000-000000000008');
-INSERT INTO staf_admin VALUES ('ghutasoit', '1a2b3c4d-0009-0000-0000-000000000009');
-INSERT INTO staf_admin VALUES ('dartono24', '1a2b3c4d-0010-0000-0000-000000000010');
+INSERT INTO staf_admin VALUES ('cici81', '1a2b3c4d-0001-0000-0000-000000000001');
+INSERT INTO staf_admin VALUES ('iwaskita', '1a2b3c4d-0002-0000-0000-000000000002');
+INSERT INTO staf_admin VALUES ('dartonositorus', '1a2b3c4d-0003-0000-0000-000000000003');
+INSERT INTO staf_admin VALUES ('ega12', '1a2b3c4d-0004-0000-0000-000000000004');
+INSERT INTO staf_admin VALUES ('prayogakartika', '1a2b3c4d-0005-0000-0000-000000000005');
+INSERT INTO staf_admin VALUES ('bakiantokuswandari', '1a2b3c4d-0006-0000-0000-000000000006');
+INSERT INTO staf_admin VALUES ('jaya34', '1a2b3c4d-0007-0000-0000-000000000007');
+INSERT INTO staf_admin VALUES ('namagaamelia', '1a2b3c4d-0008-0000-0000-000000000008');
+INSERT INTO staf_admin VALUES ('kasiransusanti', '1a2b3c4d-0009-0000-0000-000000000009');
+INSERT INTO staf_admin VALUES ('cemplunk96', '1a2b3c4d-0010-0000-0000-000000000010');
 
 INSERT INTO habitat VALUES ('Padang Pasir', 5000.00, 10, 'Aktif');
 INSERT INTO habitat VALUES ('Sabana Afrika', 7500.50, 15, 'Aktif');
