@@ -330,6 +330,7 @@ INSERT INTO pengguna VALUES ('kasiransusanti', 'jsaragih@example.com', '*5yHP@aP
 INSERT INTO pengguna VALUES ('cemplunk96', 'kasiyahsuryatmi@example.net', 'tV4J4Ofg8$', 'Bakda', 'NULL', 'Kuswoyo', '087928134810');
 
 INSERT INTO pengunjung VALUES ('rajatacalista', 'Jalan Pasteur No. 949, Ambon, Jawa Tengah 90622', '1997-04-24');
+INSERT INTO pengunjung VALUES ('mmmm', 'Jalan Pasteur No. 949, Ambon, Jawa Tengah 90621', '1998-04-24');
 INSERT INTO pengunjung VALUES ('nsihotang', 'Jl. Erlangga No. 73, Tangerang, Kalimantan Selatan 57458', '2004-05-14');
 INSERT INTO pengunjung VALUES ('hestihassanah', 'Gang Cikutra Timur No. 619, Pematangsiantar, JB 26483', '1976-05-26');
 INSERT INTO pengunjung VALUES ('atmajasuryatmi', 'Gang Sukabumi No. 0, Meulaboh, Papua Barat 89204', '2006-04-12');
