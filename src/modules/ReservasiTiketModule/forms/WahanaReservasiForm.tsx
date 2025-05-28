@@ -53,7 +53,7 @@ interface WahanaReservasiFormProps {
     nama_wahana: string;
     peraturan: string[];
     fasilitas: {
-      jadwal: Date;
+      jadwal: Date | string; // Accept both Date and string
       kapasitas_tersedia: number;
       kapasitas_max: number;
     };
@@ -64,6 +64,13 @@ interface WahanaReservasiFormProps {
     jumlah_tiket: number;
   };
 }
+
+const getFormattedTime = (jadwal: Date | string): string => {
+  if (typeof jadwal === "string") {
+    return jadwal;
+  }
+  return format(jadwal, "HH:mm");
+};
 
 export const WahanaReservasiForm: React.FC<WahanaReservasiFormProps> = ({
   onSubmit,
@@ -122,7 +129,7 @@ export const WahanaReservasiForm: React.FC<WahanaReservasiFormProps> = ({
           <FormItem>
             <FormLabel>Jam</FormLabel>
             <Input
-              value={format(ride.fasilitas.jadwal, "HH:mm")}
+              value={getFormattedTime(ride.fasilitas.jadwal)}
               disabled
               className="bg-muted"
             />
@@ -184,7 +191,7 @@ export const WahanaReservasiForm: React.FC<WahanaReservasiFormProps> = ({
                   <Input
                     type="number"
                     min={1}
-                    max={isEditing ? 20 : ride.fasilitas.kapasitas_tersedia}
+                    max={ride.fasilitas.kapasitas_tersedia}
                     placeholder="Contoh: 2"
                     {...field}
                     onChange={(e) => field.onChange(Number(e.target.value))}

@@ -19,7 +19,7 @@ interface WahanaReservasiFormModalProps {
     nama_wahana: string;
     peraturan: string[];
     fasilitas: {
-      jadwal: Date;
+      jadwal: Date | string; // Accept both Date and string
       kapasitas_tersedia: number;
       kapasitas_max: number;
     };

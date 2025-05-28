@@ -104,20 +104,20 @@ export class Reservasi extends BaseModel<ReservasiType> {
     const formattedDate = date.toISOString().split("T")[0]; // YYYY-MM-DD format
 
     const query = `
-      SELECT 
-        w.nama_wahana,
-        w.peraturan,
-        f.jadwal,
-        f.kapasitas_max,
-        COALESCE(SUM(r.jumlah_tiket) FILTER (WHERE r.status = 'Aktif' AND r.tanggal_kunjungan::date = $1::date), 0) AS tiket_terjual,
-        f.kapasitas_max - COALESCE(SUM(r.jumlah_tiket) FILTER (WHERE r.status = 'Aktif' AND r.tanggal_kunjungan::date = $1::date), 0) AS kapasitas_tersedia,
-        'Wahana' AS jenis_reservasi
-      FROM WAHANA w
-      JOIN FASILITAS f ON w.nama_wahana = f.nama
-      LEFT JOIN RESERVASI r ON w.nama_wahana = r.nama_fasilitas 
-      GROUP BY w.nama_wahana, w.peraturan, f.jadwal, f.kapasitas_max
-      ORDER BY w.nama_wahana
-    `;
+    SELECT 
+      w.nama_wahana,
+      w.peraturan,
+      f.jadwal,
+      f.kapasitas_max,
+      COALESCE(SUM(r.jumlah_tiket) FILTER (WHERE r.status = 'Aktif' AND r.tanggal_kunjungan::date = $1::date), 0) AS tiket_terjual,
+      f.kapasitas_max - COALESCE(SUM(r.jumlah_tiket) FILTER (WHERE r.status = 'Aktif' AND r.tanggal_kunjungan::date = $1::date), 0) AS kapasitas_tersedia,
+      'Wahana' AS jenis_reservasi
+    FROM WAHANA w
+    JOIN FASILITAS f ON w.nama_wahana = f.nama
+    LEFT JOIN RESERVASI r ON w.nama_wahana = r.nama_fasilitas 
+    GROUP BY w.nama_wahana, w.peraturan, f.jadwal, f.kapasitas_max
+    ORDER BY w.nama_wahana
+  `;
 
     return await this.customQuery(query, [formattedDate]);
   }

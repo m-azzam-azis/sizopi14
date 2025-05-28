@@ -42,7 +42,7 @@ interface Facility {
 interface Attraction {
   nama_atraksi: string;
   lokasi: string;
-  jadwal: Date;
+  jadwal: string; // Changed from Date to string
   kapasitas_max: number;
   kapasitas_tersedia: number;
   tiket_terjual: number;
@@ -52,7 +52,7 @@ interface Attraction {
 interface Ride {
   nama_wahana: string;
   peraturan: string;
-  jadwal: Date;
+  jadwal: string; // Changed from Date to string
   kapasitas_max: number;
   kapasitas_tersedia: number;
   tiket_terjual: number;
@@ -68,7 +68,9 @@ interface Reservation {
   jenis_reservasi: "Atraksi" | "Wahana";
   lokasi?: string;
   peraturan?: string;
-  jadwal: Date;
+  jadwal: string; // Changed from Date to string
+  kapasitas_tersedia?: number; // Add this line
+  kapasitas_max?: number; // Add this line
 }
 
 const ReservasiTiketVisitorModule = () => {
@@ -158,7 +160,7 @@ const ReservasiTiketVisitorModule = () => {
       const formattedAttractions = data.attractions.map((attr: any) => ({
         nama_atraksi: attr.nama_atraksi,
         lokasi: attr.lokasi,
-        jadwal: new Date(attr.jadwal), // Parse the full timestamp
+        jadwal: attr.jadwal, // Just use the time string directly
         kapasitas_max: parseInt(attr.kapasitas_max),
         kapasitas_tersedia: parseInt(attr.kapasitas_tersedia),
         tiket_terjual: parseInt(attr.tiket_terjual || 0),
@@ -169,7 +171,7 @@ const ReservasiTiketVisitorModule = () => {
       const formattedRides = data.rides.map((ride: any) => ({
         nama_wahana: ride.nama_wahana,
         peraturan: ride.peraturan,
-        jadwal: new Date(ride.jadwal), // Parse the full timestamp
+        jadwal: ride.jadwal, // Just use the time string directly
         kapasitas_max: parseInt(ride.kapasitas_max),
         kapasitas_tersedia: parseInt(ride.kapasitas_tersedia),
         tiket_terjual: parseInt(ride.tiket_terjual || 0),
@@ -424,11 +426,6 @@ const ReservasiTiketVisitorModule = () => {
     return format(date, "dd MMMM yyyy");
   };
 
-  // Format time
-  const formatTime = (date: Date) => {
-    return format(date, "HH:mm");
-  };
-
   // Format capacity
   const formatCapacity = (available: number, total: number) => {
     return `${available} dari ${total}`;
@@ -455,6 +452,11 @@ const ReservasiTiketVisitorModule = () => {
         ))}
       </ul>
     );
+  };
+
+  // Add this helper function
+  const formatTime = (timeString: string) => {
+    return timeString;
   };
 
   return (
@@ -675,10 +677,7 @@ const ReservasiTiketVisitorModule = () => {
                                 </TableCell>
                                 <TableCell>{attraction.lokasi}</TableCell>
                                 <TableCell>
-                                  {format(
-                                    new Date(attraction.jadwal),
-                                    "dd MMMM yyyy HH:mm"
-                                  )}
+                                  {format(new Date(attraction.jadwal), "HH:mm")}
                                 </TableCell>
                                 <TableCell>
                                   {formatCapacity(
@@ -694,12 +693,15 @@ const ReservasiTiketVisitorModule = () => {
                                       setCurrentReservation({
                                         username_P: username,
                                         nama_fasilitas: attraction.nama_atraksi,
-                                        tanggal_kunjungan: new Date(),
+                                        tanggal_kunjungan: selectedDate,
                                         jumlah_tiket: 1,
                                         status: "Aktif",
                                         jenis_reservasi: "Atraksi",
                                         lokasi: attraction.lokasi,
                                         jadwal: attraction.jadwal,
+                                        kapasitas_tersedia:
+                                          attraction.kapasitas_tersedia, // Add this line
+                                        kapasitas_max: attraction.kapasitas_max, // Add this line
                                       });
                                       setIsAttractionFormOpen(true);
                                     }}
@@ -758,10 +760,7 @@ const ReservasiTiketVisitorModule = () => {
                                   {displayPeraturan(ride.peraturan)}
                                 </TableCell>
                                 <TableCell>
-                                  {format(
-                                    new Date(ride.jadwal),
-                                    "dd MMMM yyyy HH:mm"
-                                  )}
+                                  {format(new Date(ride.jadwal), "HH:mm")}
                                 </TableCell>
                                 <TableCell>
                                   {formatCapacity(
@@ -777,12 +776,15 @@ const ReservasiTiketVisitorModule = () => {
                                       setCurrentReservation({
                                         username_P: username,
                                         nama_fasilitas: ride.nama_wahana,
-                                        tanggal_kunjungan: new Date(),
+                                        tanggal_kunjungan: selectedDate, // Use the selected date here
                                         jumlah_tiket: 1,
                                         status: "Aktif",
                                         jenis_reservasi: "Wahana",
                                         peraturan: ride.peraturan,
                                         jadwal: ride.jadwal,
+                                        kapasitas_tersedia:
+                                          ride.kapasitas_tersedia, // Add this line
+                                        kapasitas_max: ride.kapasitas_max, // Add this line
                                       });
                                       setIsRideFormOpen(true);
                                     }}
@@ -821,8 +823,8 @@ const ReservasiTiketVisitorModule = () => {
               lokasi: currentReservation.lokasi || "",
               fasilitas: {
                 jadwal: currentReservation.jadwal,
-                kapasitas_tersedia: 0, // Not used in the form
-                kapasitas_max: 0, // Not used in the form
+                kapasitas_tersedia: currentReservation.kapasitas_tersedia || 0, // Use actual capacity
+                kapasitas_max: currentReservation.kapasitas_max || 0, // Use actual capacity
               },
             }}
           />
@@ -840,8 +842,8 @@ const ReservasiTiketVisitorModule = () => {
               peraturan: parsePeraturan(currentReservation.peraturan || ""),
               fasilitas: {
                 jadwal: currentReservation.jadwal,
-                kapasitas_tersedia: 0, // Not used in the form
-                kapasitas_max: 0, // Not used in the form
+                kapasitas_tersedia: currentReservation.kapasitas_tersedia || 0, // Use actual capacity
+                kapasitas_max: currentReservation.kapasitas_max || 0, // Use actual capacity
               },
             }}
           />
@@ -859,8 +861,8 @@ const ReservasiTiketVisitorModule = () => {
               lokasi: currentReservation.lokasi || "",
               fasilitas: {
                 jadwal: currentReservation.jadwal,
-                kapasitas_tersedia: 0, // Not used in the form
-                kapasitas_max: 0, // Not used in the form
+                kapasitas_tersedia: currentReservation.kapasitas_tersedia || 0, // Use actual capacity
+                kapasitas_max: currentReservation.kapasitas_max || 0, // Use actual capacity
               },
             }}
             isEditing={true}
@@ -883,8 +885,8 @@ const ReservasiTiketVisitorModule = () => {
               peraturan: parsePeraturan(currentReservation.peraturan || ""),
               fasilitas: {
                 jadwal: currentReservation.jadwal,
-                kapasitas_tersedia: 0, // Not used in the form
-                kapasitas_max: 0, // Not used in the form
+                kapasitas_tersedia: currentReservation.kapasitas_tersedia || 0, // Use actual capacity
+                kapasitas_max: currentReservation.kapasitas_max || 0, // Use actual capacity
               },
             }}
             isEditing={true}

@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { ReservasiTiketForm } from "../forms/ReservasiTiketForm";
 
+// Change the interface to accept both Date and string
 interface ReservasiTiketFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -19,7 +20,7 @@ interface ReservasiTiketFormModalProps {
     nama_atraksi: string;
     lokasi: string;
     fasilitas: {
-      jadwal: Date;
+      jadwal: Date | string; // Accept both Date and string
       kapasitas_tersedia: number;
       kapasitas_max: number;
     };

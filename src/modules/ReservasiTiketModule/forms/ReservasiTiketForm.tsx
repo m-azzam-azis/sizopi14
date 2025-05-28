@@ -61,7 +61,7 @@ interface Atraksi {
   nama_atraksi: string;
   lokasi: string;
   fasilitas: {
-    jadwal: Date;
+    jadwal: Date | string; // Accept both Date and string
     kapasitas_tersedia: number;
     kapasitas_max: number;
   };
@@ -73,7 +73,7 @@ interface ReservasiTiketFormProps {
     nama_atraksi: string;
     lokasi: string;
     fasilitas: {
-      jadwal: Date;
+      jadwal: Date | string; // Accept both Date and string
       kapasitas_tersedia: number;
       kapasitas_max: number;
     };
@@ -84,6 +84,14 @@ interface ReservasiTiketFormProps {
     jumlah_tiket: number;
   };
 }
+
+// Add this helper function at the top of the file
+const getFormattedTime = (jadwal: Date | string): string => {
+  if (typeof jadwal === "string") {
+    return jadwal;
+  }
+  return format(jadwal, "HH:mm");
+};
 
 export const ReservasiTiketForm: React.FC<ReservasiTiketFormProps> = ({
   onSubmit,
@@ -145,7 +153,7 @@ export const ReservasiTiketForm: React.FC<ReservasiTiketFormProps> = ({
           <FormItem>
             <FormLabel>Jam</FormLabel>
             <Input
-              value={format(attraction.fasilitas.jadwal, "HH:mm")}
+              value={getFormattedTime(attraction.fasilitas.jadwal)}
               disabled
               className="bg-muted"
             />
@@ -207,9 +215,7 @@ export const ReservasiTiketForm: React.FC<ReservasiTiketFormProps> = ({
                   <Input
                     type="number"
                     min={1}
-                    max={
-                      isEditing ? 20 : attraction.fasilitas.kapasitas_tersedia
-                    }
+                    max={attraction.fasilitas.kapasitas_tersedia}
                     placeholder="Contoh: 2"
                     {...field}
                     onChange={(e) => field.onChange(Number(e.target.value))}

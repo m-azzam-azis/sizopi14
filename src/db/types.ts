@@ -40,7 +40,7 @@ export interface DokterHewanType {
 
 export interface FasilitasType {
   nama: string;
-  jadwal: Date;
+  jadwal: string; // Changed from Date to string
   kapasitas_max: number;
 }
 

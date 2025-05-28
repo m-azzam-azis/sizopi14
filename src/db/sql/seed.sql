@@ -128,7 +128,7 @@ CREATE TABLE MEMBERI (
 
 CREATE TABLE FASILITAS (
 	nama VARCHAR(50) PRIMARY KEY,
-	jadwal TIMESTAMP NOT NULL,
+	jadwal TIME NOT NULL,
 	kapasitas_max INT NOT NULL
 );
 
@@ -522,19 +522,19 @@ INSERT INTO memberi VALUES ('98b765a7-6a04-4b3d-b118-c8f26d72e433', '2023-08-30 
 INSERT INTO memberi VALUES ('b8c4d74f-239f-4e16-a109-f24b263eb4e5', '2023-09-05 09:00:00', 'omaryadi');
 INSERT INTO memberi VALUES ('cfbd3c9b-4733-4a9f-8a37-d85a1ea38d2b', '2023-07-20 08:45:00', 'knababan');
 
-INSERT INTO fasilitas VALUES ('Kolam Renang', '2025-11-01 10:00:00', 50);
-INSERT INTO fasilitas VALUES ('Teater Satwa', '2025-11-01 13:30:00', 100);
-INSERT INTO fasilitas VALUES ('Zona Edukasi', '2025-11-02 09:00:00', 30);
-INSERT INTO fasilitas VALUES ('Panggung Musik', '2025-11-02 16:00:00', 150);
-INSERT INTO fasilitas VALUES ('Kebun Mini', '2025-11-03 08:00:00', 20);
-INSERT INTO fasilitas VALUES ('Galeri Satwa', '2025-11-03 11:00:00', 40);
-INSERT INTO fasilitas VALUES ('Taman Reptil', '2025-11-04 14:00:00', 35);
-INSERT INTO fasilitas VALUES ('Pojok Burung', '2025-11-04 10:30:00', 25);
-INSERT INTO fasilitas VALUES ('Zona Air', '2025-11-11 12:00:00', 60);
-INSERT INTO fasilitas VALUES ('Zona Tengah', '2025-11-11 15:00:00', 80);
-INSERT INTO fasilitas VALUES ('Zona Hutan', '2025-11-06 09:30:00', 70);
-INSERT INTO fasilitas VALUES ('Zona Tropis', '2025-11-06 13:00:00', 40);
-INSERT INTO fasilitas VALUES ('Zona Hiburan', '2025-11-07 11:30:00', 90);
+INSERT INTO fasilitas VALUES ('Kolam Renang', '10:00:00', 50);
+INSERT INTO fasilitas VALUES ('Teater Satwa', '13:30:00', 100);
+INSERT INTO fasilitas VALUES ('Zona Edukasi', '09:00:00', 30);
+INSERT INTO fasilitas VALUES ('Panggung Musik', '16:00:00', 150);
+INSERT INTO fasilitas VALUES ('Kebun Mini', '08:00:00', 20);
+INSERT INTO fasilitas VALUES ('Galeri Satwa', '11:00:00', 40);
+INSERT INTO fasilitas VALUES ('Taman Reptil', '14:00:00', 35);
+INSERT INTO fasilitas VALUES ('Pojok Burung', '10:30:00', 25);
+INSERT INTO fasilitas VALUES ('Zona Air', '12:00:00', 60);
+INSERT INTO fasilitas VALUES ('Zona Tengah', '15:00:00', 80);
+INSERT INTO fasilitas VALUES ('Zona Hutan', '09:30:00', 70);
+INSERT INTO fasilitas VALUES ('Zona Tropis', '13:00:00', 40);
+INSERT INTO fasilitas VALUES ('Zona Hiburan', '11:30:00', 90);
 
 INSERT INTO atraksi VALUES ('Kolam Renang', 'Zona Air');
 INSERT INTO atraksi VALUES ('Teater Satwa', 'Zona Edukasi');
