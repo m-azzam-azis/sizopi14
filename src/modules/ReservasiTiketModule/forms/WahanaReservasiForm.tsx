@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,20 +19,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 // Schema for form validation
-const reservasiFormSchema = z.object({
+const wahanaReservasiFormSchema = z.object({
   nama_fasilitas: z.string({
-    required_error: "Pilih atraksi",
+    required_error: "Pilih wahana",
   }),
   tanggal_kunjungan: z.date({
     required_error: "Pilih tanggal kunjungan",
@@ -46,32 +39,19 @@ const reservasiFormSchema = z.object({
 });
 
 // Define types
-type ReservasiFormValues = z.infer<typeof reservasiFormSchema>;
+type WahanaReservasiFormValues = z.infer<typeof wahanaReservasiFormSchema>;
 
-interface ReservasiFormData {
+interface WahanaReservasiFormData {
   nama_fasilitas: string;
-  nama_atraksi?: string;
-  lokasi?: string;
-  jadwal?: string;
   tanggal_kunjungan: Date;
   jumlah_tiket: number;
 }
 
-interface Atraksi {
-  nama_atraksi: string;
-  lokasi: string;
-  fasilitas: {
-    jadwal: Date;
-    kapasitas_tersedia: number;
-    kapasitas_max: number;
-  };
-}
-
-interface ReservasiTiketFormProps {
-  onSubmit: (data: ReservasiFormData) => void;
-  attraction: {
-    nama_atraksi: string;
-    lokasi: string;
+interface WahanaReservasiFormProps {
+  onSubmit: (data: WahanaReservasiFormData) => void;
+  ride: {
+    nama_wahana: string;
+    peraturan: string[];
     fasilitas: {
       jadwal: Date;
       kapasitas_tersedia: number;
@@ -85,29 +65,24 @@ interface ReservasiTiketFormProps {
   };
 }
 
-export const ReservasiTiketForm: React.FC<ReservasiTiketFormProps> = ({
+export const WahanaReservasiForm: React.FC<WahanaReservasiFormProps> = ({
   onSubmit,
-  attraction,
+  ride,
   isEditing = false,
   initialData,
 }) => {
-  const form = useForm<ReservasiFormValues>({
-    resolver: zodResolver(reservasiFormSchema),
+  const form = useForm<WahanaReservasiFormValues>({
+    resolver: zodResolver(wahanaReservasiFormSchema),
     defaultValues: {
-      nama_fasilitas: attraction.nama_atraksi,
+      nama_fasilitas: ride.nama_wahana,
       tanggal_kunjungan: initialData?.tanggal_kunjungan || new Date(),
       jumlah_tiket: initialData?.jumlah_tiket || 1,
     },
   });
 
-  const handleFormSubmit = (values: ReservasiFormValues) => {
-    const formattedJadwal = format(attraction.fasilitas.jadwal, "HH:mm");
-
+  const handleFormSubmit = (values: WahanaReservasiFormValues) => {
     onSubmit({
       nama_fasilitas: values.nama_fasilitas,
-      nama_atraksi: attraction.nama_atraksi,
-      lokasi: attraction.lokasi,
-      jadwal: formattedJadwal,
       tanggal_kunjungan: values.tanggal_kunjungan,
       jumlah_tiket: values.jumlah_tiket,
     });
@@ -124,28 +99,30 @@ export const ReservasiTiketForm: React.FC<ReservasiTiketFormProps> = ({
           name="nama_fasilitas"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nama Atraksi</FormLabel>
-              <Input
-                value={attraction.nama_atraksi}
-                disabled
-                className="bg-muted"
-              />
+              <FormLabel>Nama Wahana</FormLabel>
+              <Input value={ride.nama_wahana} disabled className="bg-muted" />
             </FormItem>
           )}
         />
 
-        <div className="grid grid-cols-1 gap-4">
-          <FormItem>
-            <FormLabel>Lokasi</FormLabel>
-            <Input value={attraction.lokasi} disabled className="bg-muted" />
-          </FormItem>
-        </div>
+        <FormItem>
+          <FormLabel>Peraturan</FormLabel>
+          <div className="bg-muted rounded-md p-3">
+            <ul className="list-disc list-inside space-y-1">
+              {ride.peraturan.map((rule, index) => (
+                <li key={index} className="text-sm">
+                  {rule}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </FormItem>
 
         <div className="grid grid-cols-1 gap-4">
           <FormItem>
             <FormLabel>Jam</FormLabel>
             <Input
-              value={format(attraction.fasilitas.jadwal, "HH:mm")}
+              value={format(ride.fasilitas.jadwal, "HH:mm")}
               disabled
               className="bg-muted"
             />
@@ -207,9 +184,7 @@ export const ReservasiTiketForm: React.FC<ReservasiTiketFormProps> = ({
                   <Input
                     type="number"
                     min={1}
-                    max={
-                      isEditing ? 20 : attraction.fasilitas.kapasitas_tersedia
-                    }
+                    max={isEditing ? 20 : ride.fasilitas.kapasitas_tersedia}
                     placeholder="Contoh: 2"
                     {...field}
                     onChange={(e) => field.onChange(Number(e.target.value))}
@@ -219,7 +194,7 @@ export const ReservasiTiketForm: React.FC<ReservasiTiketFormProps> = ({
               </FormControl>
               {!isEditing && (
                 <p className="text-xs text-muted-foreground">
-                  Tersedia: {attraction.fasilitas.kapasitas_tersedia} tiket
+                  Tersedia: {ride.fasilitas.kapasitas_tersedia} tiket
                 </p>
               )}
               <FormMessage />
@@ -239,3 +214,5 @@ export const ReservasiTiketForm: React.FC<ReservasiTiketFormProps> = ({
     </Form>
   );
 };
+
+export default WahanaReservasiForm;

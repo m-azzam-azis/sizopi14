@@ -128,7 +128,7 @@ export interface PenjagaHewanType {
 
 export interface ReservasiType {
   username_P: string;
-  nama_atraksi: string;
+  nama_fasilitas: string;
   tanggal_kunjungan: Date;
   jumlah_tiket: number;
   status: string;

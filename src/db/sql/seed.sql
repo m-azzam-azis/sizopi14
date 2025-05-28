@@ -522,19 +522,19 @@ INSERT INTO memberi VALUES ('98b765a7-6a04-4b3d-b118-c8f26d72e433', '2023-08-30 
 INSERT INTO memberi VALUES ('b8c4d74f-239f-4e16-a109-f24b263eb4e5', '2023-09-05 09:00:00', 'omaryadi');
 INSERT INTO memberi VALUES ('cfbd3c9b-4733-4a9f-8a37-d85a1ea38d2b', '2023-07-20 08:45:00', 'knababan');
 
-INSERT INTO fasilitas VALUES ('Kolam Renang', '2024-05-01 10:00:00', 50);
-INSERT INTO fasilitas VALUES ('Teater Satwa', '2024-05-01 13:30:00', 100);
-INSERT INTO fasilitas VALUES ('Zona Edukasi', '2024-05-02 09:00:00', 30);
-INSERT INTO fasilitas VALUES ('Panggung Musik', '2024-05-02 16:00:00', 150);
-INSERT INTO fasilitas VALUES ('Kebun Mini', '2024-05-03 08:00:00', 20);
-INSERT INTO fasilitas VALUES ('Galeri Satwa', '2024-05-03 11:00:00', 40);
-INSERT INTO fasilitas VALUES ('Taman Reptil', '2024-05-04 14:00:00', 35);
-INSERT INTO fasilitas VALUES ('Pojok Burung', '2024-05-04 10:30:00', 25);
-INSERT INTO fasilitas VALUES ('Zona Air', '2024-05-05 12:00:00', 60);
-INSERT INTO fasilitas VALUES ('Zona Tengah', '2024-05-05 15:00:00', 80);
-INSERT INTO fasilitas VALUES ('Zona Hutan', '2024-05-06 09:30:00', 70);
-INSERT INTO fasilitas VALUES ('Zona Tropis', '2024-05-06 13:00:00', 40);
-INSERT INTO fasilitas VALUES ('Zona Hiburan', '2024-05-07 11:30:00', 90);
+INSERT INTO fasilitas VALUES ('Kolam Renang', '2025-11-01 10:00:00', 50);
+INSERT INTO fasilitas VALUES ('Teater Satwa', '2025-11-01 13:30:00', 100);
+INSERT INTO fasilitas VALUES ('Zona Edukasi', '2025-11-02 09:00:00', 30);
+INSERT INTO fasilitas VALUES ('Panggung Musik', '2025-11-02 16:00:00', 150);
+INSERT INTO fasilitas VALUES ('Kebun Mini', '2025-11-03 08:00:00', 20);
+INSERT INTO fasilitas VALUES ('Galeri Satwa', '2025-11-03 11:00:00', 40);
+INSERT INTO fasilitas VALUES ('Taman Reptil', '2025-11-04 14:00:00', 35);
+INSERT INTO fasilitas VALUES ('Pojok Burung', '2025-11-04 10:30:00', 25);
+INSERT INTO fasilitas VALUES ('Zona Air', '2025-11-11 12:00:00', 60);
+INSERT INTO fasilitas VALUES ('Zona Tengah', '2025-11-11 15:00:00', 80);
+INSERT INTO fasilitas VALUES ('Zona Hutan', '2025-11-06 09:30:00', 70);
+INSERT INTO fasilitas VALUES ('Zona Tropis', '2025-11-06 13:00:00', 40);
+INSERT INTO fasilitas VALUES ('Zona Hiburan', '2025-11-07 11:30:00', 90);
 
 INSERT INTO atraksi VALUES ('Kolam Renang', 'Zona Air');
 INSERT INTO atraksi VALUES ('Teater Satwa', 'Zona Edukasi');
@@ -658,9 +658,9 @@ INSERT INTO adopsi VALUES ('e743ed82-42a5-43a4-9e35-328cd7ff0e09', '398638ba-97d
 INSERT INTO adopsi VALUES ('aab11cc7-317d-42e8-bb91-8fc64517efab', 'c84949f2-643a-4441-b982-c9dae4915925', 'Lunas', '2025-05-01', '2025-12-31', 650000);
 INSERT INTO adopsi VALUES ('d111b1c5-8e1a-4c0f-bbcd-7f8ccfe7b3e3', '9b8720a0-2f01-44ab-b1dc-77ecdd5f8cf4', 'Belum', '2025-06-01', '2025-12-31', 600000);
 
-INSERT INTO reservasi VALUES ('rajatacalista', 'Kolam Renang', '2024-05-15', 2, 'Aktif');
-INSERT INTO reservasi VALUES ('nsihotang', 'Teater Satwa', '2024-05-16', 4, 'Aktif');
-INSERT INTO reservasi VALUES ('margana08', 'Kolam Renang', '2024-04-25', 2, 'Batal');
-INSERT INTO reservasi VALUES ('dartono24', 'Zona Tropis', '2024-04-10', 3, 'Selesai');
-INSERT INTO reservasi VALUES ('mandalagada', 'Panggung Musik', '2024-04-12', 4, 'Selesai');
-INSERT INTO reservasi VALUES ('rikasinaga', 'Zona Edukasi', '2024-06-05', 2, 'Aktif');
+INSERT INTO reservasi VALUES ('rajatacalista', 'Kolam Renang', '2025-11-01', 2, 'Aktif');
+INSERT INTO reservasi VALUES ('rajatacalista', 'Teater Satwa', '2025-11-01', 4, 'Aktif');
+INSERT INTO reservasi VALUES ('rajatacalista', 'Zona Hutan', '2025-11-06', 2, 'Batal');
+INSERT INTO reservasi VALUES ('rajatacalista', 'Zona Tropis', '2025-11-06', 3, 'Aktif');
+INSERT INTO reservasi VALUES ('rajatacalista', 'Panggung Musik', '2025-11-02', 4, 'Batal');
+INSERT INTO reservasi VALUES ('rajatacalista', 'Zona Edukasi', '2025-11-02', 2, 'Aktif');

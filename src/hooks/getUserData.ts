@@ -56,6 +56,8 @@ const adminOnlyRoutes = [
   "/api/atraksi",
 ];
 
+const visitorRoutes = ["/reservasi"];
+
 export const getUserData: () => ReturnType = () => {
   const [token, setToken] = useState<string | null>(null);
   const [decodedToken, setDecodedToken] = useState<sessionType | null>(null);
@@ -135,6 +137,24 @@ export const getUserData: () => ReturnType = () => {
       if (
         authState === "authenticated" &&
         decodedToken?.data.role !== "admin"
+      ) {
+        router.push("/");
+        return;
+      }
+    }
+
+    const isVisitorRoute = visitorRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+    if (isVisitorRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
+      }
+
+      if (
+        authState === "authenticated" &&
+        decodedToken?.data.role !== "visitor"
       ) {
         router.push("/");
         return;
