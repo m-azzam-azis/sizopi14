@@ -19,16 +19,18 @@ export class Pengguna extends BaseModel<PenggunaType> {
 
   async comparePassword(
     username: string,
-    inputPassword: string,
+    inputPassword: string
   ): Promise<boolean> {
     try {
-      const result = await this.customQuery(
-        "SELECT verify_login($1, $2) AS is_valid",
-        [username, inputPassword]
-      );
+      await this.customQuery("SELECT verify_login($1, $2) AS is_valid", [
+        username,
+        inputPassword,
+      ]);
       return true;
-    } catch (error: any) {
-      console.error("Login verification failed:", error.message);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error("Login verification failed:", errorMessage);
       return false;
     }
   }
@@ -66,6 +68,7 @@ export class Pengguna extends BaseModel<PenggunaType> {
       if (result[0]["exists"]) {
         return role;
       }
-    }    return "user"; // Default role if no specific role is found
+    }
+    return "user"; // Default role if no specific role is found
   }
 }
