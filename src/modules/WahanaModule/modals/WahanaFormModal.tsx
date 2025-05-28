@@ -6,18 +6,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { WahanaForm } from "../forms/WahanaForm";
+import WahanaForm from "../forms/WahanaForm";
+import {
+  CreateWahanaFormValues,
+  EditWahanaFormValues,
+} from "../forms/WahanaForm";
 
 interface WahanaFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
+  isEditing: boolean;
+  nama_wahana?: string;
   initialData?: {
-    jadwal: Date;
+    jadwal: string | Date;
     kapasitas: number;
   };
-  isEditing?: boolean;
-  nama_wahana?: string;
 }
 
 const WahanaFormModal: React.FC<WahanaFormModalProps> = ({
@@ -28,14 +32,16 @@ const WahanaFormModal: React.FC<WahanaFormModalProps> = ({
   isEditing = false,
   nama_wahana,
 }) => {
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (
+    data: CreateWahanaFormValues | EditWahanaFormValues
+  ) => {
     onSubmit(data);
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[525px] max-h-[95vh] md:max-h-[90vh] overflow-y-auto scrollbar-hide">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Edit Wahana" : "Tambah Wahana"}

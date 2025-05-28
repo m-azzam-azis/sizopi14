@@ -5,9 +5,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ReservasiTiketForm } from "../forms/ReservasiTiketForm";
+import WahanaReservasiForm from "../forms/WahanaReservasiForm";
 
-interface ReservasiTiketFormModalProps {
+interface WahanaReservasiFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: {
@@ -15,9 +15,9 @@ interface ReservasiTiketFormModalProps {
     tanggal_kunjungan: Date;
     jumlah_tiket: number;
   }) => void;
-  attraction: {
-    nama_atraksi: string;
-    lokasi: string;
+  ride: {
+    nama_wahana: string;
+    peraturan: string[];
     fasilitas: {
       jadwal: Date | string;
       kapasitas_tersedia: number;
@@ -32,11 +32,11 @@ interface ReservasiTiketFormModalProps {
   selectedDate: Date;
 }
 
-const ReservasiTiketFormModal: React.FC<ReservasiTiketFormModalProps> = ({
+const WahanaReservasiFormModal: React.FC<WahanaReservasiFormModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
-  attraction,
+  ride,
   isEditing = false,
   initialData,
   selectedDate,
@@ -49,9 +49,9 @@ const ReservasiTiketFormModal: React.FC<ReservasiTiketFormModalProps> = ({
             {isEditing ? "Edit Reservasi" : "Form Reservasi"}
           </DialogTitle>
         </DialogHeader>
-        <ReservasiTiketForm
+        <WahanaReservasiForm
           onSubmit={onSubmit}
-          attraction={attraction}
+          ride={ride}
           isEditing={isEditing}
           initialData={initialData}
           selectedDate={selectedDate}
@@ -61,4 +61,4 @@ const ReservasiTiketFormModal: React.FC<ReservasiTiketFormModalProps> = ({
   );
 };
 
-export default ReservasiTiketFormModal;
+export default WahanaReservasiFormModal;
