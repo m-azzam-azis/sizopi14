@@ -5,9 +5,17 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, PlusCircle, AlertTriangle } from "lucide-react";
+import { Eye, PlusCircle, AlertTriangle, Filter } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AnimalDisplayType } from "@/db/types";
+import { getUserData } from "@/hooks/getUserData";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AnimalDisplay extends AnimalDisplayType {
   isAdopted: boolean;
@@ -17,30 +25,83 @@ export default function AdminAdopsiModule() {
   const router = useRouter();
   const [animals, setAnimals] = useState<AnimalDisplay[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [stats, setStats] = useState({ adopted: 0, unadopted: 0 });
+  const [refreshTimestamp, setRefreshTimestamp] = useState(Date.now());
+  
+  // Dapatkan data user dan cek role
+  const { userData, isValid, isLoading: authLoading } = getUserData();
 
   useEffect(() => {
-    const fetchAnimals = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch("/api/adopsi");
-        const data: AnimalDisplayType[] = await response.json();
-        
-        const formattedData: AnimalDisplay[] = data.map(animal => ({
-          ...animal,
-          isAdopted: !!animal.id_adopsi 
-        }));
-        
-        setAnimals(formattedData);
-      } catch (error) {
-        console.error("Error fetching animals:", error);
-      } finally {
-        setIsLoading(false);
+    // Cek apakah user adalah admin
+    if (!authLoading && isValid && userData.role !== "admin") {
+      // Jika bukan admin, redirect ke halaman utama
+      router.push("/");
+    }
+  }, [userData, isValid, authLoading, router]);
+
+  useEffect(() => {
+    // Hanya ambil data jika user valid dan loading auth selesai
+    if (isValid && !authLoading) {
+      // Parse query params untuk memeriksa apakah perlu refresh
+      const url = new URL(window.location.href);
+      const hasRefreshParam = url.searchParams.has('t');
+      
+      if (hasRefreshParam) {
+        router.replace('/admin-adopsi');
       }
-    };
+      
+      fetchAnimals();
+    }
+  }, [statusFilter, refreshTimestamp, isValid, authLoading]);
 
-    fetchAnimals();
-  }, []);
+  // Fungsi refresh data saat diperlukan
+  const refreshData = () => {
+    setRefreshTimestamp(Date.now());
+  };
 
+  const fetchAnimals = async () => {
+    setIsLoading(true);
+    try {
+      // Tambahkan parameter timestamp untuk mencegah caching
+      const response = await fetch(`/api/adopsi?status=${statusFilter}&t=${Date.now()}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("Fetched animals data:", data);
+      
+      setAnimals(data);
+      
+      // Calculate stats
+      const adoptedCount = data.filter((animal: AnimalDisplay) => animal.isAdopted).length;
+      const unadoptedCount = data.filter((animal: AnimalDisplay) => !animal.isAdopted).length;
+      setStats({ adopted: adoptedCount, unadopted: unadoptedCount });
+      
+    } catch (error) {
+      console.error("Error fetching animals:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Jika masih loading autentikasi, tampilkan loading
+  if (authLoading) {
+    return (
+      <div className="container mx-auto py-10 px-4 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Jika user bukan admin, jangan render konten (redirect akan dihandle useEffect)
+  if (!isValid || userData.role !== "admin") {
+    return null;
+  }
+
+  // Kode lainnya tetap sama
   const handleViewDetail = (animalId: string) => {
     router.push(`/admin-adopsi/detail/${animalId}`); 
   };
@@ -89,69 +150,96 @@ export default function AdminAdopsiModule() {
         </CardHeader>
       </div>
 
-      <h2 className="text-2xl font-semibold mb-4 font-outfit text-foreground">Pantau Status Adopsi Hewan</h2>
+      {/* Header with filtering */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold font-outfit text-foreground">Pantau Status Adopsi Hewan</h2>
+        
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select 
+            value={statusFilter} 
+            onValueChange={setStatusFilter}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Hewan</SelectItem>
+              <SelectItem value="adopted">Diadopsi</SelectItem>
+              <SelectItem value="unadopted">Tidak Diadopsi</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="flex justify-center items-center h-40">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
+      ) : animals.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground">Tidak ada hewan yang ditemukan dengan filter ini.</p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-4">
           {animals.map((animal) => (
             <Card key={animal.id_hewan} className="overflow-hidden border-border shadow-sm relative">
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                {/* Avatar Image */}
-                <Avatar className="h-32 w-32 rounded-md">
-                  <AvatarImage src={animal.url_foto} alt={animal.nama_hewan} />
-                  <AvatarFallback className="rounded-md">
-                    {animal.nama_hewan?.substring(0, 2).toUpperCase() || "AN"}
-                  </AvatarFallback>
-                </Avatar>
-          
-                {/* Animal Details */}
-                <div className="flex flex-col justify-center">
-                  <p className="font-medium text-xl font-outfit">{animal.nama_hewan || "[Tanpa nama]"}</p>
-                  <p className="text-base text-muted-foreground">{animal.spesies}</p>
-                  <Badge
-                    className={`mt-2 px-3 py-1 text-sm rounded-full ${getConditionBadgeStyle(animal.status_kesehatan)}`}
-                  >
-                    {animal.status_kesehatan}
-                  </Badge>
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row gap-4">
+                  {/* Avatar Image */}
+                  <Avatar className="h-32 w-32 rounded-md">
+                    <AvatarImage src={animal.url_foto} alt={animal.nama_hewan} />
+                    <AvatarFallback className="rounded-md">
+                      {animal.nama_hewan?.substring(0, 2).toUpperCase() || "AN"}
+                    </AvatarFallback>
+                  </Avatar>
+            
+                  {/* Animal Details */}
+                  <div className="flex flex-col justify-center">
+                    <p className="font-medium text-xl font-outfit">{animal.nama_hewan || "[Tanpa nama]"}</p>
+                    <p className="text-base text-muted-foreground">{animal.spesies}</p>
+                    <Badge
+                      className={`mt-2 px-3 py-1 text-sm rounded-full ${getConditionBadgeStyle(animal.status_kesehatan)}`}
+                    >
+                      {getConditionIcon(animal.status_kesehatan)}
+                      {animal.status_kesehatan}
+                    </Badge>
+                  </div>
                 </div>
-              </div>
-          
-              {/* Badge and Buttons */}
-              <div className="absolute top-12 right-6 flex flex-col items-end gap-4">
-                {/* Badge */}
-                <Badge
-                  variant={animal.isAdopted ? "default" : "outline"}
-                  className="text-sm px-3 py-1"
-                >
-                  {animal.isAdopted ? "Diadopsi" : "Tidak Diadopsi"}
-                </Badge>
+            
+                {/* Badge and Buttons */}
+                <div className="absolute top-12 right-6 flex flex-col items-end gap-4">
+                  {/* Badge */}
+                  <Badge
+                    variant={animal.isAdopted ? "default" : "outline"}
+                    className="text-sm px-3 py-1"
+                  >
+                    {animal.isAdopted ? "Diadopsi" : "Tidak Diadopsi"}
+                  </Badge>
 
-                {/* Buttons */}
-                {animal.isAdopted ? (
-                  <Button
-                    variant="outline"
-                    className="text-primary border-primary hover:bg-primary/10 text-base font-medium"
-                    onClick={() => handleViewDetail(animal.id_hewan)}
-                  >
-                    <Eye className="mr-2 h-5 w-5" /> Lihat Detail
-                  </Button>
-                ) : (
-                  <Button
-                    variant="default"
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 text-base font-medium"
-                    onClick={() => handleRegisterAdmin(animal.id_hewan)}
-                  >
-                    <PlusCircle className="mr-2 h-5 w-5" /> Daftarkan Adopter
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  {/* Buttons */}
+                  {animal.isAdopted ? (
+                    <Button
+                      variant="outline"
+                      className="text-primary border-primary hover:bg-primary/10 text-base font-medium"
+                      onClick={() => handleViewDetail(animal.id_hewan)}
+                    >
+                      <Eye className="mr-2 h-5 w-5" /> Lihat Detail
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="default"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 text-base font-medium"
+                      onClick={() => handleRegisterAdmin(animal.id_hewan)}
+                    >
+                      <PlusCircle className="mr-2 h-5 w-5" /> Daftarkan Adopter
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

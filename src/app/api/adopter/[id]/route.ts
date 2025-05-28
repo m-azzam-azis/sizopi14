@@ -8,17 +8,14 @@ export async function GET(
     const adopterId = params.id;
     console.log(`Fetching details for adopter: ${adopterId}`);
     
-    // First, let's check what columns exist in the individu and organisasi tables
-    // to avoid the "column does not exist" error
-    
-    // 1. Start with just the basic adopter info which we know exists
+    // 1. Ambil data dasar adopter
     const adopterQuery = `
       SELECT 
-        ad.id_adopter as id,
-        ad.username_adopter,
-        ad.total_kontribusi
-      FROM adopter ad
-      WHERE ad.id_adopter = $1
+        a.id_adopter as id,
+        a.username_adopter,
+        a.total_kontribusi
+      FROM adopter a
+      WHERE a.id_adopter = $1
     `;
     
     const adopterResult = await pool.query(adopterQuery, [adopterId]);
@@ -30,118 +27,82 @@ export async function GET(
       });
     }
     
-    // Basic adopter info
+    // Data dasar adopter
     const adopter = adopterResult.rows[0];
     
-    // 2. Check columns in individu table 
-    let individualColumns;
-    try {
-      const columnsQuery = `
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'individu'
-      `;
-      const columnsResult = await pool.query(columnsQuery);
-      individualColumns = columnsResult.rows.map(row => row.column_name);
-      console.log("Individu columns:", individualColumns);
-    } catch (error) {
-      console.error("Error checking individu columns:", error);
-      individualColumns = [];
-    }
-    
-    // 3. Check columns in organisasi table
-    let organisasiColumns;
-    try {
-      const columnsQuery = `
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'organisasi'
-      `;
-      const columnsResult = await pool.query(columnsQuery);
-      organisasiColumns = columnsResult.rows.map(row => row.column_name);
-      console.log("Organisasi columns:", organisasiColumns);
-    } catch (error) {
-      console.error("Error checking organisasi columns:", error);
-      organisasiColumns = [];
-    }
-    
-    // 4. Check if pengguna table exists and its columns
-    let penggunaColumns;
-    try {
-      const columnsQuery = `
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'pengguna'
-      `;
-      const columnsResult = await pool.query(columnsQuery);
-      penggunaColumns = columnsResult.rows.map(row => row.column_name);
-      console.log("Pengguna columns:", penggunaColumns);
-    } catch (error) {
-      console.error("Error checking pengguna columns:", error);
-      penggunaColumns = [];
-    }
-    
-    // 5. Now, build dynamic queries based on available columns
+    // 2. Cek apakah adopter adalah individu atau organisasi dan ambil nama
     let name = adopter.username_adopter;
-    let type = "unknown";
-    let address = "";
-    let contact = "";
+    let type = null;
     
-    // Try to get individual details with dynamic column selection
-    if (individualColumns.includes('id_adopter') && individualColumns.includes('nama')) {
-      // Build a safe query with only columns that exist
-      let individualQueryStr = `
-        SELECT nama
-        FROM individu
-        WHERE id_adopter = $1
-      `;
-      
-      const individualResult = await pool.query(individualQueryStr, [adopterId]);
-      
-      if (individualResult.rows.length > 0) {
-        name = individualResult.rows[0].nama;
-        type = "individu";
-      }
-    }
+    // Cek di tabel individu
+    const individualQuery = `
+      SELECT nama
+      FROM individu
+      WHERE id_adopter = $1
+    `;
     
-    // If not found as individual, try organization
-    if (type === "unknown" && 
-        organisasiColumns.includes('id_adopter') && 
-        organisasiColumns.includes('nama_organisasi')) {
-      
-      let orgQueryStr = `
+    const individualResult = await pool.query(individualQuery, [adopterId]);
+    
+    if (individualResult.rows.length > 0) {
+      name = individualResult.rows[0].nama || name;
+      type = "individu";
+    } else {
+      // Cek di tabel organisasi
+      const orgQuery = `
         SELECT nama_organisasi
         FROM organisasi
         WHERE id_adopter = $1
       `;
       
-      const orgResult = await pool.query(orgQueryStr, [adopterId]);
+      const orgResult = await pool.query(orgQuery, [adopterId]);
       
       if (orgResult.rows.length > 0) {
-        name = orgResult.rows[0].nama_organisasi;
+        name = orgResult.rows[0].nama_organisasi || name;
         type = "organisasi";
       }
     }
     
-    // Try to get contact info if pengguna table exists with proper columns
-    if (penggunaColumns.includes('username') && penggunaColumns.includes('no_telp')) {
-      const contactQuery = `
-        SELECT no_telp
-        FROM pengguna
-        WHERE username = (SELECT username_adopter FROM adopter WHERE id_adopter = $1)
+    // 3. Ambil alamat dari tabel PENGUNJUNG
+    // username_adopter pada tabel ADOPTER adalah FK ke PENGUNJUNG.username_P
+    let address = "[alamat]";
+    
+    try {
+      const addressQuery = `
+        SELECT p.alamat
+        FROM pengunjung p
+        WHERE p.username_P = $1
       `;
       
-      try {
-        const contactResult = await pool.query(contactQuery, [adopterId]);
-        if (contactResult.rows.length > 0) {
-          contact = contactResult.rows[0].no_telp || "";
-        }
-      } catch (error) {
-        console.error("Error fetching contact:", error);
+      const addressResult = await pool.query(addressQuery, [adopter.username_adopter]);
+      
+      if (addressResult.rows.length > 0 && addressResult.rows[0].alamat) {
+        address = addressResult.rows[0].alamat;
       }
+    } catch (error) {
+      console.error("Error fetching address:", error);
     }
     
-    // Try to get adoption history
+    // 4. Ambil nomor telepon dari tabel PENGGUNA
+    let contact = "[no telepon]";
+    
+    try {
+      const contactQuery = `
+        SELECT p.no_telepon
+        FROM pengguna p
+        JOIN pengunjung pg ON pg.username_P = p.username
+        WHERE pg.username_P = $1
+      `;
+      
+      const contactResult = await pool.query(contactQuery, [adopter.username_adopter]);
+      
+      if (contactResult.rows.length > 0 && contactResult.rows[0].no_telepon) {
+        contact = contactResult.rows[0].no_telepon;
+      }
+    } catch (error) {
+      console.error("Error fetching contact:", error);
+    }
+    
+    // 5. PERBAIKAN: Ambil semua adopsi dengan status pembayaran lunas, termasuk yang sudah berakhir
     const adoptionsQuery = `
       SELECT 
         a.id_hewan,
@@ -150,31 +111,27 @@ export async function GET(
         a.status_pembayaran,
         a.kontribusi_finansial,
         TO_CHAR(a.tgl_mulai_adopsi, 'YYYY-MM-DD') as tgl_mulai_adopsi,
-        TO_CHAR(a.tgl_berhenti_adopsi, 'YYYY-MM-DD') as tgl_berhenti_adopsi
+        TO_CHAR(a.tgl_berhenti_adopsi, 'YYYY-MM-DD') as tgl_berhenti_adopsi,
+        CASE WHEN a.tgl_berhenti_adopsi >= CURRENT_DATE THEN true ELSE false END as is_ongoing
       FROM adopsi a
       JOIN hewan h ON a.id_hewan = h.id
-      WHERE a.id_adopter = $1
-      ORDER BY a.tgl_mulai_adopsi DESC
+      WHERE a.id_adopter = $1 AND a.status_pembayaran = 'Lunas'
+      ORDER BY is_ongoing DESC, a.tgl_mulai_adopsi DESC
     `;
     
-    let adoptions = [];
-    try {
-      const adoptionsResult = await pool.query(adoptionsQuery, [adopterId]);
-      adoptions = adoptionsResult.rows;
-    } catch (error) {
-      console.error("Error fetching adoptions:", error);
-    }
+    const adoptionsResult = await pool.query(adoptionsQuery, [adopterId]);
+    console.log(`Found ${adoptionsResult.rows.length} adoptions for adopter ${adopterId}`);
     
-    // Return formatted data
+    // 6. Persiapkan data respons
     const responseData = {
       adopter: {
         ...adopter,
         name,
         type,
-        address, // Empty string since we couldn't find alamat column
+        address,
         contact
       },
-      adoptions
+      adoptions: adoptionsResult.rows
     };
     
     return new Response(JSON.stringify(responseData), {

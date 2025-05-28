@@ -32,9 +32,11 @@ export class Adopter extends BaseModel<AdopterType> {
     async getAdopterWithDetails(id: string) {
         const query = `
             SELECT 
-                ad.id_adopter,
-                ad.username_adopter,
+                ad.id_adopter, 
+                ad.username_adopter, 
                 ad.total_kontribusi,
+                p.email,
+                p.no_telepon,
                 CASE 
                     WHEN i.nama IS NOT NULL THEN i.nama
                     WHEN o.nama_organisasi IS NOT NULL THEN o.nama_organisasi
@@ -45,16 +47,15 @@ export class Adopter extends BaseModel<AdopterType> {
                     WHEN o.id_adopter IS NOT NULL THEN 'organisasi'
                     ELSE NULL
                 END as type,
-                p.no_telp as contact,
-                p.email,
-                COALESCE(i.alamat, o.alamat) as address
+                pg.alamat as address -- Menggunakan alamat dari tabel PENGUNJUNG
             FROM adopter ad
+            JOIN pengguna p ON ad.username_adopter = p.username
+            JOIN pengunjung pg ON p.username = pg.username_P -- JOIN dengan tabel PENGUNJUNG
             LEFT JOIN individu i ON ad.id_adopter = i.id_adopter
             LEFT JOIN organisasi o ON ad.id_adopter = o.id_adopter
-            LEFT JOIN pengguna p ON ad.username_adopter = p.username
             WHERE ad.id_adopter = $1
         `;
-
+    
         const result = await pool.query(query, [id]);
         return result.rows[0];
     }

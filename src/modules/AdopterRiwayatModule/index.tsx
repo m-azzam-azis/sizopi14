@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getUserData } from "@/hooks/getUserData";
 
 interface Adopter {
   id: string;
@@ -31,6 +32,7 @@ interface Adopter {
   address: string;
   contact: string;
   total_kontribusi: number;
+  yearly_contribution?: number;
   avatarUrl?: string;
   username_adopter?: string;
   type?: "individu" | "organisasi";
@@ -47,73 +49,86 @@ const AdopterRiwayatModule = () => {
   const [organizationAdopters, setOrganizationAdopters] = useState<Adopter[]>([]);
   const [topAdopters, setTopAdopters] = useState<Adopter[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Get user data and check role
+  const { userData, isValid, isLoading: authLoading } = getUserData();
+
+  useEffect(() => {
+    // Check if user is admin
+    if (!authLoading && isValid && userData.role !== "admin") {
+      // If not admin, redirect to home page
+      router.push("/");
+    }
+  }, [userData, isValid, authLoading, router]);
 
   // Fetch data from API
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
+    // Only fetch data if user is valid and auth loading is finished
+    if (isValid && !authLoading) {
+      fetchData();
+    }
+  }, [isValid, authLoading]);
+  
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch all adopters
+      const response = await fetch("/api/adopter");
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("Fetched adopter data:", data);
+      
+      // Handle empty array properly
+      if (Array.isArray(data)) {
+        setAdopters(data);
+        
+        // Separate individual and organization adopters
+        const individuals = data.filter(adopter => adopter.type === "individu");
+        const organizations = data.filter(adopter => adopter.type === "organisasi");
+        
+        setIndividualAdopters(individuals);
+        setOrganizationAdopters(organizations);
+      } else {
+        console.error("Expected array but got:", typeof data);
+        setAdopters([]);
+        setIndividualAdopters([]);
+        setOrganizationAdopters([]);
+      }
+      
+      // Fetch top adopters
       try {
-        // Fetch all adopters
-        const response = await fetch("/api/adopter");
+        const topResponse = await fetch("/api/adopter/top");
         
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Error response:", errorText);
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log("Fetched adopter data:", data);
-        
-        // Handle empty array properly
-        if (Array.isArray(data)) {
-          setAdopters(data);
-          
-          // Separate individual and organization adopters
-          const individuals = data.filter(adopter => adopter.type === "individu");
-          const organizations = data.filter(adopter => adopter.type === "organisasi");
-          
-          setIndividualAdopters(individuals);
-          setOrganizationAdopters(organizations);
-        } else {
-          console.error("Expected array but got:", typeof data);
-          setAdopters([]);
-          setIndividualAdopters([]);
-          setOrganizationAdopters([]);
-        }
-        
-        // Fetch top adopters
-        try {
-          const topResponse = await fetch("/api/adopter/top");
-          
-          if (topResponse.ok) {
-            const topData = await topResponse.json();
-            console.log("Fetched top adopters:", topData);
-            if (Array.isArray(topData)) {
-              setTopAdopters(topData);
-            } else {
-              setTopAdopters([]);
-            }
+        if (topResponse.ok) {
+          const topData = await topResponse.json();
+          console.log("Fetched top adopters:", topData);
+          if (Array.isArray(topData)) {
+            setTopAdopters(topData);
           } else {
-            console.error("Top adopters request failed:", topResponse.status);
             setTopAdopters([]);
           }
-        } catch (topError) {
-          console.error("Error fetching top adopters:", topError);
+        } else {
+          console.error("Top adopters request failed:", topResponse.status);
           setTopAdopters([]);
         }
-      } catch (error) {
-        console.error("Error fetching adopters:", error);
-        showToastMessage(`Gagal memuat data adopter: ${error.message}`);
-      } finally {
-        setIsLoading(false);
+      } catch (topError) {
+        console.error("Error fetching top adopters:", topError);
+        setTopAdopters([]);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching adopters:", error);
+      showToastMessage(`Gagal memuat data adopter`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchData();
-  }, []);
-
-  // Format currency for display
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -134,11 +149,20 @@ const AdopterRiwayatModule = () => {
           method: "DELETE",
         });
 
+        const result = await response.json();
+
         if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+          if (response.status === 403) {
+            // Adopter masih aktif mengadopsi
+            showToastMessage(result.message || "Adopter masih aktif mengadopsi");
+          } else {
+            throw new Error(result.error || `HTTP error! Status: ${response.status}`);
+          }
+          setShowDeleteAlert(false);
+          setAdopterToDelete(null);
+          return;
         }
 
-        // Update local state to remove the deleted adopter
         setAdopters(adopters.filter((adopter) => adopter.id !== adopterToDelete));
         setIndividualAdopters(individualAdopters.filter(
           (adopter) => adopter.id !== adopterToDelete
@@ -158,24 +182,28 @@ const AdopterRiwayatModule = () => {
     setAdopterToDelete(null);
   };
 
-  // Function to view adoption history
   const handleViewHistory = (adopterId: string) => {
     router.push(`/adopter/${adopterId}`);
   };
 
-  // Function to show toast message
   const showToastMessage = (message: string) => {
     setToastMessage(message);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  if (isLoading) {
+  // If still loading authentication, show loading
+  if (authLoading || isLoading) {
     return (
       <div className="container mx-auto py-10 px-4 flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  // If user is not admin, don't render content (redirect will be handled in useEffect)
+  if (!isValid || userData.role !== "admin") {
+    return null;
   }
 
   const renderAdopterTable = (adopters: Adopter[], title: string) => {
@@ -265,7 +293,7 @@ const AdopterRiwayatModule = () => {
             ) : (
               topAdopters.map((adopter, index) => (
                 <div
-                  key={adopter.id}
+                  key={adopter.id || index}
                   className="flex justify-between items-center p-3 bg-card rounded-md border border-border"
                 >
                   <div className="flex items-center gap-3">
@@ -312,7 +340,6 @@ const AdopterRiwayatModule = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Toast Notification */}
       {showToast && (
         <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
           {toastMessage}

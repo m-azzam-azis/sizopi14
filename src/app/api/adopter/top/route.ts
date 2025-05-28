@@ -1,72 +1,99 @@
+import { NextResponse } from "next/server";
 import pool from "@/db/db";
+
+// Define interface untuk objek nama
+interface NameMap {
+  [id: string]: string;
+}
 
 export async function GET() {
   try {
-    // Start with basic adopter info
-    const adopterQuery = `
-      SELECT 
-        ad.id_adopter as id, 
-        ad.username_adopter, 
-        ad.total_kontribusi
-      FROM adopter ad
-      ORDER BY ad.total_kontribusi DESC
-      LIMIT 5
-    `;
+    // Get adopters with contributions from the last year
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     
-    const adopterResult = await pool.query(adopterQuery);
+    const formattedDate = oneYearAgo.toISOString().split('T')[0];
     
     // Try to get individual names
     const individualsQuery = `SELECT id_adopter, nama FROM individu`;
-    let individualNames = {};
+    let individualNames: NameMap = {};
     try {
       const individualsResult = await pool.query(individualsQuery);
-      individualNames = individualsResult.rows.reduce((acc, row) => {
+      individualNames = individualsResult.rows.reduce<NameMap>((acc, row) => {
         acc[row.id_adopter] = row.nama;
         return acc;
       }, {});
     } catch (error) {
-      console.log("Error fetching individual names:");
+      console.log("Error fetching individual names:", error);
     }
-    
+
     // Try to get organization names
     const orgsQuery = `SELECT id_adopter, nama_organisasi FROM organisasi`;
-    let orgNames = {};
+    let orgNames: NameMap = {};
     try {
       const orgsResult = await pool.query(orgsQuery);
-      orgNames = orgsResult.rows.reduce((acc, row) => {
+      orgNames = orgsResult.rows.reduce<NameMap>((acc, row) => {
         acc[row.id_adopter] = row.nama_organisasi;
         return acc;
       }, {});
     } catch (error) {
-      console.log("Error fetching organization names:");
+      console.log("Error fetching organization names:", error);
     }
     
-    // Combine the data
-    const topAdopters = adopterResult.rows.map(adopter => {
-      const id = adopter.id;
-      const name = individualNames[id] || orgNames[id] || adopter.username_adopter;
-      const type = individualNames[id] ? 'individu' : (orgNames[id] ? 'organisasi' : null);
-      
-      return {
-        ...adopter,
-        name,
-        type,
-        yearly_contribution: adopter.total_kontribusi, // Use total_kontribusi as yearly_contribution
-        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'Unknown')}&background=random`
-      };
-    });
+    // Query untuk mendapatkan kontribusi tahun terakhir per adopter
+    // Hanya adopsi dengan status pembayaran 'Lunas' yang dihitung
+    const topAdoptersQuery = `
+      SELECT 
+        a.id_adopter,
+        a.username_adopter,
+        COALESCE(SUM(ad.kontribusi_finansial), 0) as yearly_contribution,
+        COUNT(DISTINCT ad.id_hewan) as animals_count,
+        CASE 
+          WHEN i.id_adopter IS NOT NULL THEN 'individu'
+          WHEN o.id_adopter IS NOT NULL THEN 'organisasi'
+          ELSE NULL
+        END as type
+      FROM 
+        adopter a
+      LEFT JOIN 
+        adopsi ad ON a.id_adopter = ad.id_adopter AND ad.status_pembayaran = 'Lunas' 
+        AND ad.tgl_mulai_adopsi >= $1
+      LEFT JOIN 
+        individu i ON a.id_adopter = i.id_adopter
+      LEFT JOIN 
+        organisasi o ON a.id_adopter = o.id_adopter
+      GROUP BY 
+        a.id_adopter, a.username_adopter, type
+      ORDER BY 
+        yearly_contribution DESC
+      LIMIT 5
+    `;
+
+    const result = await pool.query(topAdoptersQuery, [formattedDate]);
     
-    return new Response(JSON.stringify(topAdopters), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    // Add names to the response based on adopter type
+    const topAdopters = result.rows.map(adopter => {
+      if (adopter.type === 'individu') {
+        return {
+          ...adopter,
+          name: individualNames[adopter.id_adopter] || 'Unknown'
+        };
+      } else if (adopter.type === 'organisasi') {
+        return {
+          ...adopter,
+          name: orgNames[adopter.id_adopter] || 'Unknown'
+        };
+      }
+      return adopter;
     });
+
+    return NextResponse.json(topAdopters);
+    
   } catch (error) {
-    console.error("Error fetching top adopters:", error);
-    return new Response(JSON.stringify({ 
-      error: "Failed to fetch top adopters",
-    }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    console.error("Error getting top adopters:", error);
+    return NextResponse.json(
+      { error: "Failed to get top adopters" },
+      { status: 500 }
+    );
   }
 }
