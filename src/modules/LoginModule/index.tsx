@@ -60,7 +60,8 @@ export const LoginModule: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Login failed");
+        toast.error(result.error);
+        return;
       }
 
       toast.success("Login successful!");
@@ -89,10 +90,12 @@ export const LoginModule: React.FC = () => {
         }
       }, 1000);
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "An unexpected error occurred";
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
       console.error("Login error:", error);
-      toast.error(errorMessage || "Invalid credentials");
     } finally {
       setIsLoading(false);
     }
