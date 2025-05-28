@@ -5,23 +5,20 @@ DECLARE
     tickets_sold INT;
     remaining_capacity INT;
 BEGIN
-    SELECT f.kapasitas_max INTO capacity_max
+    SELECT 
+        f.kapasitas_max,
+        COALESCE(SUM(r.jumlah_tiket) FILTER (WHERE r.status = 'Aktif' AND r.tanggal_kunjungan::date = NEW.tanggal_kunjungan::date), 0)
+    INTO 
+        capacity_max, tickets_sold
     FROM FASILITAS f
-    WHERE f.nama = NEW.nama_fasilitas;
-    
-    SELECT COALESCE(SUM(jumlah_tiket), 0) INTO tickets_sold
-    FROM RESERVASI
-    WHERE nama_fasilitas = NEW.nama_fasilitas
-      AND tanggal_kunjungan = NEW.tanggal_kunjungan
-      AND status != 'Batal'
-      AND (username_P != NEW.username_P 
-           OR nama_fasilitas != NEW.nama_fasilitas 
-           OR tanggal_kunjungan != NEW.tanggal_kunjungan);
+    LEFT JOIN RESERVASI r ON f.nama = r.nama_fasilitas 
+    WHERE f.nama = NEW.nama_fasilitas
+    GROUP BY f.kapasitas_max;
     
     remaining_capacity := capacity_max - tickets_sold;
     
     IF TG_OP = 'UPDATE' THEN
-        IF OLD.status != 'Batal' THEN
+        IF OLD.status = 'Aktif' AND OLD.nama_fasilitas = NEW.nama_fasilitas AND OLD.tanggal_kunjungan::date = NEW.tanggal_kunjungan::date THEN
             remaining_capacity := remaining_capacity + OLD.jumlah_tiket;
         END IF;
     END IF;
