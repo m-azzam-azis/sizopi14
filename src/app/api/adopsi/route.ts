@@ -1,7 +1,5 @@
-import { Hewan } from "@/db/models/hewan";
 import { Adopsi } from "@/db/models/adopsi";
 import pool from "@/db/db";
-import { AnimalDisplayType } from "@/db/types";
 import { NextResponse } from "next/server";
 
 
