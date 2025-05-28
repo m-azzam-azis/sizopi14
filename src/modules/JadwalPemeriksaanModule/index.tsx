@@ -98,9 +98,23 @@ export const JadwalPemeriksaanModule: React.FC = () => {
     fetch("/api/hewan")
       .then((res) => res.json())
       .then((data) => {
-        setHewan(data.map((h: any) => ({ id: h.id, nama: h.nama })));
+        const mapped = data.map((h: any) => ({ id: h.id, nama: h.nama }));
+        setHewan(mapped);
+        if (mapped.length > 0) {
+          setSearch(mapped[0].id);
+        }
       });
   }, []);
+
+  // Keep search in sync with hewan list (handles dynamic changes)
+  useEffect(() => {
+    if (hewan.length > 0 && !hewan.some((h) => h.id === search)) {
+      setSearch(hewan[0].id);
+    }
+    if (hewan.length === 0 && search !== "") {
+      setSearch("");
+    }
+  }, [hewan]);
 
   // Fetch jadwal pemeriksaan dari API
   const fetchJadwal = async () => {
@@ -147,6 +161,13 @@ export const JadwalPemeriksaanModule: React.FC = () => {
       setIsDialogOpen(true);
     }
   }, [editingItem, form]);
+
+  // Pastikan id_hewan selalu di-set ke search saat tambah dialog dibuka
+  useEffect(() => {
+    if (isDialogOpen && !editingItem) {
+      form.setValue("id_hewan", search, { shouldValidate: true });
+    }
+  }, [isDialogOpen, editingItem, search, form]);
 
   // Handle form submission (Create & Update)
   const onSubmit = async (data: PemeriksaanFormValues) => {
@@ -213,27 +234,33 @@ export const JadwalPemeriksaanModule: React.FC = () => {
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Filter &amp; Pencarian</CardTitle>
+          <CardTitle>Filter Jadwal Pemeriksaan</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Cari ID hewan, nama hewan..."
-                className="pl-10"
+            <div>
+              <label className="block text-sm font-medium mb-1">Filter Hewan</label>
+              <Select
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+                onValueChange={setSearch}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih hewan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {hewan.map((h) => (
+                    <SelectItem key={h.id} value={h.id}>
+                      {h.nama} ({h.id})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className={`justify-start text-left font-normal ${
-                    dateFilter ? "" : "text-muted-foreground"
-                  }`}
+                  className={`justify-start text-left font-normal ${dateFilter ? "" : "text-muted-foreground"}`}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {dateFilter
@@ -271,7 +298,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
               <Plus className="mr-1" size={16} /> Tambah Jadwal Baru
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[400px]">
             <DialogHeader>
               <DialogTitle>
                 {editingItem
@@ -289,74 +316,33 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-4"
               >
-                <FormField
-                  control={form.control}
-                  name="id_hewan"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Hewan</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Pilih hewan" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {hewan.map((animal) => (
-                            <SelectItem key={animal.id} value={animal.id}>
-                              {animal.id} - {animal.nama}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+                {/* id_hewan di-set otomatis via effect, tidak perlu input hidden */}
                 <FormField
                   control={form.control}
                   name="tanggal_pemeriksaan"
-                  render={({ field }) => {
-                    return (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Tanggal Pemeriksaan</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="date"
-                            value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
-                            onChange={(e) => {
-                              const date = e.target.value ? new Date(e.target.value) : undefined;
-                              field.onChange(date);
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="frekuensi_pemeriksaan"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Frekuensi Pemeriksaan (bulan)</FormLabel>
+                      <FormLabel>Tanggal Pemeriksaan Selanjutnya</FormLabel>
                       <FormControl>
-                        <Input type="number" min={1} max={365} {...field} />
+                        <Input
+                          type="date"
+                          value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                          onChange={(e) => {
+                            const date = e.target.value ? new Date(e.target.value) : undefined;
+                            field.onChange(date);
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
                 <DialogFooter>
-                  <Button variant={"default"} className="bg-primary text-white">
-                    {editingItem ? "Simpan Perubahan" : "Tambah Jadwal"}
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Batal
+                  </Button>
+                  <Button type="submit" className="bg-primary text-white">
+                    Simpan
                   </Button>
                 </DialogFooter>
               </form>
@@ -370,10 +356,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID Hewan</TableHead>
-                <TableHead>Nama Hewan</TableHead>
-                <TableHead>Tanggal Pemeriksaan</TableHead>
-                <TableHead>Frekuensi (bulan)</TableHead>
+                <TableHead>Tanggal Pemeriksaan Selanjutnya</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
@@ -381,28 +364,26 @@ export const JadwalPemeriksaanModule: React.FC = () => {
               {filteredData.length > 0 ? (
                 filteredData.map((item) => (
                   <TableRow key={item.id_hewan}>
-                    <TableCell>{item.id_hewan}</TableCell>
-                    <TableCell>{getAnimalName(item.id_hewan)}</TableCell>
                     <TableCell>
                       {format(new Date(item.tgl_pemeriksaan_selanjutnya), "dd/MM/yyyy")}
                     </TableCell>
-                    <TableCell>{item.freq_pemeriksaan_rutin}</TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
+                        className="border-primary text-primary font-semibold rounded-md px-3 py-1 hover:bg-primary/10 transition"
                         onClick={() => setEditingItem(item)}
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-4 w-4 mr-1" /> Edit
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            className="text-red-500"
+                            className="border-red-500 text-red-600 font-semibold rounded-md px-3 py-1 hover:bg-red-50 hover:text-red-700 transition"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4 mr-1" /> Hapus
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -411,9 +392,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                               Konfirmasi Hapus
                             </AlertDialogTitle>
                             <AlertDialogDescription>
-                              Apakah Anda yakin ingin menghapus jadwal
-                              pemeriksaan untuk {getAnimalName(item.id_hewan)}?
-                              Tindakan ini tidak dapat dibatalkan.
+                              Apakah Anda yakin ingin menghapus jadwal pemeriksaan ini? Tindakan ini tidak dapat dibatalkan.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -432,7 +411,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-4">
+                  <TableCell colSpan={2} className="text-center py-4">
                     Tidak ada jadwal pemeriksaan yang ditemukan
                   </TableCell>
                 </TableRow>

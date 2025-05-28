@@ -556,16 +556,16 @@ INSERT INTO berpartisipasi VALUES ('Kebun Mini', '003417f2-cf99-4dff-b42b-4167e5
 INSERT INTO berpartisipasi VALUES ('Kolam Renang', 'd3f0c021-bb7f-44e9-a31f-2304ef6b34a0');
 INSERT INTO berpartisipasi VALUES ('Zona Edukasi', '54dbb957-d7b1-4094-8084-9a2a33a4f7be');
 
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('d84d43b2-441d-450d-b58e-12fbbf49c88c', '2024-06-01', 30);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('b2a95b99-5821-45b7-b493-17b79d914ef5', '2024-06-05', 60);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('98b765a7-6a04-4b3d-b118-c8f26d72e433', '2024-06-10', 45);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('b8c4d74f-239f-4e16-a109-f24b263eb4e5', '2024-06-12', 90);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('cfbd3c9b-4733-4a9f-8a37-d85a1ea38d2b', '2024-06-15', 30);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('1787f195-1111-4e53-8a7d-dfded104abef', '2024-06-17', 60);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('054e0e4d-9b2b-45ae-88d7-3cf983849953', '2024-06-19', 90);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('003417f2-cf99-4dff-b42b-4167e5a09a31', '2024-06-21', 45);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('d3f0c021-bb7f-44e9-a31f-2304ef6b34a0', '2024-06-23', 30);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('54dbb957-d7b1-4094-8084-9a2a33a4f7be', '2024-06-25', 60);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('d84d43b2-441d-450d-b58e-12fbbf49c88c', '2024-06-01', 3);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('b2a95b99-5821-45b7-b493-17b79d914ef5', '2024-06-05', 6);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('98b765a7-6a04-4b3d-b118-c8f26d72e433', '2024-06-10', 4);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('b8c4d74f-239f-4e16-a109-f24b263eb4e5', '2024-06-12', 9);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('cfbd3c9b-4733-4a9f-8a37-d85a1ea38d2b', '2024-06-15', 3);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('1787f195-1111-4e53-8a7d-dfded104abef', '2024-06-17', 6);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('054e0e4d-9b2b-45ae-88d7-3cf983849953', '2024-06-19', 9);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('003417f2-cf99-4dff-b42b-4167e5a09a31', '2024-06-21', 4);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('d3f0c021-bb7f-44e9-a31f-2304ef6b34a0', '2024-06-23', 3);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('54dbb957-d7b1-4094-8084-9a2a33a4f7be', '2024-06-25', 6);
 
 INSERT INTO jadwal_penugasan VALUES ('hutapeamaimunah', '2024-05-01 08:00:00', 'Kolam Renang');
 INSERT INTO jadwal_penugasan VALUES ('randriani', '2024-05-01 09:00:00', 'Teater Satwa');
