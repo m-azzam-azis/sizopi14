@@ -63,7 +63,18 @@ export async function POST(request: Request) {
       data.status = 'tersedia';
     }
     const pakanModel = new Pakan();
-    const created = await pakanModel.create(data);    // Insert into MEMBERI table for relationship
+
+    const created = await pakanModel.create(data);
+
+    // Insert into MEMBERI table for relationship
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+    let username_jh = null;
+    if (token) {
+      const decoded: any = decode(token);
+      username_jh = decoded?.data?.username;
+    }
+
     if (username_jh) {
       const memberiModel = new Memberi();
       let jadwalValue: Date;
@@ -179,7 +190,9 @@ export async function DELETE(request: Request) {
         headers: { "Content-Type": "application/json" },
       });
     }    
+    
     const pakanModel = new Pakan();
+    
     console.log("DELETE request received for: ", { id_hewan, jadwal });
     // Using the new deleteByPrimaryKey method specifically designed for the composite primary key
     const deleted = await pakanModel.deleteByPrimaryKey(id_hewan, jadwal);
