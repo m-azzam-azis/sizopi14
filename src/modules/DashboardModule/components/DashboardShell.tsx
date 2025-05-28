@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { UserRole } from "@/types/user";
+import { getUserData } from "@/hooks/getUserData";
 
 interface DashboardShellProps {
   user: {

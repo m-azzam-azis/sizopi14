@@ -70,39 +70,6 @@ type JadwalPemeriksaan = {
   created_at: Date;
 };
 
-// Mock data for animals
-const hewan = [
-  { id: "H001", name: "Gajah Sumatran" },
-  { id: "H002", name: "Harimau Benggala" },
-  { id: "H003", name: "Orangutan" },
-  { id: "H004", name: "Komodo" },
-];
-
-// Mock data for demo purposes
-const mockJadwalPemeriksaan: JadwalPemeriksaan[] = [
-  {
-    id: "1",
-    id_hewan: "H001",
-    tanggal_pemeriksaan: new Date("2025-05-10"),
-    frekuensi_pemeriksaan: 3, // every 3 months
-    created_at: new Date("2025-04-10"),
-  },
-  {
-    id: "2",
-    id_hewan: "H002",
-    tanggal_pemeriksaan: new Date("2025-05-15"),
-    frekuensi_pemeriksaan: 4, // every 4 months
-    created_at: new Date("2025-05-01"),
-  },
-  {
-    id: "3",
-    id_hewan: "H003",
-    tanggal_pemeriksaan: new Date("2025-05-05"),
-    frekuensi_pemeriksaan: 1, // every 1 month
-    created_at: new Date("2025-04-28"),
-  },
-];
-
 // Validation schema for the form
 const pemeriksaanFormSchema = z.object({
   id_hewan: z.string().min(1, "ID Hewan harus diisi"),
@@ -118,30 +85,53 @@ const pemeriksaanFormSchema = z.object({
 type PemeriksaanFormValues = z.infer<typeof pemeriksaanFormSchema>;
 
 export const JadwalPemeriksaanModule: React.FC = () => {
-  const [jadwalPemeriksaan, setJadwalPemeriksaan] = useState<
-    JadwalPemeriksaan[]
-  >(mockJadwalPemeriksaan);
+  const [hewan, setHewan] = useState<{ id: string; nama: string }[]>([]);
+  const [jadwalPemeriksaan, setJadwalPemeriksaan] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
-  const [editingItem, setEditingItem] = useState<JadwalPemeriksaan | null>(
-    null
-  );
+  const [editingItem, setEditingItem] = useState<any | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Setup form with react-hook-form and zod validation
+  // Fetch hewan dari API
+  useEffect(() => {
+    fetch("/api/hewan")
+      .then((res) => res.json())
+      .then((data) => {
+        setHewan(data.map((h: any) => ({ id: h.id, nama: h.nama })));
+      });
+  }, []);
+
+  // Fetch jadwal pemeriksaan dari API
+  const fetchJadwal = async () => {
+    setLoading(true);
+    const res = await fetch("/api/jadwal-pemeriksaan?limit=100&page=1");
+    const data = await res.json();
+    setJadwalPemeriksaan(data);
+    setLoading(false);
+  };
+  useEffect(() => {
+    fetchJadwal();
+  }, []);
+
+  // Setup form
   const form = useForm<PemeriksaanFormValues>({
     resolver: zodResolver(pemeriksaanFormSchema),
     defaultValues: {
       id_hewan: "",
-      tanggal_pemeriksaan: new Date(),
-      frekuensi_pemeriksaan: 30,
+      tanggal_pemeriksaan: undefined, // User harus pilih manual
+      frekuensi_pemeriksaan: 1,
     },
   });
 
   // Reset form when dialog is closed
   useEffect(() => {
     if (!isDialogOpen) {
-      form.reset();
+      form.reset({
+        id_hewan: "",
+        tanggal_pemeriksaan: undefined,
+        frekuensi_pemeriksaan: 1,
+      });
       setEditingItem(null);
     }
   }, [isDialogOpen, form]);
@@ -151,66 +141,70 @@ export const JadwalPemeriksaanModule: React.FC = () => {
     if (editingItem) {
       form.reset({
         id_hewan: editingItem.id_hewan,
-        tanggal_pemeriksaan: new Date(editingItem.tanggal_pemeriksaan),
-        frekuensi_pemeriksaan: editingItem.frekuensi_pemeriksaan,
+        tanggal_pemeriksaan: new Date(editingItem.tgl_pemeriksaan_selanjutnya),
+        frekuensi_pemeriksaan: editingItem.freq_pemeriksaan_rutin,
       });
       setIsDialogOpen(true);
     }
   }, [editingItem, form]);
 
-  // Handle form submission
-  const onSubmit = (data: PemeriksaanFormValues) => {
+  // Handle form submission (Create & Update)
+  const onSubmit = async (data: PemeriksaanFormValues) => {
+    const tgl_pemeriksaan_selanjutnya = data.tanggal_pemeriksaan instanceof Date
+      ? data.tanggal_pemeriksaan.toISOString()
+      : data.tanggal_pemeriksaan;
     if (editingItem) {
-      // Update existing item
-      setJadwalPemeriksaan(
-        jadwalPemeriksaan.map((item) =>
-          item.id === editingItem.id
-            ? {
-                ...item,
-                ...data,
-              }
-            : item
-        )
-      );
+      // Update
+      await fetch(`/api/jadwal-pemeriksaan?id=${editingItem.id_hewan}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_hewan: data.id_hewan,
+          tgl_pemeriksaan_selanjutnya,
+          freq_pemeriksaan_rutin: data.frekuensi_pemeriksaan,
+        }),
+      });
     } else {
-      // Create new item
-      const newItem: JadwalPemeriksaan = {
-        id: `${jadwalPemeriksaan.length + 1}`,
-        ...data,
-        created_at: new Date(),
-      };
-      setJadwalPemeriksaan([...jadwalPemeriksaan, newItem]);
+      // Create
+      await fetch("/api/jadwal-pemeriksaan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_hewan: data.id_hewan,
+          tgl_pemeriksaan_selanjutnya,
+          freq_pemeriksaan_rutin: data.frekuensi_pemeriksaan,
+        }),
+      });
     }
     setIsDialogOpen(false);
+    fetchJadwal();
   };
 
   // Delete an item
-  const handleDelete = (id: string) => {
-    setJadwalPemeriksaan(jadwalPemeriksaan.filter((item) => item.id !== id));
+  const handleDelete = async (id_hewan: string) => {
+    await fetch(`/api/jadwal-pemeriksaan?id=${id_hewan}`, { method: "DELETE" });
+    fetchJadwal();
   };
 
   // Filter data based on search and filters
   const filteredData = jadwalPemeriksaan.filter((item) => {
     const animal = hewan.find((h) => h.id === item.id_hewan);
-    const animalName = animal ? animal.name : "";
-
+    const animalName = animal ? animal.nama : "";
     const matchesSearch =
       search === "" ||
       item.id_hewan.toLowerCase().includes(search.toLowerCase()) ||
       animalName.toLowerCase().includes(search.toLowerCase());
-
     const matchesDate =
       dateFilter === null ||
-      format(item.tanggal_pemeriksaan, "yyyy-MM-dd") ===
+      format(new Date(item.tgl_pemeriksaan_selanjutnya), "yyyy-MM-dd") ===
         format(dateFilter, "yyyy-MM-dd");
-
     return matchesSearch && matchesDate;
   });
 
   // Helper to get animal name from ID
   const getAnimalName = (id: string) => {
     const animal = hewan.find((h) => h.id === id);
-    return animal ? animal.name : id;
+    return animal ? animal.nama : id;
   };
 
   return (
@@ -313,7 +307,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                         <SelectContent>
                           {hewan.map((animal) => (
                             <SelectItem key={animal.id} value={animal.id}>
-                              {animal.id} - {animal.name}
+                              {animal.id} - {animal.nama}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -326,39 +320,24 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                 <FormField
                   control={form.control}
                   name="tanggal_pemeriksaan"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Tanggal Pemeriksaan</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={`w-full justify-start text-left font-normal`}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {field.value
-                                ? format(field.value, "PPP")
-                                : "Pilih tanggal"}
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={(date) => {
-                              if (date) {
-                                field.onChange(date);
-                              }
+                  render={({ field }) => {
+                    return (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Tanggal Pemeriksaan</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                            onChange={(e) => {
+                              const date = e.target.value ? new Date(e.target.value) : undefined;
+                              field.onChange(date);
                             }}
-                            initialFocus
                           />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 <FormField
@@ -395,23 +374,19 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                 <TableHead>Nama Hewan</TableHead>
                 <TableHead>Tanggal Pemeriksaan</TableHead>
                 <TableHead>Frekuensi (bulan)</TableHead>
-                <TableHead>Tanggal Dibuat</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredData.length > 0 ? (
                 filteredData.map((item) => (
-                  <TableRow key={item.id}>
+                  <TableRow key={item.id_hewan}>
                     <TableCell>{item.id_hewan}</TableCell>
                     <TableCell>{getAnimalName(item.id_hewan)}</TableCell>
                     <TableCell>
-                      {format(new Date(item.tanggal_pemeriksaan), "dd/MM/yyyy")}
+                      {format(new Date(item.tgl_pemeriksaan_selanjutnya), "dd/MM/yyyy")}
                     </TableCell>
-                    <TableCell>{item.frekuensi_pemeriksaan} </TableCell>
-                    <TableCell>
-                      {format(new Date(item.created_at), "dd/MM/yyyy")}
-                    </TableCell>
+                    <TableCell>{item.freq_pemeriksaan_rutin}</TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button
                         variant="ghost"
@@ -444,7 +419,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                           <AlertDialogFooter>
                             <AlertDialogCancel>Batal</AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() => handleDelete(item.id)}
+                              onClick={() => handleDelete(item.id_hewan)}
                               className="bg-red-500 text-white hover:bg-red-600"
                             >
                               Hapus

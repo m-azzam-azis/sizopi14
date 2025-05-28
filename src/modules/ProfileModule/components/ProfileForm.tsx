@@ -25,7 +25,14 @@ export const baseProfileSchema = z.object({
 });
 
 interface ProfileFormProps {
-  user: BaseUserData;
+  user: {
+    username: string;
+    firstName: string;
+    middleName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+  };
   onSubmit: (data: any) => void;
   extraFields?: React.ReactNode;
   extraSchema?: any;

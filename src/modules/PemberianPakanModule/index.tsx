@@ -68,72 +68,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 
-// Define types for the data
-type PemberianPakan = {
-  id: string;
-  id_hewan: string;
-  jadwal: Date;
-  jenis: string;
-  jumlah: number;
-  status: "pending" | "completed" | "canceled";
-  username_jh: string;
-};
-
-// Mock data for demo purposes
-const mockPemberianPakan: PemberianPakan[] = [
-  {
-    id: "1",
-    id_hewan: "H001",
-    jadwal: new Date("2025-04-25T08:00:00"),
-    jenis: "Rumput",
-    jumlah: 200,
-    status: "completed",
-    username_jh: "jh_bambang",
-  },
-  {
-    id: "2",
-    id_hewan: "H002",
-    jadwal: new Date("2025-04-25T09:30:00"),
-    jenis: "Daging",
-    jumlah: 350,
-    status: "pending",
-    username_jh: "jh_sarah",
-  },
-  {
-    id: "3",
-    id_hewan: "H003",
-    jadwal: new Date("2025-04-26T10:00:00"),
-    jenis: "Buah-buahan",
-    jumlah: 100,
-    status: "canceled",
-    username_jh: "jh_ahmad",
-  },
-];
-
-// Mock data for animal caretakers
-const penjagaHewan = [
-  { username: "jh_bambang", name: "Bambang" },
-  { username: "jh_sarah", name: "Sarah" },
-  { username: "jh_ahmad", name: "Ahmad" },
-];
-
-// Mock data for animals
-const hewan = [
-  { id: "H001", name: "Gajah Sumatran" },
-  { id: "H002", name: "Harimau Benggala" },
-  { id: "H003", name: "Orangutan" },
-  { id: "H004", name: "Komodo" },
-];
-
-// Mock data for food types
-const jenisPakan = [
-  "Rumput",
-  "Daging",
-  "Buah-buahan",
-  "Sayuran",
-  "Biji-bijian",
-];
-
 // Validation schema for the form
 const pakanFormSchema = z.object({
   id_hewan: z.string().min(1, "ID Hewan harus diisi"),
@@ -149,58 +83,33 @@ const pakanFormSchema = z.object({
   username_jh: z.string().min(1, "Penjaga hewan harus diisi"),
 });
 
-const hewanExtended = [
-  {
-    id: "H001",
-    name: "Gajah Sumatran",
-    species: "Elephas maximus sumatranus",
-    origin: "Sumatera",
-    birthDate: new Date("2015-06-12"),
-    habitat: "Hutan Hujan Tropis",
-    healthStatus: "Sehat",
-  },
-  {
-    id: "H002",
-    name: "Harimau Benggala",
-    species: "Panthera tigris tigris",
-    origin: "India",
-    birthDate: new Date("2018-03-24"),
-    habitat: "Hutan Tropis",
-    healthStatus: "Pemulihan",
-  },
-  {
-    id: "H003",
-    name: "Orangutan",
-    species: "Pongo pygmaeus",
-    origin: "Kalimantan",
-    birthDate: new Date("2017-09-30"),
-    habitat: "Hutan Hujan Tropis",
-    healthStatus: "Sehat",
-  },
-  {
-    id: "H004",
-    name: "Komodo",
-    species: "Varanus komodoensis",
-    origin: "Pulau Komodo",
-    birthDate: new Date("2019-11-05"),
-    habitat: "Savana",
-    healthStatus: "Sehat",
-  },
-];
-
 type PakanFormValues = z.infer<typeof pakanFormSchema>;
 
 export const PemberianPakanModule: React.FC = () => {
-  const [pemberianPakan, setPemberianPakan] =
-    useState<PemberianPakan[]>(mockPemberianPakan);
+  const [pemberianPakan, setPemberianPakan] = useState<any[]>([]);
+  const [hewan, setHewan] = useState<any[]>([]);
+  const [penjagaHewan, setPenjagaHewan] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
-  const [editingItem, setEditingItem] = useState<PemberianPakan | null>(null);
+  const [editingItem, setEditingItem] = useState<any | null>(null);
   const [caretakerFilter, setCaretakerFilter] = useState<string | null>(null);
 
-  // Setup form with react-hook-form and zod validation
+  // Fetch data dari API
+  useEffect(() => {
+    fetch("/api/pakan")
+      .then((res) => res.json())
+      .then(setPemberianPakan);
+    fetch("/api/hewan")
+      .then((res) => res.json())
+      .then(setHewan);
+    fetch("/api/penjaga-hewan")
+      .then((res) => res.json())
+      .then(setPenjagaHewan);
+  }, []);
+
+  // Setup form
   const form = useForm<PakanFormValues>({
     resolver: zodResolver(pakanFormSchema),
     defaultValues: {
@@ -212,20 +121,6 @@ export const PemberianPakanModule: React.FC = () => {
       username_jh: "",
     },
   });
-
-  const getAnimalExtendedInfo = (id: string) => {
-    return (
-      hewanExtended.find((h) => h.id === id) || {
-        id,
-        name: "Unknown",
-        species: "Unknown",
-        origin: "Unknown",
-        birthDate: new Date(),
-        habitat: "Unknown",
-        healthStatus: "Unknown",
-      }
-    );
-  };
 
   // Reset form when dialog is closed
   useEffect(() => {
@@ -250,47 +145,48 @@ export const PemberianPakanModule: React.FC = () => {
     }
   }, [editingItem, form]);
 
-  // Handle form submission
-  const onSubmit = (data: PakanFormValues) => {
+  // CRUD
+  const fetchPakan = async () => {
+    const res = await fetch("/api/pakan");
+    setPemberianPakan(await res.json());
+  };
+
+  const onSubmit = async (data: PakanFormValues) => {
     if (editingItem) {
-      // Update existing item
-      setPemberianPakan(
-        pemberianPakan.map((item) =>
-          item.id === editingItem.id
-            ? ({ ...data, id: item.id } as PemberianPakan)
-            : item
-        )
+      await fetch(`/api/pakan?id_hewan=${editingItem.id_hewan}&jadwal=${editingItem.jadwal}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        }
       );
     } else {
-      // Create new item
-      const newItem: PemberianPakan = {
-        id: `${pemberianPakan.length + 1}`,
-        ...data,
-      };
-      setPemberianPakan([...pemberianPakan, newItem]);
+      await fetch("/api/pakan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
     }
     setIsDialogOpen(false);
+    fetchPakan();
   };
 
-  // Delete an item
-  const handleDelete = (id: string) => {
-    setPemberianPakan(pemberianPakan.filter((item) => item.id !== id));
+  const handleDelete = async (id_hewan: string, jadwal: string) => {
+    await fetch(`/api/pakan?id_hewan=${id_hewan}&jadwal=${jadwal}`, { method: "DELETE" });
+    fetchPakan();
   };
 
-  // Filter data based on search and filters
+  // Filter data
   const filteredData = pemberianPakan.filter((item) => {
     const matchesSearch =
       search === "" ||
       item.id_hewan.toLowerCase().includes(search.toLowerCase()) ||
       item.jenis.toLowerCase().includes(search.toLowerCase()) ||
       item.username_jh.toLowerCase().includes(search.toLowerCase());
-
     const matchesStatus = statusFilter === null || item.status === statusFilter;
-
     const matchesDate =
       dateFilter === null ||
-      format(item.jadwal, "yyyy-MM-dd") === format(dateFilter, "yyyy-MM-dd");
-
+      format(new Date(item.jadwal), "yyyy-MM-dd") === format(dateFilter, "yyyy-MM-dd");
     return matchesSearch && matchesStatus && matchesDate;
   });
 
@@ -308,16 +204,15 @@ export const PemberianPakanModule: React.FC = () => {
     }
   };
 
-  // Helper to get animal name from ID
+  // Helper get nama hewan
   const getAnimalName = (id: string) => {
-    const animal = hewan.find((h) => h.id === id);
-    return animal ? animal.name : id;
+    const animal = hewan.find((h: any) => h.id === id);
+    return animal ? animal.nama : id;
   };
-
-  // Helper to get caretaker name from username
+  // Helper get nama penjaga
   const getCaretakerName = (username: string) => {
-    const caretaker = penjagaHewan.find((p) => p.username === username);
-    return caretaker ? caretaker.name : username;
+    const caretaker = penjagaHewan.find((p: any) => p.username_JH === username);
+    return caretaker ? caretaker.username_JH : username;
   };
 
   const completedFeedings = pemberianPakan.filter(
@@ -433,7 +328,7 @@ export const PemberianPakanModule: React.FC = () => {
                         <SelectContent>
                           {hewan.map((h) => (
                             <SelectItem key={h.id} value={h.id}>
-                              {h.id} - {h.name}
+                              {h.id} - {h.nama}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -520,7 +415,7 @@ export const PemberianPakanModule: React.FC = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {jenisPakan.map((jenis) => (
+                          {hewan.map((jenis) => (
                             <SelectItem key={jenis} value={jenis}>
                               {jenis}
                             </SelectItem>
@@ -595,7 +490,7 @@ export const PemberianPakanModule: React.FC = () => {
                               key={penjaga.username}
                               value={penjaga.username}
                             >
-                              {penjaga.name} ({penjaga.username})
+                              {penjaga.username_JH} ({penjaga.username})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -622,6 +517,7 @@ export const PemberianPakanModule: React.FC = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>ID Hewan</TableHead>
+                <TableHead>Nama Hewan</TableHead>
                 <TableHead>Jadwal</TableHead>
                 <TableHead>Jenis Pakan</TableHead>
                 <TableHead>Jumlah (gram)</TableHead>
@@ -633,16 +529,13 @@ export const PemberianPakanModule: React.FC = () => {
             <TableBody>
               {filteredData.length > 0 ? (
                 filteredData.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      {item.id_hewan} - {getAnimalName(item.id_hewan)}
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(item.jadwal), "dd/MM/yyyy HH:mm")}
-                    </TableCell>
+                  <TableRow key={item.id_hewan + item.jadwal}>
+                    <TableCell>{item.id_hewan}</TableCell>
+                    <TableCell>{getAnimalName(item.id_hewan)}</TableCell>
+                    <TableCell>{format(new Date(item.jadwal), "dd/MM/yyyy HH:mm")}</TableCell>
                     <TableCell>{item.jenis}</TableCell>
                     <TableCell>{item.jumlah}</TableCell>
-                    <TableCell>{getStatusBadge(item.status)}</TableCell>
+                    <TableCell>{item.status}</TableCell>
                     <TableCell>{getCaretakerName(item.username_jh)}</TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button
@@ -680,7 +573,7 @@ export const PemberianPakanModule: React.FC = () => {
                           <AlertDialogFooter>
                             <AlertDialogCancel>Batal</AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() => handleDelete(item.id)}
+                              onClick={() => handleDelete(item.id_hewan, item.jadwal)}
                               className="bg-red-500 text-white hover:bg-red-600"
                             >
                               Hapus
@@ -693,92 +586,8 @@ export const PemberianPakanModule: React.FC = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-4">
+                  <TableCell colSpan={8} className="text-center py-4">
                     Tidak ada data pemberian pakan yang ditemukan
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-      <h2 className="text-xl font-semibold mt-10 mb-4">
-        Riwayat Pemberian Makan
-      </h2>
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Filter Penjaga Hewan</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="w-full md:w-1/3">
-            <Select
-              value={caretakerFilter || "all"}
-              onValueChange={(value) =>
-                setCaretakerFilter(value === "all" ? null : value)
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih penjaga hewan" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Penjaga</SelectItem>
-                {penjagaHewan.map((penjaga) => (
-                  <SelectItem key={penjaga.username} value={penjaga.username}>
-                    {penjaga.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nama Individu</TableHead>
-                <TableHead>Spesies</TableHead>
-                <TableHead>Asal Hewan</TableHead>
-                <TableHead>Tanggal Lahir</TableHead>
-                <TableHead>Habitat</TableHead>
-                <TableHead>Status Kesehatan</TableHead>
-                <TableHead>Jenis Pakan</TableHead>
-                <TableHead>Jumlah (gram)</TableHead>
-                <TableHead>Jadwal</TableHead>
-                <TableHead>Penjaga</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {completedFeedings.length > 0 ? (
-                completedFeedings.map((item) => {
-                  const animal = getAnimalExtendedInfo(item.id_hewan);
-                  return (
-                    <TableRow key={`history-${item.id}`}>
-                      <TableCell>{animal.name}</TableCell>
-                      <TableCell>{animal.species}</TableCell>
-                      <TableCell>{animal.origin}</TableCell>
-                      <TableCell>
-                        {format(animal.birthDate, "dd/MM/yyyy")}
-                      </TableCell>
-                      <TableCell>{animal.habitat}</TableCell>
-                      <TableCell>{animal.healthStatus}</TableCell>
-                      <TableCell>{item.jenis}</TableCell>
-                      <TableCell>{item.jumlah}</TableCell>
-                      <TableCell>
-                        {format(new Date(item.jadwal), "dd/MM/yyyy HH:mm")}
-                      </TableCell>
-                      <TableCell>
-                        {getCaretakerName(item.username_jh)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={10} className="text-center py-4">
-                    Tidak ada riwayat pemberian pakan yang ditemukan
                   </TableCell>
                 </TableRow>
               )}

@@ -1,10 +1,13 @@
 export interface AdopsiType {
+  id_adopsi: string; // Tambahkan id_adopsi sebagai primary key
   id_adopter: string;
   id_hewan: string;
   status_pembayaran: string;
   tgl_mulai_adopsi: Date;
   tgl_berhenti_adopsi: Date;
   kontribusi_finansial: number;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 export interface AdopterType {
@@ -147,4 +150,18 @@ export interface StafAdminType {
 export interface WahanaType {
   nama_wahana: string;
   peraturan: string;
+}
+
+export interface AnimalDisplayType {
+  id_hewan: string;
+  nama_hewan: string;
+  spesies: string;
+  status_kesehatan: string;
+  url_foto: string;
+  id_adopsi?: string;
+  nama_adopter?: string;
+  kontribusi_finansial?: number;
+  status_pembayaran?: string;
+  tgl_mulai_adopsi?: Date;
+  tgl_berhenti_adopsi?: Date;
 }

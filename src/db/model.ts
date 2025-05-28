@@ -88,7 +88,6 @@ export abstract class BaseModel<T extends QueryParams> {
     const result = await pool.query(query, values);
     return result.rows[0] ? (result.rows[0] as T) : null;
   }
-
   async delete(column: keyof T, value: any): Promise<T | null> {
     const query = `DELETE FROM ${this.tableName} WHERE ${String(
       column

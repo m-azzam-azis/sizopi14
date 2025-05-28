@@ -9,9 +9,12 @@ export class Pengguna extends BaseModel<PenggunaType> {
   async findByEmail(email: string) {
     return this.findBy("email", email);
   }
-
   async findByUsername(username: string) {
     return this.findBy("username", username);
+  }
+
+  async updateByUsername(username: string, data: Partial<PenggunaType>) {
+    return this.update("username", username, data);
   }
 
   async comparePassword(
@@ -63,8 +66,6 @@ export class Pengguna extends BaseModel<PenggunaType> {
       if (result[0]["exists"]) {
         return role;
       }
-    }
-
-    return "user"; // Default role if no specific role is found
+    }    return "user"; // Default role if no specific role is found
   }
 }

@@ -5,9 +5,7 @@ dotenv.config();
 
 const isDebug = process.env.DEBUG === "True";
 
-let pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+let pool: Pool;
 
 if (isDebug) {
   pool = new Pool({
@@ -16,6 +14,14 @@ if (isDebug) {
     database: process.env.DB_NAME,
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
+    ssl: false, // Non-SSL for local/dev
+  });
+} else {
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false,
+    },
   });
 }
 

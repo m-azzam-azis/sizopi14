@@ -110,7 +110,7 @@ CREATE TABLE CATATAN_MEDIS (
 
 CREATE TABLE PAKAN (
   id_hewan UUID REFERENCES HEWAN(id) ON UPDATE CASCADE ON DELETE CASCADE,
-  jadwal TIMESTAMP,
+  jadwal DATE,
   jenis VARCHAR(50) NOT NULL,
   jumlah INT NOT NULL,
   status VARCHAR(50) NOT NULL,
@@ -119,7 +119,7 @@ CREATE TABLE PAKAN (
 
 CREATE TABLE MEMBERI (
   id_hewan UUID,
-  jadwal TIMESTAMP,
+  jadwal DATE,
   username_jh VARCHAR(50) REFERENCES PENJAGA_HEWAN(username_jh) ON UPDATE CASCADE ON DELETE CASCADE,
   
   PRIMARY KEY (id_hewan, jadwal),
@@ -500,16 +500,16 @@ INSERT INTO catatan_medis VALUES ('003417f2-cf99-4dff-b42b-4167e5a09a31', 'mutia
 INSERT INTO catatan_medis VALUES ('d3f0c021-bb7f-44e9-a31f-2304ef6b34a0', 'yuniarganda', '2023-11-11', 'Muntah', 'Obat Pencernaan', 'Sembuh', 'Periksa dalam 2 minggu');
 INSERT INTO catatan_medis VALUES ('54dbb957-d7b1-4094-8084-9a2a33a4f7be', 'ppuspasari', '2023-07-05', 'Gigi Sakit', 'Obat Kumur', 'Sembuh', 'Tidak ada tindak lanjut');
 
-INSERT INTO pakan VALUES ('d84d43b2-441d-450d-b58e-12fbbf49c88c', '2023-10-01 08:00:00', 'Daging Sapi', 5, 'Tersedia');
-INSERT INTO pakan VALUES ('b2a95b99-5821-45b7-b493-17b79d914ef5', '2023-09-22 07:00:00', 'Ikan', 3, 'Tersedia');
-INSERT INTO pakan VALUES ('98b765a7-6a04-4b3d-b118-c8f26d72e433', '2023-08-30 08:30:00', 'Sayuran', 2, 'Tersedia');
-INSERT INTO pakan VALUES ('b8c4d74f-239f-4e16-a109-f24b263eb4e5', '2023-09-05 09:00:00', 'Daging Ayam', 4, 'Tersedia');
-INSERT INTO pakan VALUES ('cfbd3c9b-4733-4a9f-8a37-d85a1ea38d2b', '2023-07-20 08:45:00', 'Roti', 1, 'Tersedia');
-INSERT INTO pakan VALUES ('1787f195-1111-4e53-8a7d-dfded104abef', '2023-12-01 10:00:00', 'Wortel', 3, 'Tersedia');
-INSERT INTO pakan VALUES ('054e0e4d-9b2b-45ae-88d7-3cf983849953', '2023-11-20 09:30:00', 'Buah-buahan', 2, 'Tersedia');
-INSERT INTO pakan VALUES ('003417f2-cf99-4dff-b42b-4167e5a09a31', '2023-10-15 07:45:00', 'Biji-bijian', 4, 'Tersedia');
-INSERT INTO pakan VALUES ('d3f0c021-bb7f-44e9-a31f-2304ef6b34a0', '2023-09-18 08:15:00', 'Rumput Segar', 6, 'Tersedia');
-INSERT INTO pakan VALUES ('54dbb957-d7b1-4094-8084-9a2a33a4f7be', '2023-08-22 10:30:00', 'Ikan Kecil', 3, 'Tersedia');
+INSERT INTO pakan VALUES ('d84d43b2-441d-450d-b58e-12fbbf49c88c', '2023-10-01', 'Daging Sapi', 5, 'Tersedia');
+INSERT INTO pakan VALUES ('b2a95b99-5821-45b7-b493-17b79d914ef5', '2023-09-22', 'Ikan', 3, 'Tersedia');
+INSERT INTO pakan VALUES ('98b765a7-6a04-4b3d-b118-c8f26d72e433', '2023-08-30', 'Sayuran', 2, 'Tersedia');
+INSERT INTO pakan VALUES ('b8c4d74f-239f-4e16-a109-f24b263eb4e5', '2023-09-05', 'Daging Ayam', 4, 'Tersedia');
+INSERT INTO pakan VALUES ('cfbd3c9b-4733-4a9f-8a37-d85a1ea38d2b', '2023-07-20', 'Roti', 1, 'Tersedia');
+INSERT INTO pakan VALUES ('1787f195-1111-4e53-8a7d-dfded104abef', '2023-12-01', 'Wortel', 3, 'Tersedia');
+INSERT INTO pakan VALUES ('054e0e4d-9b2b-45ae-88d7-3cf983849953', '2023-11-20', 'Buah-buahan', 2, 'Tersedia');
+INSERT INTO pakan VALUES ('003417f2-cf99-4dff-b42b-4167e5a09a31', '2023-10-15', 'Biji-bijian', 4, 'Tersedia');
+INSERT INTO pakan VALUES ('d3f0c021-bb7f-44e9-a31f-2304ef6b34a0', '2023-09-18', 'Rumput Segar', 6, 'Tersedia');
+INSERT INTO pakan VALUES ('54dbb957-d7b1-4094-8084-9a2a33a4f7be', '2023-08-22', 'Ikan Kecil', 3, 'Tersedia');
 
 INSERT INTO memberi VALUES ('1787f195-1111-4e53-8a7d-dfded104abef', '2023-12-01 10:00:00', 'rahmiardianto');
 INSERT INTO memberi VALUES ('054e0e4d-9b2b-45ae-88d7-3cf983849953', '2023-11-20 09:30:00', 'darmaji97');
@@ -660,7 +660,6 @@ INSERT INTO adopsi VALUES ('d111b1c5-8e1a-4c0f-bbcd-7f8ccfe7b3e3', '9b8720a0-2f0
 
 INSERT INTO reservasi VALUES ('rajatacalista', 'Kolam Renang', '2025-11-01', 2, 'Aktif');
 INSERT INTO reservasi VALUES ('nsihotang', 'Kolam Renang', '2025-11-01', 2, 'Aktif');
-INSERT INTO reservasi VALUES ('rajatacalista', 'Teater Satwa', '2025-11-01', 4, 'Aktif');
 INSERT INTO reservasi VALUES ('rajatacalista', 'Zona Hutan', '2025-11-06', 2, 'Batal');
 INSERT INTO reservasi VALUES ('rajatacalista', 'Zona Tropis', '2025-11-06', 3, 'Aktif');
 INSERT INTO reservasi VALUES ('rajatacalista', 'Panggung Musik', '2025-11-02', 4, 'Batal');

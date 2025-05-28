@@ -19,4 +19,8 @@ export class PelatihHewan extends BaseModel<PelatihHewanType> {
 
     return this.customQuery(query);
   }
+
+  async updateByUsername(username: string, data: Partial<PelatihHewanType>) {
+    return this.update("username_LH", username, data);
+  }
 }
