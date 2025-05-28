@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -79,39 +79,49 @@ const AdminWahanaReservasiForm = ({
 
   const selectedDate = form.watch("tanggal_kunjungan");
 
-  const fetchCapacity = async (date: Date) => {
-    setIsLoadingCapacity(true);
-    try {
-      const dateStr = format(date, "yyyy-MM-dd");
-      const response = await fetch(
-        `/api/reservasi/capacity?facility=${encodeURIComponent(
-          initialData.nama_fasilitas
-        )}&date=${dateStr}&username=${encodeURIComponent(
-          initialData.username_P
-        )}&currentTickets=${initialData.jumlah_tiket}`
-      );
+  const fetchCapacity = useCallback(
+    async (date: Date) => {
+      setIsLoadingCapacity(true);
+      try {
+        const dateStr = format(date, "yyyy-MM-dd");
+        const status = form.watch("status");
+        const response = await fetch(
+          `/api/reservasi/capacity?facility=${encodeURIComponent(
+            initialData.nama_fasilitas
+          )}&date=${dateStr}&username=${encodeURIComponent(
+            initialData.username_P
+          )}&currentTickets=${initialData.jumlah_tiket}&status=${status}`
+        );
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch capacity data");
+        if (!response.ok) {
+          throw new Error("Failed to fetch capacity data");
+        }
+
+        const data = await response.json();
+        setCapacityData(data);
+      } catch (error) {
+        console.error("Error fetching capacity:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load capacity data",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingCapacity(false);
       }
-
-      const data = await response.json();
-      setCapacityData(data);
-    } catch (error) {
-      console.error("Error fetching capacity:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load capacity data",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingCapacity(false);
-    }
-  };
+    },
+    [
+      initialData.nama_fasilitas,
+      initialData.username_P,
+      initialData.jumlah_tiket,
+      toast,
+      form,
+    ]
+  );
 
   useEffect(() => {
     fetchCapacity(selectedDate);
-  }, [selectedDate, initialData.nama_fasilitas]);
+  }, [selectedDate, initialData.nama_fasilitas, fetchCapacity]);
 
   const onDateChange = async (date: Date | undefined) => {
     if (!date) return;

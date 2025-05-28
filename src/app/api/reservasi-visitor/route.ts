@@ -17,13 +17,11 @@ export async function GET(request: Request) {
     const reservasiModel = new Reservasi();
     let data;
 
-    // Get user reservations
     if (username && !type) {
       data = await reservasiModel.getVisitorReservations(username);
       return NextResponse.json({ reservations: data });
     }
 
-    // Get available reservations options
     if (type === "available") {
       const dateString = searchParams.get("date");
       const date = dateString ? new Date(dateString) : new Date();
@@ -37,7 +35,6 @@ export async function GET(request: Request) {
       });
     }
 
-    // Get specific attraction details
     if (type === "attraction" && searchParams.get("name")) {
       const dateString = searchParams.get("date");
       const date = dateString ? new Date(dateString) : new Date();
@@ -48,7 +45,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ data });
     }
 
-    // Similarly for rides
     if (type === "ride" && searchParams.get("name")) {
       const dateString = searchParams.get("date");
       const date = dateString ? new Date(dateString) : new Date();
@@ -63,10 +59,12 @@ export async function GET(request: Request) {
       { message: "Invalid request parameters" },
       { status: 400 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error processing request:", error);
     return NextResponse.json(
-      { message: "Server error", error: error.message },
+      { message: "Server error", error: errorMessage },
       { status: 500 }
     );
   }
@@ -87,7 +85,6 @@ export async function POST(request: Request) {
 
     const reservasiModel = new Reservasi();
 
-    // Check if there's enough capacity
     const capacityCheck = await reservasiModel.checkCapacity(
       nama_fasilitas,
       new Date(tanggal_kunjungan),
@@ -101,7 +98,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create the reservation
     const result = await reservasiModel.createReservation({
       username_P,
       nama_fasilitas,
@@ -113,10 +109,12 @@ export async function POST(request: Request) {
       message: "Reservation created successfully",
       reservation: result,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error creating reservation:", error);
     return NextResponse.json(
-      { message: "Server error", error: error.message },
+      { message: "Server error", error: errorMessage },
       { status: 500 }
     );
   }
@@ -143,7 +141,6 @@ export async function PUT(request: Request) {
 
     const reservasiModel = new Reservasi();
 
-    // If updating ticket count, check capacity
     if (new_jumlah_tiket) {
       const capacityCheck = await reservasiModel.checkCapacity(
         nama_fasilitas,
@@ -159,12 +156,11 @@ export async function PUT(request: Request) {
       }
     }
 
-    // Update the reservation
     const result = await reservasiModel.updateReservation({
       username_P,
       nama_fasilitas,
       tanggal_kunjungan: new Date(tanggal_kunjungan),
-      jumlah_tiket: 0, // This is just a placeholder, not actually used in the update
+      jumlah_tiket: 0,
       new_tanggal_kunjungan: new_tanggal_kunjungan
         ? new Date(new_tanggal_kunjungan)
         : undefined,
@@ -183,10 +179,12 @@ export async function PUT(request: Request) {
       message: "Reservation updated successfully",
       reservation: result,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error updating reservation:", error);
     return NextResponse.json(
-      { message: "Server error", error: error.message },
+      { message: "Server error", error: errorMessage },
       { status: 500 }
     );
   }
@@ -208,7 +206,6 @@ export async function DELETE(request: Request) {
 
     const reservasiModel = new Reservasi();
 
-    // Cancel the reservation (mark as 'Batal')
     const result = await reservasiModel.cancelReservation(
       username,
       facility,
@@ -226,10 +223,12 @@ export async function DELETE(request: Request) {
       message: "Reservation cancelled successfully",
       reservation: result,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error cancelling reservation:", error);
     return NextResponse.json(
-      { message: "Server error", error: error.message },
+      { message: "Server error", error: errorMessage },
       { status: 500 }
     );
   }
