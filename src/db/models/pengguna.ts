@@ -1,5 +1,6 @@
 import { BaseModel } from "../model";
 import { PenggunaType } from "../types";
+import pool from "../db";
 
 export class Pengguna extends BaseModel<PenggunaType> {
   constructor() {
@@ -34,38 +35,48 @@ export class Pengguna extends BaseModel<PenggunaType> {
   }
 
   async getRole(username: string) {
-    const queries = [
-      {
-        role: "visitor", // Changed from "pengunjung" to match your UI requirements
-        query: "SELECT EXISTS (SELECT 1 FROM PENGUNJUNG WHERE username_P = $1)",
-      },
-      {
-        role: "veterinarian", // Changed from "dokter_hewan" to match your UI requirements
-        query:
-          "SELECT EXISTS (SELECT 1 FROM DOKTER_HEWAN WHERE username_DH = $1)",
-      },
-      {
-        role: "caretaker", // Changed from "penjaga_hewan" to match your UI requirements
-        query:
-          "SELECT EXISTS (SELECT 1 FROM PENJAGA_HEWAN WHERE username_JH = $1)",
-      },
-      {
-        role: "trainer", // Changed from "pelatih_hewan" to match your UI requirements
-        query:
-          "SELECT EXISTS (SELECT 1 FROM PELATIH_HEWAN WHERE username_LH = $1)",
-      },
-      {
-        role: "admin", // Changed from "staf_admin" to match your UI requirements
-        query:
-          "SELECT EXISTS (SELECT 1 FROM STAF_ADMIN WHERE username_sa = $1)",
-      },
-    ];
-
-    for (const { role, query } of queries) {
-      const result = await this.customQuery(query, [username]);
-      if (result[0]["exists"]) {
-        return role;
+    try {
+      // Periksa apakah pengguna adalah admin
+      const adminResult = await pool.query(
+        `SELECT 1 FROM staf_admin WHERE username_sa = $1`,
+        [username]
+      );
+      if (adminResult.rows.length > 0) {
+        return 'admin';
       }
-    }    return "user"; // Default role if no specific role is found
+      
+      // Periksa apakah pengguna adalah dokter hewan
+      const vetResult = await pool.query(
+        `SELECT 1 FROM dokter_hewan WHERE username_dokter = $1`,
+        [username]
+      );
+      if (vetResult.rows.length > 0) {
+        return 'veterinarian';
+      }
+      
+      // Periksa apakah pengguna adalah pelatih
+      const trainerResult = await pool.query(
+        `SELECT 1 FROM pelatih WHERE username_pelatih = $1`,
+        [username]
+      );
+      if (trainerResult.rows.length > 0) {
+        return 'trainer';
+      }
+      
+      // Periksa apakah pengguna adalah penjaga
+      const caretakerResult = await pool.query(
+        `SELECT 1 FROM penjaga WHERE username_penjaga = $1`,
+        [username]
+      );
+      if (caretakerResult.rows.length > 0) {
+        return 'caretaker';
+      }
+      
+      // Default: pengunjung
+      return 'visitor';
+    } catch (error) {
+      console.error('Error getting user role:', error);
+      throw error;
+    }
   }
 }

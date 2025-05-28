@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { UserRole } from "@/types/user";
 import DashboardShell from "./components/DashboardShell";
 import AdminDashboard from "./components/AdminDashboard";
@@ -13,6 +14,7 @@ const DashboardModule: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -20,7 +22,14 @@ const DashboardModule: React.FC = () => {
       setError(null);
       try {
         const res = await fetch("/api/profile");
-        if (!res.ok) throw new Error("Failed to fetch user profile");
+        if (!res.ok) {
+          if (res.status === 401) {
+            router.push('/login');
+            return;
+          } 
+          throw new Error("Failed to fetch user profile");
+        }
+
         const data = await res.json();
         setUser(data);
       } catch (err: any) {
@@ -30,7 +39,7 @@ const DashboardModule: React.FC = () => {
       }
     };
     fetchUser();
-  }, []);
+  }, [router]);
 
   if (loading) return <div>Loading dashboard...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
@@ -54,27 +63,20 @@ const DashboardModule: React.FC = () => {
     }
   };
 
+  const formattedUser = {
+    firstName: user.firstName || user.nama_depan || '',
+    middleName: user.middleName || user.nama_tengah || '',
+    lastName: user.lastName || user.nama_belakang || '',
+    username: user.username || '',
+    email: user.email || '',
+    phoneNumber: user.phoneNumber || user.no_telepon || '',
+    role: user.role as UserRole,
+    staffId: user.staffId || user.id_staf,
+  };
+
   return (
     <DashboardShell
-      user={{
-        firstName: user.firstName,
-        lastName: user.lastName,
-        username: user.username,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        role: user.role,
-        ...(user.role === "visitor"
-          ? { alamat: user.alamat, tanggalLahir: user.tanggalLahir }
-          : {}),
-        ...(user.role === "caretaker" ||
-        user.role === "trainer" ||
-        user.role === "admin"
-          ? {
-              jumlahHewan: user.jumlahHewan,
-              staffId: user.staffId,
-            }
-          : {}),
-      }}
+      user={formattedUser}
       roleSpecificContent={renderRoleSpecificContent()}
     />
   );
