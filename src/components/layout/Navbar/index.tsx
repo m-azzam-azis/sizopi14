@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import {
   Popover,
   PopoverContent,
@@ -23,9 +22,7 @@ import { getUserData } from "@/hooks/getUserData";
 import { toast } from "sonner";
 
 export const Navbar = () => {
-  const pathname = usePathname();
-  const router = useRouter();
-  const { userData, isValid, isLoading } = getUserData();
+  const { userData, isValid } = getUserData();
   const [isAdopter, setIsAdopter] = useState(false);
 
   const mapRoleToUIRole = (role: string): string => {
