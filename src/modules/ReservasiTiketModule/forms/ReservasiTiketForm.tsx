@@ -226,12 +226,12 @@ export const ReservasiTiketForm: React.FC<ReservasiTiketFormProps> = ({
                   <Input
                     type="number"
                     min={1}
-                    max={
-                      isEditing
-                        ? attraction.fasilitas.kapasitas_tersedia +
-                          (initialData?.jumlah_tiket || 0)
-                        : attraction.fasilitas.kapasitas_tersedia
-                    }
+                    // max={
+                    //   isEditing
+                    //     ? attraction.fasilitas.kapasitas_tersedia +
+                    //       (initialData?.jumlah_tiket || 0)
+                    //     : attraction.fasilitas.kapasitas_tersedia
+                    // }
                     placeholder="Contoh: 2"
                     {...field}
                     onChange={(e) => field.onChange(Number(e.target.value))}

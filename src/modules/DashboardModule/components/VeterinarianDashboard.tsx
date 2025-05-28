@@ -8,7 +8,14 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { VeterinarianData } from "@/types/user";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface MedicalRecord {
   id: string;
@@ -21,13 +28,28 @@ interface MedicalRecord {
 }
 
 interface VeterinarianDashboardProps {
-  userData: VeterinarianData & {
-    medicalRecords?: MedicalRecord[];
+  userData: {
+    username: string;
+    email: string;
+    nama_depan: string;
+    nama_tengah: string;
+    nama_belakang: string;
+    no_telepon: string;
+    role: "visitor" | "veterinarian" | "caretaker" | "trainer" | "admin" | "";
+    alamat: string;
+    tgl_lahir: string;
+    id_staf_JH: string;
+    id_staf_LH: string;
+    no_str: string;
+    nama_spesialisasi: string[];
+    id_staf_sa: string;
   };
+  animalsTreated?: number;
 }
 
 const VeterinarianDashboard: React.FC<VeterinarianDashboardProps> = ({
   userData,
+  animalsTreated,
 }) => {
   return (
     <>
@@ -41,10 +63,10 @@ const VeterinarianDashboard: React.FC<VeterinarianDashboardProps> = ({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {userData.animalsTreated ?? 0}
-            </div>
-            <p className="text-xs text-muted-foreground">+5 new this week</p>
+            <div className="text-2xl font-bold">{animalsTreated ?? 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Total hewan yang ditangani
+            </p>
           </CardContent>
         </Card>
 
@@ -53,9 +75,7 @@ const VeterinarianDashboard: React.FC<VeterinarianDashboardProps> = ({
             <CardTitle className="text-sm font-medium">Certification</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-md font-medium">
-              {userData.certificationNumber || "-"}
-            </div>
+            <div className="text-md font-medium">{userData.no_str || "-"}</div>
             <p className="text-xs text-muted-foreground">Valid until 2026</p>
           </CardContent>
         </Card>
@@ -68,7 +88,7 @@ const VeterinarianDashboard: React.FC<VeterinarianDashboardProps> = ({
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {(userData.specializations || []).map((spec, index) => (
+              {(userData.nama_spesialisasi || []).map((spec, index) => (
                 <Badge key={index} variant="secondary">
                   {spec}
                 </Badge>
@@ -78,7 +98,7 @@ const VeterinarianDashboard: React.FC<VeterinarianDashboardProps> = ({
         </Card>
       </div>
 
-      {userData.medicalRecords && userData.medicalRecords.length > 0 && (
+      {/* {userData.medicalRecords && userData.medicalRecords.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Recent Medical Records</CardTitle>
@@ -109,7 +129,7 @@ const VeterinarianDashboard: React.FC<VeterinarianDashboardProps> = ({
             </Table>
           </CardContent>
         </Card>
-      )}
+      )} */}
     </>
   );
 };

@@ -31,6 +31,13 @@ import ReservasiTiketFormModal from "../modals/ReservasiTiketFormModal";
 import ReservasiTiketDetailModal from "../modals/ReservasiTiketDetailModal";
 import ReservasiTiketCancelModal from "../modals/ReservasiTiketCancelModal";
 import WahanaReservasiFormModal from "../modals/WahanaReservasiFormModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface Attraction {
   nama_atraksi: string;
@@ -91,6 +98,9 @@ const ReservasiTiketVisitorModule = () => {
     useState<Reservation | null>(null);
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const fetchUserReservations = useCallback(async () => {
     if (!isValid || !username) return;
@@ -238,11 +248,20 @@ const ReservasiTiketVisitorModule = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        toast({
-          title: "Error",
-          description: result.message || "Gagal membuat reservasi",
-          variant: "destructive",
-        });
+        let errorMessage = result.message || "Gagal membuat reservasi";
+
+        if (errorMessage.includes("Failed to execute custom query:")) {
+          errorMessage = errorMessage
+            .replace("Failed to execute custom query:", "")
+            .trim();
+        }
+
+        if (errorMessage.includes("ERROR:")) {
+          errorMessage = errorMessage.replace("ERROR:", "").trim();
+        }
+
+        setErrorMessage(errorMessage);
+        setErrorDialogOpen(true);
         return;
       }
 
@@ -286,11 +305,20 @@ const ReservasiTiketVisitorModule = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        toast({
-          title: "Error",
-          description: result.message || "Gagal membuat reservasi",
-          variant: "destructive",
-        });
+        let errorMessage = result.message || "Gagal membuat reservasi";
+
+        if (errorMessage.includes("Failed to execute custom query:")) {
+          errorMessage = errorMessage
+            .replace("Failed to execute custom query:", "")
+            .trim();
+        }
+
+        if (errorMessage.includes("ERROR:")) {
+          errorMessage = errorMessage.replace("ERROR:", "").trim();
+        }
+
+        setErrorMessage(errorMessage);
+        setErrorDialogOpen(true);
         return;
       }
 
@@ -336,11 +364,20 @@ const ReservasiTiketVisitorModule = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        toast({
-          title: "Error",
-          description: result.message || "Gagal mengubah reservasi",
-          variant: "destructive",
-        });
+        let errorMessage = result.message || "Gagal mengubah reservasi";
+
+        if (errorMessage.includes("Failed to execute custom query:")) {
+          errorMessage = errorMessage
+            .replace("Failed to execute custom query:", "")
+            .trim();
+        }
+
+        if (errorMessage.includes("ERROR:")) {
+          errorMessage = errorMessage.replace("ERROR:", "").trim();
+        }
+
+        setErrorMessage(errorMessage);
+        setErrorDialogOpen(true);
         return;
       }
 
@@ -360,6 +397,7 @@ const ReservasiTiketVisitorModule = () => {
         title: "Error",
         description: "Gagal mengubah reservasi",
         variant: "destructive",
+        duration: 6000,
       });
     }
   };
@@ -993,6 +1031,20 @@ const ReservasiTiketVisitorModule = () => {
           />
         </>
       )}
+
+      <Dialog open={errorDialogOpen} onOpenChange={setErrorDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Error Kapasitas</DialogTitle>
+            <DialogDescription className="py-4 text-red-500">
+              {errorMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end">
+            <Button onClick={() => setErrorDialogOpen(false)}>Tutup</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <style jsx>{`
         .loader {
