@@ -302,7 +302,7 @@ export class Reservasi extends BaseModel<ReservasiType> {
       message:
         kapasitas_tersedia >= jumlah_tiket
           ? "Kapasitas mencukupi"
-          : `Kapasitas tidak mencukupi. Hanya tersisa ${kapasitas_tersedia} tiket.`,
+          : `Kapasitas tersisa "${kapasitas_tersedia}" tiket, atraksi tidak mencukupi untuk sejumlah "${jumlah_tiket}" tiket yang diminta.`,
       kapasitas_tersedia: parseInt(kapasitas_tersedia),
     };
   }
