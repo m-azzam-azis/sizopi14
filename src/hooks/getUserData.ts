@@ -138,7 +138,7 @@ export const getUserData: () => ReturnType = () => {
         authState === "authenticated" &&
         decodedToken?.data.role !== "admin"
       ) {
-        router.push("/");
+        router.push("/dashboard");
         return;
       }
     }

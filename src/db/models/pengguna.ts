@@ -10,6 +10,7 @@ export class Pengguna extends BaseModel<PenggunaType> {
   async findByEmail(email: string) {
     return this.findBy("email", email);
   }
+  
   async findByUsername(username: string) {
     return this.findBy("username", username);
   }
@@ -23,13 +24,20 @@ export class Pengguna extends BaseModel<PenggunaType> {
     inputPassword: string,
   ): Promise<boolean> {
     try {
+      // Gunakan hasil query yang diterima
       const result = await this.customQuery(
         "SELECT verify_login($1, $2) AS is_valid",
         [username, inputPassword]
       );
-      return true;
-    } catch (error: any) {
-      console.error("Login verification failed:", error.message);
+
+      // Gunakan result untuk menentukan hasilnya berdasarkan respons verify_login
+      return result[0]?.is_valid === true;
+    } catch (error: unknown) { 
+      if (error instanceof Error) {
+        console.error("Login verification failed:", error.message);
+      } else {
+        console.error("Login verification failed:", error);
+      }
       return false;
     }
   }

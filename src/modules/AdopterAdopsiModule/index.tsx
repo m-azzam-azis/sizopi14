@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUserData } from "@/hooks/getUserData";
-import { toast } from "sonner";
 
 interface Animal {
   id_hewan: string;
@@ -77,8 +76,13 @@ export default function AdopterAdopsiModule() {
             setError("Data adopter tidak ditemukan");
           }
         } else {
+          // Tambahkan handling error response yang tidak ok
+          setError(`Error: ${response.status} ${response.statusText}`);
         }
-      } catch (err) {
+      } catch (error) {
+        // Gunakan parameter error
+        console.error("Error fetching data:", error);
+        setError("Gagal mengambil data adopsi");
       } finally {
         if (isMounted) {
           setIsLoaded(true);

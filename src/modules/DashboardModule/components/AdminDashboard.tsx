@@ -34,7 +34,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userData }) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card className="border rounded-md shadow-sm bg-white">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Today's Ticket Sales</CardTitle>
+            <CardTitle className="text-sm font-medium">Today&apos;s Ticket Sales</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
@@ -48,7 +48,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userData }) => {
 
         <Card className="border rounded-md shadow-sm bg-white">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Today's Visitors</CardTitle>
+            <CardTitle className="text-sm font-medium">Today&apos;s Visitors</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
