@@ -215,7 +215,12 @@ export const ReservasiTiketForm: React.FC<ReservasiTiketFormProps> = ({
                   <Input
                     type="number"
                     min={1}
-                    max={attraction.fasilitas.kapasitas_tersedia}
+                    max={
+                      isEditing
+                        ? attraction.fasilitas.kapasitas_tersedia +
+                          (initialData?.jumlah_tiket || 0)
+                        : attraction.fasilitas.kapasitas_tersedia
+                    }
                     placeholder="Contoh: 2"
                     {...field}
                     onChange={(e) => field.onChange(Number(e.target.value))}
@@ -223,11 +228,14 @@ export const ReservasiTiketForm: React.FC<ReservasiTiketFormProps> = ({
                   <span className="ml-2">tiket</span>
                 </div>
               </FormControl>
-              {!isEditing && (
-                <p className="text-xs text-muted-foreground">
-                  Tersedia: {attraction.fasilitas.kapasitas_tersedia} tiket
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground">
+                Tersedia:{" "}
+                {isEditing
+                  ? attraction.fasilitas.kapasitas_tersedia +
+                    (initialData?.jumlah_tiket || 0)
+                  : attraction.fasilitas.kapasitas_tersedia}{" "}
+                tiket
+              </p>
               <FormMessage />
             </FormItem>
           )}

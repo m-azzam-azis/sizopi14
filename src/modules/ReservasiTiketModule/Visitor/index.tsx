@@ -147,7 +147,7 @@ const ReservasiTiketVisitorModule = () => {
   const fetchAvailableFacilities = async (date: Date = selectedDate) => {
     setIsAvailableLoading(true);
     try {
-      const dateParam = date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+      const dateParam = format(date, "yyyy-MM-dd");
       const response = await fetch(
         `/api/reservasi-visitor?type=available&date=${dateParam}`
       );
@@ -362,7 +362,10 @@ const ReservasiTiketVisitorModule = () => {
       const response = await fetch(
         `/api/reservasi-visitor?username=${username}&facility=${
           currentReservation.nama_fasilitas
-        }&date=${currentReservation.tanggal_kunjungan.toISOString()}`,
+        }&date=${format(
+          currentReservation.tanggal_kunjungan,
+          "yyyy-MM-dd HH:mm:ss"
+        )}`,
         {
           method: "DELETE",
         }
@@ -406,12 +409,50 @@ const ReservasiTiketVisitorModule = () => {
   };
 
   // Opening edit form
-  const handleShowEditForm = (reservation: Reservation) => {
-    setCurrentReservation(reservation);
-    if (reservation.jenis_reservasi === "Atraksi") {
-      setIsEditAttractionModalOpen(true);
-    } else {
-      setIsEditRideModalOpen(true);
+  const handleShowEditForm = async (reservation: Reservation) => {
+    try {
+      // Fetch current capacity for this facility on this date
+      const dateParam = format(reservation.tanggal_kunjungan, "yyyy-MM-dd");
+      const facilityType =
+        reservation.jenis_reservasi === "Atraksi" ? "attraction" : "ride";
+      const facilityName = encodeURIComponent(reservation.nama_fasilitas);
+
+      const response = await fetch(
+        `/api/reservasi-visitor?type=${facilityType}&name=${facilityName}&date=${dateParam}`
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch facility details");
+
+      const data = await response.json();
+      console.log("Capacity data:", data);
+
+      // Update reservation with current capacity data
+      setCurrentReservation({
+        ...reservation,
+        kapasitas_tersedia: parseInt(data.data.kapasitas_tersedia),
+        kapasitas_max: parseInt(data.data.kapasitas_max),
+      });
+
+      if (reservation.jenis_reservasi === "Atraksi") {
+        setIsEditAttractionModalOpen(true);
+      } else {
+        setIsEditRideModalOpen(true);
+      }
+    } catch (error) {
+      console.error("Error fetching capacity data:", error);
+      toast({
+        title: "Error",
+        description: "Gagal memuat data kapasitas fasilitas",
+        variant: "destructive",
+      });
+
+      // Fallback to showing the edit form without updated capacity
+      setCurrentReservation(reservation);
+      if (reservation.jenis_reservasi === "Atraksi") {
+        setIsEditAttractionModalOpen(true);
+      } else {
+        setIsEditRideModalOpen(true);
+      }
     }
   };
 
