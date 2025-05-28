@@ -1,14 +1,12 @@
 import React from "react";
+import { Button } from "@/components/ui/button";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface ReservasiTiketCancelModalProps {
   isOpen: boolean;
@@ -22,25 +20,24 @@ const ReservasiTiketCancelModal: React.FC<ReservasiTiketCancelModalProps> = ({
   onConfirm,
 }) => {
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>BATALKAN RESERVASI</AlertDialogTitle>
-          <AlertDialogDescription>
-            Apakah anda yakin ingin membatalkan reservasi ini?
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>TIDAK</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>BATALKAN RESERVASI</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <p>Apakah anda yakin ingin membatalkan reservasi ini?</p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            TIDAK
+          </Button>
+          <Button variant="destructive" onClick={onConfirm}>
             YA
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

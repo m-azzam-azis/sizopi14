@@ -25,7 +25,6 @@ export const Chips = function ({
 
   return (
     <button
-      variant={"default"}
       onClick={() => {
         setIsSelected(!isSelected);
         if (onClick) {
