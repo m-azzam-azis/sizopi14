@@ -159,7 +159,7 @@ export const Navbar = () => {
               </Link>
             ) : uiRole === "pengunjung" ? (
               <Link
-                href="/reservasi/dashboard"
+                href="/reservasi"
                 className="max-md:hidden text-base text-primary font-outfit font-medium"
               >
                 Reservasi Tiket
