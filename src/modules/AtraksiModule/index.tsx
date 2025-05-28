@@ -30,6 +30,13 @@ import {
 import { toast } from "sonner";
 import { getUserData } from "@/hooks/getUserData";
 import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface PelatihHewan {
   id_staf: string;
@@ -78,31 +85,19 @@ const AtraksiModule = () => {
   const [atraksiData, setAtraksiData] = useState<AtraksiData[]>([]);
   const [pelatihHewan, setPelatihHewan] = useState<PelatihHewan[]>([]);
   const [hewan, setHewan] = useState<Hewan[]>([]);
+  const [rotationMessage, setRotationMessage] = useState<string | null>(null);
+  const [showRotationDialog, setShowRotationDialog] = useState(false);
 
   const fetchAtraksiData = async () => {
-    setIsLoading(true);
     try {
+      setIsLoading(true);
       const response = await fetch("/api/atraksi");
-      if (!response.ok) {
-        throw new Error("Failed to fetch attractions");
-      }
-
-      const { data } = await response.json();
-
-      const formattedData = data.map((atraksi: AtraksiApiResponse) => ({
-        id: `atr-${atraksi.nama_atraksi}`,
-        nama_atraksi: atraksi.nama_atraksi,
-        lokasi: atraksi.lokasi,
-        kapasitas: atraksi.kapasitas_max,
-        jadwal: atraksi.jadwal,
-        hewan_terlibat: atraksi.hewan_terlibat || [],
-        pelatih: atraksi.pelatih || null,
-      }));
-
-      setAtraksiData(formattedData);
+      if (!response.ok) throw new Error("Failed to fetch data");
+      const data = await response.json();
+      setAtraksiData(data.data);
     } catch (error) {
-      console.error("Error fetching attractions:", error);
-      toast.error("Failed to load attraction data");
+      console.error("Error fetching atraksi data:", error);
+      toast.error("Gagal memuat data atraksi");
     } finally {
       setIsLoading(false);
     }
@@ -217,8 +212,11 @@ const AtraksiModule = () => {
         }),
       });
 
+      const result = await response.json();
+      console.log("Response from API:", result);
+
       if (!response.ok) {
-        throw new Error("Failed to update attraction");
+        throw new Error(result.error || "Failed to update attraction");
       }
 
       const updatedAtraksiData = atraksiData.map((atraksi) => {
@@ -234,6 +232,12 @@ const AtraksiModule = () => {
 
       setAtraksiData(updatedAtraksiData);
       toast.success("Atraksi berhasil diperbarui");
+
+      if (result.rotationMessage) {
+        console.log("Rotation message received:", result.rotationMessage);
+        setRotationMessage(result.rotationMessage);
+        setShowRotationDialog(true);
+      }
     } catch (error) {
       console.error("Error updating attraction:", error);
       toast.error("Gagal memperbarui atraksi");
@@ -487,6 +491,44 @@ const AtraksiModule = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Rotation Message Dialog */}
+      <Dialog
+        open={showRotationDialog}
+        onOpenChange={(isOpen) => {
+          setShowRotationDialog(isOpen);
+
+          if (!isOpen) {
+            fetchAtraksiData();
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rotasi Pelatih</DialogTitle>
+            <DialogDescription className="py-4">
+              <div className="text-sm text-blue-600 mb-2">
+                {rotationMessage}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Sesuai kebijakan, pelatih hewan akan dirotasi setelah bertugas
+                lebih dari 3 bulan pada atraksi yang sama.
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end">
+            <Button
+              onClick={() => {
+                setShowRotationDialog(false);
+
+                fetchAtraksiData();
+              }}
+            >
+              Tutup
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
