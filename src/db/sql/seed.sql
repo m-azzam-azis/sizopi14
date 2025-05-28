@@ -659,6 +659,7 @@ INSERT INTO adopsi VALUES ('aab11cc7-317d-42e8-bb91-8fc64517efab', 'c84949f2-643
 INSERT INTO adopsi VALUES ('d111b1c5-8e1a-4c0f-bbcd-7f8ccfe7b3e3', '9b8720a0-2f01-44ab-b1dc-77ecdd5f8cf4', 'Belum', '2025-06-01', '2025-12-31', 600000);
 
 INSERT INTO reservasi VALUES ('rajatacalista', 'Kolam Renang', '2025-11-01', 2, 'Aktif');
+INSERT INTO reservasi VALUES ('nsihotang', 'Kolam Renang', '2025-11-01', 2, 'Aktif');
 INSERT INTO reservasi VALUES ('rajatacalista', 'Teater Satwa', '2025-11-01', 4, 'Aktif');
 INSERT INTO reservasi VALUES ('rajatacalista', 'Zona Hutan', '2025-11-06', 2, 'Batal');
 INSERT INTO reservasi VALUES ('rajatacalista', 'Zona Tropis', '2025-11-06', 3, 'Aktif');

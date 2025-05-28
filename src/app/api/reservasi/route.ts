@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Reservasi } from "@/db/models/reservasi";
+import { format } from "date-fns";
 
 export async function GET(request: Request) {
   try {
@@ -51,13 +52,69 @@ export async function PUT(request: Request) {
 
     const reservasiModel = new Reservasi();
 
+    if (status === "Dibatalkan") {
+      const dbStatus = "Batal";
+
+      await reservasiModel.updateReservation({
+        username_P,
+        nama_fasilitas,
+        tanggal_kunjungan: new Date(tanggal_kunjungan),
+        jumlah_tiket,
+        new_status: dbStatus,
+      });
+
+      return NextResponse.json({
+        message: `${
+          type === "attraction" ? "Attraction" : "Ride"
+        } reservation cancelled successfully`,
+      });
+    }
+
+    const query = `
+      SELECT jumlah_tiket, tanggal_kunjungan 
+      FROM RESERVASI
+      WHERE username_P = $1 AND nama_fasilitas = $2 AND tanggal_kunjungan = $3
+    `;
+
+    const currentReservation = await reservasiModel.customQuery(query, [
+      username_P,
+      nama_fasilitas,
+      format(new Date(tanggal_kunjungan), "yyyy-MM-dd"),
+    ]);
+
+    if (currentReservation.length === 0) {
+      return NextResponse.json(
+        { message: "Reservation not found" },
+        { status: 404 }
+      );
+    }
+
+    const currentTickets = parseInt(currentReservation[0].jumlah_tiket);
+
+    if (jumlah_tiket > currentTickets) {
+      const additionalTickets = jumlah_tiket - currentTickets;
+
+      const capacityCheck = await reservasiModel.checkCapacity(
+        nama_fasilitas,
+        new Date(tanggal_kunjungan),
+        additionalTickets
+      );
+
+      if (!capacityCheck.enough) {
+        return NextResponse.json(
+          { message: capacityCheck.message },
+          { status: 400 }
+        );
+      }
+    }
+
     const dbStatus = status === "Terjadwal" ? "Aktif" : "Batal";
 
     await reservasiModel.updateReservation({
       username_P,
       nama_fasilitas,
       tanggal_kunjungan: new Date(tanggal_kunjungan),
-      jumlah_tiket,
+      jumlah_tiket: currentTickets,
       new_status: dbStatus,
       new_jumlah_tiket: jumlah_tiket,
     });

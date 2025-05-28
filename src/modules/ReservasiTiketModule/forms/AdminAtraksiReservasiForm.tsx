@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,9 +10,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -29,6 +30,7 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ReservationStatus, ReservasiTiketAtraksi } from "@/types/schema";
+import { useToast } from "@/hooks/use-toast";
 
 const adminAtraksiReservasiFormSchema = z.object({
   tanggal_kunjungan: z.date({
@@ -58,6 +60,14 @@ const AdminAtraksiReservasiForm = ({
   onSubmit,
   initialData,
 }: AdminAtraksiReservasiFormProps) => {
+  const { toast } = useToast();
+  const [capacityData, setCapacityData] = useState<{
+    kapasitas_max: number;
+    kapasitas_tersedia: number;
+    max_allowed: number;
+  } | null>(null);
+  const [isLoadingCapacity, setIsLoadingCapacity] = useState(false);
+
   const form = useForm<AdminAtraksiReservasiFormValues>({
     resolver: zodResolver(adminAtraksiReservasiFormSchema),
     defaultValues: {
@@ -66,6 +76,49 @@ const AdminAtraksiReservasiForm = ({
       status: initialData?.status || "Terjadwal",
     },
   });
+
+  const selectedDate = form.watch("tanggal_kunjungan");
+
+  const fetchCapacity = async (date: Date) => {
+    setIsLoadingCapacity(true);
+    try {
+      const dateStr = format(date, "yyyy-MM-dd");
+      const status = form.watch("status");
+      const response = await fetch(
+        `/api/reservasi/capacity?facility=${encodeURIComponent(
+          initialData.nama_fasilitas
+        )}&date=${dateStr}&username=${encodeURIComponent(
+          initialData.username_P
+        )}&currentTickets=${initialData.jumlah_tiket}&status=${status}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch capacity data");
+      }
+
+      const data = await response.json();
+      setCapacityData(data);
+    } catch (error) {
+      console.error("Error fetching capacity:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load capacity data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingCapacity(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCapacity(selectedDate);
+  }, [selectedDate, initialData.nama_fasilitas]);
+
+  const onDateChange = async (date: Date | undefined) => {
+    if (!date) return;
+    form.setValue("tanggal_kunjungan", date);
+    await fetchCapacity(date);
+  };
 
   return (
     <Form {...form}>
@@ -117,7 +170,7 @@ const AdminAtraksiReservasiForm = ({
                   <Calendar
                     mode="single"
                     selected={field.value}
-                    onSelect={field.onChange}
+                    onSelect={(date) => onDateChange(date)}
                     disabled={(date) =>
                       date < new Date() ||
                       date >
@@ -139,14 +192,27 @@ const AdminAtraksiReservasiForm = ({
             <FormItem>
               <FormLabel>Jumlah tiket yang ingin dibeli</FormLabel>
               <FormControl>
-                <Input
-                  type="number"
-                  min={1}
-                  placeholder="Contoh: 2"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={capacityData?.max_allowed || initialData.jumlah_tiket}
+                    placeholder="Contoh: 2"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    disabled={isLoadingCapacity}
+                  />
+                  {isLoadingCapacity && (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  )}
+                </div>
               </FormControl>
+              {capacityData && (
+                <FormDescription>
+                  Tersedia: {capacityData.max_allowed} tiket (kapasitas tersisa
+                  + tiket reservasi ini)
+                </FormDescription>
+              )}
               <FormMessage />
             </FormItem>
           )}
