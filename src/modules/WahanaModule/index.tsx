@@ -36,7 +36,7 @@ interface WahanaData {
   id?: string;
   nama_wahana: string;
   kapasitas_max: number;
-  jadwal: Date;
+  jadwal: string | Date;
   peraturan: string[];
 }
 
@@ -70,7 +70,7 @@ const WahanaModule = () => {
         id: `whn-${wahana.nama_wahana}`,
         nama_wahana: wahana.nama_wahana,
         kapasitas_max: wahana.kapasitas_max,
-        jadwal: new Date(wahana.jadwal),
+        jadwal: wahana.jadwal,
         peraturan: Array.isArray(wahana.peraturan)
           ? wahana.peraturan
           : [wahana.peraturan],
@@ -206,14 +206,16 @@ const WahanaModule = () => {
     setIsAddModalOpen(false);
   };
 
-  const formatDateTime = (date: Date) => {
-    return date.toLocaleString("id-ID", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const formatDateTime = (time: string | Date) => {
+    if (typeof time === "string") {
+      const [hours, minutes] = time.split(":");
+      return `${hours}:${minutes}`;
+    } else {
+      return time.toLocaleString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
   };
 
   const formatRegulations = (peraturan: string[]) => {

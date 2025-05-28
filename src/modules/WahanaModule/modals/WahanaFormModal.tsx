@@ -16,9 +16,12 @@ interface WahanaFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
-  initialData?: { jadwal: Date; kapasitas: number };
-  isEditing?: boolean;
+  isEditing: boolean;
   nama_wahana?: string;
+  initialData?: {
+    jadwal: string | Date;
+    kapasitas: number;
+  };
 }
 
 const WahanaFormModal: React.FC<WahanaFormModalProps> = ({

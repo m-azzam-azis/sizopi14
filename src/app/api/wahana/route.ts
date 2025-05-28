@@ -48,7 +48,7 @@ export async function POST(req: Request) {
 
     await fasilitasModel.create({
       nama: nama_wahana,
-      jadwal: new Date(jadwal),
+      jadwal: jadwal,
       kapasitas_max: kapasitas_max,
     });
 
@@ -91,7 +91,7 @@ export async function PUT(req: Request) {
 
     const fasilitasModel = new Fasilitas();
     await fasilitasModel.update("nama", nama_wahana, {
-      jadwal: new Date(jadwal),
+      jadwal: jadwal,
       kapasitas_max: kapasitas_max,
     });
 

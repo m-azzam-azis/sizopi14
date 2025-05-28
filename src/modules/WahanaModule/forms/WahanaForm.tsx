@@ -16,21 +16,29 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { DateTimePicker } from "@/components/elements/DateTimePicker/DateTimePicker";
+import { format } from "date-fns";
 
 const createWahanaSchema = z.object({
   nama_wahana: z.string().min(1, "Nama wahana tidak boleh kosong"),
   kapasitas: z.number().min(1, "Kapasitas harus lebih dari 0"),
-  jadwal: z.date(),
+  jadwal: z.string(),
   peraturan: z.array(z.string()).min(1, "Peraturan tidak boleh kosong"),
 });
 
-const editWahanaSchema = z.object({
-  kapasitas: z.number().min(1, "Kapasitas harus lebih dari 0"),
-  jadwal: z.date(),
+const editWahanaFormSchema = z.object({
+  jadwal: z.string({
+    required_error: "Jadwal is required",
+  }),
+  kapasitas: z
+    .number({
+      required_error: "Kapasitas is required",
+    })
+    .int()
+    .positive(),
 });
 
 export type CreateWahanaFormValues = z.infer<typeof createWahanaSchema>;
-export type EditWahanaFormValues = z.infer<typeof editWahanaSchema>;
+export type EditWahanaFormValues = z.infer<typeof editWahanaFormSchema>;
 
 export const CreateWahanaForm = ({
   onSubmit,
@@ -42,7 +50,7 @@ export const CreateWahanaForm = ({
     defaultValues: {
       nama_wahana: "",
       kapasitas: 10,
-      jadwal: new Date(),
+      jadwal: "09:00",
       peraturan: [""],
     },
   });
@@ -106,11 +114,7 @@ export const CreateWahanaForm = ({
             <FormItem>
               <FormLabel>Jadwal</FormLabel>
               <FormControl>
-                <DateTimePicker
-                  date={field.value}
-                  setDate={field.onChange}
-                  className="w-full"
-                />
+                <Input type="time" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -174,28 +178,34 @@ export const CreateWahanaForm = ({
 
 export const EditWahanaForm = ({
   onSubmit,
-  initialValues,
-  nama_wahana,
+  isEditing = false,
+  initialData,
 }: {
   onSubmit: (data: EditWahanaFormValues) => void;
-  initialValues: { jadwal: Date; kapasitas: number };
-  nama_wahana?: string;
+  isEditing?: boolean;
+  initialData?: { jadwal: string | Date; kapasitas: number };
 }) => {
-  const form = useForm<EditWahanaFormValues>({
-    resolver: zodResolver(editWahanaSchema),
-    defaultValues: initialValues,
+  const getInitialJadwalValue = () => {
+    if (!initialData?.jadwal) return "09:00";
+
+    if (typeof initialData.jadwal === "string") {
+      return initialData.jadwal.substring(0, 5);
+    } else {
+      return format(initialData.jadwal, "HH:mm");
+    }
+  };
+
+  const form = useForm<z.infer<typeof editWahanaFormSchema>>({
+    resolver: zodResolver(editWahanaFormSchema),
+    defaultValues: {
+      jadwal: getInitialJadwalValue(),
+      kapasitas: initialData?.kapasitas || 10,
+    },
   });
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {nama_wahana && (
-          <div className="mb-4">
-            <h3 className="font-medium">Nama Wahana:</h3>
-            <p className="text-foreground/80">{nama_wahana}</p>
-          </div>
-        )}
-
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}
           name="kapasitas"
@@ -222,11 +232,7 @@ export const EditWahanaForm = ({
             <FormItem>
               <FormLabel>Jadwal</FormLabel>
               <FormControl>
-                <DateTimePicker
-                  date={field.value}
-                  setDate={field.onChange}
-                  className="w-full"
-                />
+                <Input type="time" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -248,7 +254,7 @@ const WahanaForm = ({
   nama_wahana,
 }: {
   onSubmit: (data: any) => void;
-  initialValues?: { jadwal: Date; kapasitas: number };
+  initialValues?: { jadwal: string | Date; kapasitas: number };
   isEditing?: boolean;
   nama_wahana?: string;
 }) => {
@@ -256,8 +262,8 @@ const WahanaForm = ({
     return (
       <EditWahanaForm
         onSubmit={onSubmit}
-        initialValues={initialValues}
-        nama_wahana={nama_wahana}
+        initialData={initialValues}
+        isEditing={isEditing}
       />
     );
   }
