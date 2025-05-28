@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AdopsiIndividuForm({
@@ -16,7 +15,6 @@ export default function AdopsiIndividuForm({
   adopter: { name: string; address: string; noTelp: string };
   animalData: { name: string; species: string };
 }) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
 
   const {

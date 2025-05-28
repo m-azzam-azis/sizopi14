@@ -26,9 +26,6 @@ export default function AdminAdopsiModule() {
   const [animals, setAnimals] = useState<AnimalDisplay[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [stats, setStats] = useState({ adopted: 0, unadopted: 0 });
-  const [refreshTimestamp, setRefreshTimestamp] = useState(Date.now());
-  
   // Dapatkan data user dan cek role
   const { userData, isValid, isLoading: authLoading } = getUserData();
 
@@ -53,12 +50,7 @@ export default function AdminAdopsiModule() {
       
       fetchAnimals();
     }
-  }, [statusFilter, refreshTimestamp, isValid, authLoading]);
-
-  // Fungsi refresh data saat diperlukan
-  const refreshData = () => {
-    setRefreshTimestamp(Date.now());
-  };
+  }, [statusFilter, isValid, authLoading, router]);
 
   const fetchAnimals = async () => {
     setIsLoading(true);
@@ -75,16 +67,20 @@ export default function AdminAdopsiModule() {
       
       setAnimals(data);
       
-      // Calculate stats
-      const adoptedCount = data.filter((animal: AnimalDisplay) => animal.isAdopted).length;
-      const unadoptedCount = data.filter((animal: AnimalDisplay) => !animal.isAdopted).length;
-      setStats({ adopted: adoptedCount, unadopted: unadoptedCount });
+      // Calculate stats but don't store in state since it's not used in the UI
+      // const adoptedCount = data.filter((animal: AnimalDisplay) => animal.isAdopted).length;
+      // const unadoptedCount = data.filter((animal: AnimalDisplay) => !animal.isAdopted).length;
       
     } catch (error) {
       console.error("Error fetching animals:", error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Refresh function if needed elsewhere in the component
+  const refreshData = () => {
+    fetchAnimals();
   };
 
   // Jika masih loading autentikasi, tampilkan loading
@@ -133,6 +129,10 @@ export default function AdminAdopsiModule() {
     return null;
   };
 
+  // Optional: Stats Display if you want to use them
+  const adoptedCount = animals.filter(animal => animal.isAdopted).length;
+  const unadoptedCount = animals.filter(animal => !animal.isAdopted).length;
+
   return (
     <div className="container mx-auto py-10 px-4 font-outfit">
       <div className="text-center mb-6">
@@ -152,7 +152,13 @@ export default function AdminAdopsiModule() {
 
       {/* Header with filtering */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold font-outfit text-foreground">Pantau Status Adopsi Hewan</h2>
+        <div>
+          <h2 className="text-2xl font-semibold font-outfit text-foreground">Pantau Status Adopsi Hewan</h2>
+          {/* Optional: Display stats in UI */}
+          <div className="text-sm text-muted-foreground mt-1">
+            <span className="font-medium">{adoptedCount}</span> diadopsi &bull; <span className="font-medium">{unadoptedCount}</span> belum diadopsi
+          </div>
+        </div>
         
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
@@ -169,6 +175,16 @@ export default function AdminAdopsiModule() {
               <SelectItem value="unadopted">Tidak Diadopsi</SelectItem>
             </SelectContent>
           </Select>
+          
+          {/* Optional: Add a refresh button */}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={refreshData}
+            className="ml-2"
+          >
+            Refresh
+          </Button>
         </div>
       </div>
 
