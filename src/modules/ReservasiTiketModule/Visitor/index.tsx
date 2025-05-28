@@ -32,7 +32,6 @@ import ReservasiTiketDetailModal from "../modals/ReservasiTiketDetailModal";
 import ReservasiTiketCancelModal from "../modals/ReservasiTiketCancelModal";
 import WahanaReservasiFormModal from "../modals/WahanaReservasiFormModal";
 
-// Define types for our data
 interface Facility {
   jadwal: Date;
   kapasitas_max: number;
@@ -42,7 +41,7 @@ interface Facility {
 interface Attraction {
   nama_atraksi: string;
   lokasi: string;
-  jadwal: string; // Changed from Date to string
+  jadwal: string;
   kapasitas_max: number;
   kapasitas_tersedia: number;
   tiket_terjual: number;
@@ -52,7 +51,7 @@ interface Attraction {
 interface Ride {
   nama_wahana: string;
   peraturan: string;
-  jadwal: string; // Changed from Date to string
+  jadwal: string;
   kapasitas_max: number;
   kapasitas_tersedia: number;
   tiket_terjual: number;
@@ -68,9 +67,9 @@ interface Reservation {
   jenis_reservasi: "Atraksi" | "Wahana";
   lokasi?: string;
   peraturan?: string;
-  jadwal: string; // Changed from Date to string
-  kapasitas_tersedia?: number; // Add this line
-  kapasitas_max?: number; // Add this line
+  jadwal: string;
+  kapasitas_tersedia?: number;
+  kapasitas_max?: number;
 }
 
 const ReservasiTiketVisitorModule = () => {
@@ -82,19 +81,15 @@ const ReservasiTiketVisitorModule = () => {
     authState,
   } = getUserData();
 
-  // Current user
   const username = userData?.username || "";
 
-  // State for user's reservations
   const [userReservations, setUserReservations] = useState<Reservation[]>([]);
   const [isReservationsLoading, setIsReservationsLoading] = useState(true);
 
-  // State for available facilities
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [rides, setRides] = useState<Ride[]>([]);
   const [isAvailableLoading, setIsAvailableLoading] = useState(true);
 
-  // Modal states
   const [isAttractionFormOpen, setIsAttractionFormOpen] = useState(false);
   const [isRideFormOpen, setIsRideFormOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -103,14 +98,11 @@ const ReservasiTiketVisitorModule = () => {
   const [isEditRideModalOpen, setIsEditRideModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
-  // Current item being viewed/edited
   const [currentReservation, setCurrentReservation] =
     useState<Reservation | null>(null);
 
-  // Selected date for booking
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  // Fetch user's reservations
   const fetchUserReservations = async () => {
     if (!isValid || !username) return;
 
@@ -123,7 +115,6 @@ const ReservasiTiketVisitorModule = () => {
 
       const data = await response.json();
 
-      // Format dates
       const formattedReservations = data.reservations.map((res: any) => ({
         ...res,
         tanggal_kunjungan: new Date(res.tanggal_kunjungan),
@@ -143,7 +134,6 @@ const ReservasiTiketVisitorModule = () => {
     }
   };
 
-  // Fetch available attractions and rides
   const fetchAvailableFacilities = async (date: Date = selectedDate) => {
     setIsAvailableLoading(true);
     try {
@@ -156,22 +146,20 @@ const ReservasiTiketVisitorModule = () => {
 
       const data = await response.json();
 
-      // Format attractions properly
       const formattedAttractions = data.attractions.map((attr: any) => ({
         nama_atraksi: attr.nama_atraksi,
         lokasi: attr.lokasi,
-        jadwal: attr.jadwal, // Just use the time string directly
+        jadwal: attr.jadwal,
         kapasitas_max: parseInt(attr.kapasitas_max),
         kapasitas_tersedia: parseInt(attr.kapasitas_tersedia),
         tiket_terjual: parseInt(attr.tiket_terjual || 0),
         jenis_reservasi: "Atraksi",
       }));
 
-      // Format rides properly
       const formattedRides = data.rides.map((ride: any) => ({
         nama_wahana: ride.nama_wahana,
         peraturan: ride.peraturan,
-        jadwal: ride.jadwal, // Just use the time string directly
+        jadwal: ride.jadwal,
         kapasitas_max: parseInt(ride.kapasitas_max),
         kapasitas_tersedia: parseInt(ride.kapasitas_tersedia),
         tiket_terjual: parseInt(ride.tiket_terjual || 0),
@@ -192,7 +180,6 @@ const ReservasiTiketVisitorModule = () => {
     }
   };
 
-  // Load data when user is authenticated
   useEffect(() => {
     if (!authLoading && isValid) {
       fetchUserReservations();
@@ -200,7 +187,6 @@ const ReservasiTiketVisitorModule = () => {
     }
   }, [authLoading, isValid, username, selectedDate]);
 
-  // Handle creating a new attraction reservation
   const handleCreateAttractionReservation = async (data: {
     nama_fasilitas: string;
     tanggal_kunjungan: Date;
@@ -236,7 +222,6 @@ const ReservasiTiketVisitorModule = () => {
         description: "Berhasil membuat reservasi",
       });
 
-      // Refresh data
       fetchUserReservations();
       fetchAvailableFacilities(selectedDate);
       setIsAttractionFormOpen(false);
@@ -250,7 +235,6 @@ const ReservasiTiketVisitorModule = () => {
     }
   };
 
-  // Handle creating a new ride reservation
   const handleCreateRideReservation = async (data: {
     nama_fasilitas: string;
     tanggal_kunjungan: Date;
@@ -286,7 +270,6 @@ const ReservasiTiketVisitorModule = () => {
         description: "Berhasil membuat reservasi",
       });
 
-      // Refresh data
       fetchUserReservations();
       fetchAvailableFacilities(selectedDate);
       setIsRideFormOpen(false);
@@ -300,7 +283,6 @@ const ReservasiTiketVisitorModule = () => {
     }
   };
 
-  // Handle updating a reservation
   const handleUpdateReservation = async (data: {
     tanggal_kunjungan: Date;
     jumlah_tiket: number;
@@ -338,7 +320,6 @@ const ReservasiTiketVisitorModule = () => {
         description: "Berhasil mengubah reservasi",
       });
 
-      // Refresh data and close modal
       fetchUserReservations();
       fetchAvailableFacilities(selectedDate);
       setIsEditAttractionModalOpen(false);
@@ -354,7 +335,6 @@ const ReservasiTiketVisitorModule = () => {
     }
   };
 
-  // Handle canceling a reservation
   const handleCancelReservation = async () => {
     if (!currentReservation) return;
 
@@ -387,7 +367,6 @@ const ReservasiTiketVisitorModule = () => {
         description: "Berhasil membatalkan reservasi",
       });
 
-      // Refresh data and close modal
       fetchUserReservations();
       fetchAvailableFacilities(selectedDate);
       setIsCancelModalOpen(false);
@@ -402,16 +381,13 @@ const ReservasiTiketVisitorModule = () => {
     }
   };
 
-  // Showing reservation details
   const handleShowDetail = (reservation: Reservation) => {
     setCurrentReservation(reservation);
     setIsDetailModalOpen(true);
   };
 
-  // Opening edit form
   const handleShowEditForm = async (reservation: Reservation) => {
     try {
-      // Fetch current capacity for this facility on this date
       const dateParam = format(reservation.tanggal_kunjungan, "yyyy-MM-dd");
       const facilityType =
         reservation.jenis_reservasi === "Atraksi" ? "attraction" : "ride";
@@ -426,7 +402,6 @@ const ReservasiTiketVisitorModule = () => {
       const data = await response.json();
       console.log("Capacity data:", data);
 
-      // Update reservation with current capacity data
       setCurrentReservation({
         ...reservation,
         kapasitas_tersedia: parseInt(data.data.kapasitas_tersedia),
@@ -446,7 +421,6 @@ const ReservasiTiketVisitorModule = () => {
         variant: "destructive",
       });
 
-      // Fallback to showing the edit form without updated capacity
       setCurrentReservation(reservation);
       if (reservation.jenis_reservasi === "Atraksi") {
         setIsEditAttractionModalOpen(true);
@@ -456,29 +430,24 @@ const ReservasiTiketVisitorModule = () => {
     }
   };
 
-  // Opening cancel confirmation
   const handleShowCancelConfirm = (reservation: Reservation) => {
     setCurrentReservation(reservation);
     setIsCancelModalOpen(true);
   };
 
-  // Format date
   const formatDate = (date: Date) => {
     return format(date, "dd MMMM yyyy");
   };
 
-  // Format capacity
   const formatCapacity = (available: number, total: number) => {
     return `${available} dari ${total}`;
   };
 
-  // Parse peraturan string into array
   const parsePeraturan = (peraturan: string): string[] => {
     if (!peraturan) return [];
     return peraturan.split(",").map((item) => item.trim());
   };
 
-  // Display peraturan as bullet points
   const displayPeraturan = (peraturan: string) => {
     const rules = parsePeraturan(peraturan);
 
@@ -495,7 +464,6 @@ const ReservasiTiketVisitorModule = () => {
     );
   };
 
-  // Add this helper function
   const formatTime = (timeString: string) => {
     return timeString;
   };
@@ -655,16 +623,22 @@ const ReservasiTiketVisitorModule = () => {
                       onSelect={(date) => {
                         if (date) {
                           setSelectedDate(date);
-                          fetchAvailableFacilities(date); // Fetch attractions for this specific date
+                          fetchAvailableFacilities(date);
                         }
                       }}
-                      disabled={(date) =>
-                        date < new Date() ||
-                        date >
-                          new Date(
-                            new Date().setMonth(new Date().getMonth() + 9)
-                          )
-                      }
+                      disabled={(date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        date.setHours(0, 0, 0, 0);
+
+                        return (
+                          date < today ||
+                          date >
+                            new Date(
+                              new Date().setMonth(new Date().getMonth() + 9)
+                            )
+                        );
+                      }}
                       initialFocus
                     />
                   </PopoverContent>
@@ -741,8 +715,8 @@ const ReservasiTiketVisitorModule = () => {
                                         lokasi: attraction.lokasi,
                                         jadwal: attraction.jadwal,
                                         kapasitas_tersedia:
-                                          attraction.kapasitas_tersedia, // Add this line
-                                        kapasitas_max: attraction.kapasitas_max, // Add this line
+                                          attraction.kapasitas_tersedia,
+                                        kapasitas_max: attraction.kapasitas_max,
                                       });
                                       setIsAttractionFormOpen(true);
                                     }}
@@ -817,15 +791,15 @@ const ReservasiTiketVisitorModule = () => {
                                       setCurrentReservation({
                                         username_P: username,
                                         nama_fasilitas: ride.nama_wahana,
-                                        tanggal_kunjungan: selectedDate, // Use the selected date here
+                                        tanggal_kunjungan: selectedDate,
                                         jumlah_tiket: 1,
                                         status: "Aktif",
                                         jenis_reservasi: "Wahana",
                                         peraturan: ride.peraturan,
                                         jadwal: ride.jadwal,
                                         kapasitas_tersedia:
-                                          ride.kapasitas_tersedia, // Add this line
-                                        kapasitas_max: ride.kapasitas_max, // Add this line
+                                          ride.kapasitas_tersedia,
+                                        kapasitas_max: ride.kapasitas_max,
                                       });
                                       setIsRideFormOpen(true);
                                     }}
@@ -864,10 +838,11 @@ const ReservasiTiketVisitorModule = () => {
               lokasi: currentReservation.lokasi || "",
               fasilitas: {
                 jadwal: currentReservation.jadwal,
-                kapasitas_tersedia: currentReservation.kapasitas_tersedia || 0, // Use actual capacity
-                kapasitas_max: currentReservation.kapasitas_max || 0, // Use actual capacity
+                kapasitas_tersedia: currentReservation.kapasitas_tersedia || 0,
+                kapasitas_max: currentReservation.kapasitas_max || 0,
               },
             }}
+            selectedDate={selectedDate}
           />
 
           {/* Ride Booking Form Modal */}
@@ -883,10 +858,11 @@ const ReservasiTiketVisitorModule = () => {
               peraturan: parsePeraturan(currentReservation.peraturan || ""),
               fasilitas: {
                 jadwal: currentReservation.jadwal,
-                kapasitas_tersedia: currentReservation.kapasitas_tersedia || 0, // Use actual capacity
-                kapasitas_max: currentReservation.kapasitas_max || 0, // Use actual capacity
+                kapasitas_tersedia: currentReservation.kapasitas_tersedia || 0,
+                kapasitas_max: currentReservation.kapasitas_max || 0,
               },
             }}
+            selectedDate={selectedDate}
           />
 
           {/* Attraction Edit Form Modal */}
@@ -902,8 +878,8 @@ const ReservasiTiketVisitorModule = () => {
               lokasi: currentReservation.lokasi || "",
               fasilitas: {
                 jadwal: currentReservation.jadwal,
-                kapasitas_tersedia: currentReservation.kapasitas_tersedia || 0, // Use actual capacity
-                kapasitas_max: currentReservation.kapasitas_max || 0, // Use actual capacity
+                kapasitas_tersedia: currentReservation.kapasitas_tersedia || 0,
+                kapasitas_max: currentReservation.kapasitas_max || 0,
               },
             }}
             isEditing={true}
@@ -911,6 +887,7 @@ const ReservasiTiketVisitorModule = () => {
               tanggal_kunjungan: currentReservation.tanggal_kunjungan,
               jumlah_tiket: currentReservation.jumlah_tiket,
             }}
+            selectedDate={currentReservation.tanggal_kunjungan}
           />
 
           {/* Ride Edit Form Modal */}
@@ -926,8 +903,8 @@ const ReservasiTiketVisitorModule = () => {
               peraturan: parsePeraturan(currentReservation.peraturan || ""),
               fasilitas: {
                 jadwal: currentReservation.jadwal,
-                kapasitas_tersedia: currentReservation.kapasitas_tersedia || 0, // Use actual capacity
-                kapasitas_max: currentReservation.kapasitas_max || 0, // Use actual capacity
+                kapasitas_tersedia: currentReservation.kapasitas_tersedia || 0,
+                kapasitas_max: currentReservation.kapasitas_max || 0,
               },
             }}
             isEditing={true}
@@ -935,6 +912,7 @@ const ReservasiTiketVisitorModule = () => {
               tanggal_kunjungan: currentReservation.tanggal_kunjungan,
               jumlah_tiket: currentReservation.jumlah_tiket,
             }}
+            selectedDate={currentReservation.tanggal_kunjungan}
           />
 
           {/* Reservation Detail Modal */}

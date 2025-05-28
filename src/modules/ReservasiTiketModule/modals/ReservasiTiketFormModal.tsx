@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/dialog";
 import { ReservasiTiketForm } from "../forms/ReservasiTiketForm";
 
-// Change the interface to accept both Date and string
 interface ReservasiTiketFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -20,7 +19,7 @@ interface ReservasiTiketFormModalProps {
     nama_atraksi: string;
     lokasi: string;
     fasilitas: {
-      jadwal: Date | string; // Accept both Date and string
+      jadwal: Date | string;
       kapasitas_tersedia: number;
       kapasitas_max: number;
     };
@@ -30,6 +29,7 @@ interface ReservasiTiketFormModalProps {
     tanggal_kunjungan: Date;
     jumlah_tiket: number;
   };
+  selectedDate: Date;
 }
 
 const ReservasiTiketFormModal: React.FC<ReservasiTiketFormModalProps> = ({
@@ -39,6 +39,7 @@ const ReservasiTiketFormModal: React.FC<ReservasiTiketFormModalProps> = ({
   attraction,
   isEditing = false,
   initialData,
+  selectedDate,
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -53,6 +54,7 @@ const ReservasiTiketFormModal: React.FC<ReservasiTiketFormModalProps> = ({
           attraction={attraction}
           isEditing={isEditing}
           initialData={initialData}
+          selectedDate={selectedDate}
         />
       </DialogContent>
     </Dialog>

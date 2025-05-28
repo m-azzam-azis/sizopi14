@@ -29,13 +29,9 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
-// Schema for form validation
 const reservasiFormSchema = z.object({
   nama_fasilitas: z.string({
     required_error: "Pilih atraksi",
-  }),
-  tanggal_kunjungan: z.date({
-    required_error: "Pilih tanggal kunjungan",
   }),
   jumlah_tiket: z
     .number({
@@ -43,9 +39,11 @@ const reservasiFormSchema = z.object({
     })
     .min(1, "Minimal pembelian 1 tiket")
     .int("Jumlah tiket harus berupa bilangan bulat"),
+  tanggal_kunjungan: z.date({
+    required_error: "Pilih tanggal kunjungan",
+  }),
 });
 
-// Define types
 type ReservasiFormValues = z.infer<typeof reservasiFormSchema>;
 
 interface ReservasiFormData {
@@ -61,7 +59,7 @@ interface Atraksi {
   nama_atraksi: string;
   lokasi: string;
   fasilitas: {
-    jadwal: Date | string; // Accept both Date and string
+    jadwal: Date | string;
     kapasitas_tersedia: number;
     kapasitas_max: number;
   };
@@ -73,7 +71,7 @@ interface ReservasiTiketFormProps {
     nama_atraksi: string;
     lokasi: string;
     fasilitas: {
-      jadwal: Date | string; // Accept both Date and string
+      jadwal: Date | string;
       kapasitas_tersedia: number;
       kapasitas_max: number;
     };
@@ -83,9 +81,9 @@ interface ReservasiTiketFormProps {
     tanggal_kunjungan: Date;
     jumlah_tiket: number;
   };
+  selectedDate: Date;
 }
 
-// Add this helper function at the top of the file
 const getFormattedTime = (jadwal: Date | string): string => {
   if (typeof jadwal === "string") {
     return jadwal;
@@ -98,25 +96,29 @@ export const ReservasiTiketForm: React.FC<ReservasiTiketFormProps> = ({
   attraction,
   isEditing = false,
   initialData,
+  selectedDate,
 }) => {
   const form = useForm<ReservasiFormValues>({
     resolver: zodResolver(reservasiFormSchema),
     defaultValues: {
       nama_fasilitas: attraction.nama_atraksi,
-      tanggal_kunjungan: initialData?.tanggal_kunjungan || new Date(),
       jumlah_tiket: initialData?.jumlah_tiket || 1,
+      tanggal_kunjungan: initialData?.tanggal_kunjungan || selectedDate,
     },
   });
 
   const handleFormSubmit = (values: ReservasiFormValues) => {
-    const formattedJadwal = format(attraction.fasilitas.jadwal, "HH:mm");
+    const formattedJadwal =
+      typeof attraction.fasilitas.jadwal === "string"
+        ? attraction.fasilitas.jadwal
+        : format(attraction.fasilitas.jadwal, "HH:mm");
 
     onSubmit({
       nama_fasilitas: values.nama_fasilitas,
       nama_atraksi: attraction.nama_atraksi,
       lokasi: attraction.lokasi,
       jadwal: formattedJadwal,
-      tanggal_kunjungan: values.tanggal_kunjungan,
+      tanggal_kunjungan: isEditing ? values.tanggal_kunjungan : selectedDate,
       jumlah_tiket: values.jumlah_tiket,
     });
   };
@@ -160,49 +162,73 @@ export const ReservasiTiketForm: React.FC<ReservasiTiketFormProps> = ({
           </FormItem>
         </div>
 
-        <FormField
-          control={form.control}
-          name="tanggal_kunjungan"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Tanggal</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "dd MMMM yyyy")
-                      ) : (
-                        <span>Pilih tanggal</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date < new Date() ||
-                      date >
-                        new Date(new Date().setMonth(new Date().getMonth() + 3))
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        
+        {isEditing ? (
+          <FormField
+            control={form.control}
+            name="tanggal_kunjungan"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Tanggal</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "dd MMMM yyyy")
+                        ) : (
+                          <span>Pilih tanggal</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        date.setHours(0, 0, 0, 0);
+
+                        return (
+                          date < today ||
+                          date >
+                            new Date(
+                              new Date().setMonth(new Date().getMonth() + 9)
+                            )
+                        );
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : (
+          /* Show selected date as info when creating new reservation */
+          <FormItem>
+            <FormLabel>Tanggal Kunjungan</FormLabel>
+            <Input
+              value={format(selectedDate, "dd MMMM yyyy")}
+              disabled
+              className="bg-muted"
+            />
+            <p className="text-xs text-muted-foreground">
+              Tanggal dipilih dari kalender di atas
+            </p>
+          </FormItem>
+        )}
 
         <FormField
           control={form.control}

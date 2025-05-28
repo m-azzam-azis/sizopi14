@@ -19,7 +19,7 @@ interface ReservasiTiketDetailModalProps {
     jenis_reservasi: "Atraksi" | "Wahana";
     lokasi?: string;
     peraturan?: string[];
-    jadwal: Date | string; // Accept both Date and string
+    jadwal: Date | string;
   };
   onEdit?: () => void;
   onCancel?: () => void;
@@ -36,7 +36,6 @@ const ReservasiTiketDetailModal: React.FC<ReservasiTiketDetailModalProps> = ({
     return format(date, "dd MMMM yyyy");
   };
 
-  // Update the formatTime function to handle both string and Date
   const formatTime = (time: Date | string) => {
     if (typeof time === "string") {
       return time;

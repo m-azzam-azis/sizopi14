@@ -19,7 +19,7 @@ interface WahanaReservasiFormModalProps {
     nama_wahana: string;
     peraturan: string[];
     fasilitas: {
-      jadwal: Date | string; // Accept both Date and string
+      jadwal: Date | string;
       kapasitas_tersedia: number;
       kapasitas_max: number;
     };
@@ -29,6 +29,7 @@ interface WahanaReservasiFormModalProps {
     tanggal_kunjungan: Date;
     jumlah_tiket: number;
   };
+  selectedDate: Date;
 }
 
 const WahanaReservasiFormModal: React.FC<WahanaReservasiFormModalProps> = ({
@@ -38,6 +39,7 @@ const WahanaReservasiFormModal: React.FC<WahanaReservasiFormModalProps> = ({
   ride,
   isEditing = false,
   initialData,
+  selectedDate,
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -52,6 +54,7 @@ const WahanaReservasiFormModal: React.FC<WahanaReservasiFormModalProps> = ({
           ride={ride}
           isEditing={isEditing}
           initialData={initialData}
+          selectedDate={selectedDate}
         />
       </DialogContent>
     </Dialog>
