@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import {
   Popover,
   PopoverContent,
@@ -23,9 +22,7 @@ import { getUserData } from "@/hooks/getUserData";
 import { toast } from "sonner";
 
 export const Navbar = () => {
-  const pathname = usePathname();
-  const router = useRouter();
-  const { userData, isValid, isLoading } = getUserData();
+  const { userData, isValid } = getUserData();
   const [isAdopter, setIsAdopter] = useState(false);
 
   const mapRoleToUIRole = (role: string): string => {
@@ -202,14 +199,7 @@ export const Navbar = () => {
                 Jadwal Pertunjukan
               </Link>
             ) : uiRole === "pengunjung" ? (
-              <>
-                <Link
-                  href="/informasi"
-                  className="max-md:hidden text-base text-primary font-outfit font-medium"
-                >
-                  Informasi Kebun Binatang
-                </Link>
-                
+              <>                
                 {isAdopter && (
                   <Link
                     href="/adopter-adopsi"
@@ -316,7 +306,7 @@ export const Navbar = () => {
                   ) : uiRole === "admin" ? (
                     <>
                       <Link
-                        href="/dashboard/admin/reservasi"
+                        href="/kelola-pengunjung"
                         className="text-base text-primary font-outfit"
                       >
                         Kelola Pengunjung
@@ -343,13 +333,6 @@ export const Navbar = () => {
                     </Link>
                   ) : uiRole === "pengunjung" ? (
                     <>
-                      <Link
-                        href="/informasi"
-                        className="text-base text-primary font-outfit"
-                      >
-                        Informasi Kebun Binatang
-                      </Link>
-                      
                       {isAdopter && (
                         <Link
                           href="/adopter-adopsi"
@@ -360,7 +343,7 @@ export const Navbar = () => {
                       )}
                       
                       <Link
-                        href="/reservasi/dashboard"
+                        href="/reservasi"
                         className="text-base text-primary font-outfit"
                       >
                         Reservasi Tiket

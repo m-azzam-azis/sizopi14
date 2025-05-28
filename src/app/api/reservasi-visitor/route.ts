@@ -129,7 +129,6 @@ export async function PUT(request: Request) {
       tanggal_kunjungan,
       new_tanggal_kunjungan,
       new_jumlah_tiket,
-      new_status,
     } = body;
 
     if (!username_P || !nama_fasilitas || !tanggal_kunjungan) {
@@ -141,50 +140,32 @@ export async function PUT(request: Request) {
 
     const reservasiModel = new Reservasi();
 
-    if (new_jumlah_tiket) {
-      const capacityCheck = await reservasiModel.checkCapacity(
+    try {
+      await reservasiModel.updateReservation({
+        username_P,
         nama_fasilitas,
-        new Date(new_tanggal_kunjungan || tanggal_kunjungan),
-        new_jumlah_tiket
-      );
+        tanggal_kunjungan: new Date(tanggal_kunjungan),
+        jumlah_tiket: 1,
+        new_tanggal_kunjungan: new_tanggal_kunjungan
+          ? new Date(new_tanggal_kunjungan)
+          : undefined,
+        new_jumlah_tiket: new_jumlah_tiket,
+      });
 
-      if (!capacityCheck.enough) {
-        return NextResponse.json(
-          { message: capacityCheck.message },
-          { status: 400 }
-        );
-      }
+      return NextResponse.json({ message: "Reservasi updated successfully" });
+    } catch (dbError) {
+      const errorMessage =
+        dbError instanceof Error ? dbError.message : "Unknown error";
+      console.error("Database error:", errorMessage);
+
+      return NextResponse.json({ message: errorMessage }, { status: 400 });
     }
-
-    const result = await reservasiModel.updateReservation({
-      username_P,
-      nama_fasilitas,
-      tanggal_kunjungan: new Date(tanggal_kunjungan),
-      jumlah_tiket: 0,
-      new_tanggal_kunjungan: new_tanggal_kunjungan
-        ? new Date(new_tanggal_kunjungan)
-        : undefined,
-      new_jumlah_tiket,
-      new_status,
-    });
-
-    if (!result) {
-      return NextResponse.json(
-        { message: "Reservation not found or no changes made" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      message: "Reservation updated successfully",
-      reservation: result,
-    });
-  } catch (error: unknown) {
+  } catch (error) {
+    console.error("Error updating reservation:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
-    console.error("Error updating reservation:", error);
     return NextResponse.json(
-      { message: "Server error", error: errorMessage },
+      { message: "Failed to update reservation", error: errorMessage },
       { status: 500 }
     );
   }

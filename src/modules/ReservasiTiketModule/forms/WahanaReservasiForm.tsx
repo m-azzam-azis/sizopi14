@@ -204,12 +204,12 @@ export const WahanaReservasiForm: React.FC<WahanaReservasiFormProps> = ({
                   <Input
                     type="number"
                     min={1}
-                    max={
-                      isEditing
-                        ? ride.fasilitas.kapasitas_tersedia +
-                          (initialData?.jumlah_tiket || 0)
-                        : ride.fasilitas.kapasitas_tersedia
-                    }
+                    // max={
+                    //   isEditing
+                    //     ? ride.fasilitas.kapasitas_tersedia +
+                    //       (initialData?.jumlah_tiket || 0)
+                    //     : ride.fasilitas.kapasitas_tersedia
+                    // }
                     placeholder="Contoh: 2"
                     {...field}
                     onChange={(e) => field.onChange(Number(e.target.value))}

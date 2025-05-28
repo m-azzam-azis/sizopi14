@@ -87,27 +87,53 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const { nama_atraksi, kapasitas_max, jadwal } = body;
 
-    if (!nama_atraksi || !kapasitas_max || !jadwal) {
-      return NextResponse.json(
-        { message: "Missing required fields" },
-        { status: 400 }
-      );
-    }
-
     const atraksiModel = new Atraksi();
+    let rotationMessage = null;
 
-    await atraksiModel.customQuery(
-      `UPDATE FASILITAS SET jadwal = $1, kapasitas_max = $2 WHERE nama = $3`,
-      [jadwal, kapasitas_max, nama_atraksi]
-    );
+    try {
+      const rotationResult = await atraksiModel.customQuery(
+        `SELECT * FROM perform_trainer_rotation($1)`,
+        [nama_atraksi]
+      );
 
-    return NextResponse.json({
-      message: "Attraction updated successfully",
-    });
+      console.log("Rotation result:", rotationResult);
+
+      await atraksiModel.customQuery(
+        `UPDATE FASILITAS SET kapasitas_max = $1, jadwal = $2 WHERE nama = $3`,
+        [kapasitas_max, jadwal, nama_atraksi]
+      );
+
+      if (rotationResult[0]?.rotated === true) {
+        rotationMessage = `Pelatih "${rotationResult[0].old_trainer}" telah bertugas lebih dari 3 bulan di atraksi "${nama_atraksi}" dan akan diganti. Pelatih baru "${rotationResult[0].new_trainer}" ditugaskan.`;
+      }
+
+      try {
+        await atraksiModel.customQuery(
+          `UPDATE ATRAKSI SET lokasi = lokasi WHERE nama_atraksi = $1`,
+          [nama_atraksi]
+        );
+      } catch (triggerError) {
+        const errorMessage =
+          triggerError instanceof Error ? triggerError.message : "";
+        if (errorMessage.includes("TRAINER_ROTATION:")) {
+          rotationMessage = errorMessage
+            .replace("TRAINER_ROTATION:", "")
+            .trim();
+        } else {
+          throw triggerError;
+        }
+      }
+
+      return NextResponse.json({
+        message: "Attraction updated successfully",
+        rotationMessage: rotationMessage,
+      });
+    } catch (error) {
+      throw error;
+    }
   } catch (error: unknown) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
-    console.error("Error updating attraction:", error);
     return NextResponse.json(
       { message: "Failed to update attraction", error: errorMessage },
       { status: 500 }
