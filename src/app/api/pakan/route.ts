@@ -3,13 +3,12 @@ import { Memberi } from "@/db/models/memberi";
 import { cookies } from "next/headers";
 import { decode } from "jsonwebtoken";
 
-
 export async function GET(request: Request) {
   try {
     const pakanModel = new Pakan();
     const url = new URL(request.url);
     const id_hewan = url.searchParams.get("id_hewan");
-    
+
     if (id_hewan) {
       // Filter by specific animal
       const data = await pakanModel.findWhere("id_hewan", id_hewan);
@@ -37,8 +36,8 @@ export async function POST(request: Request) {
   try {
     // Check authorization - only caretakers can create feeding schedules
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-    
+    const token = cookieStore.get("token") as string | undefined;
+
     if (!token) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -47,29 +46,32 @@ export async function POST(request: Request) {
     }
 
     const decoded: any = decode(token);
-    const username_jh = decoded?.data?.username;
+    let username_jh = decoded?.data?.username;
     const role = decoded?.data?.role;
 
     if (!username_jh || role !== "caretaker") {
-      return new Response(JSON.stringify({ error: "Forbidden: Only caretakers can create feeding schedules" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          error: "Forbidden: Only caretakers can create feeding schedules",
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     const data = await request.json();
     // Set status default ke 'tersedia' jika tidak dikirim dari frontend
     if (!data.status) {
-      data.status = 'tersedia';
+      data.status = "tersedia";
     }
     const pakanModel = new Pakan();
 
     const created = await pakanModel.create(data);
 
     // Insert into MEMBERI table for relationship
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-    let username_jh = null;
+    username_jh = null;
     if (token) {
       const decoded: any = decode(token);
       username_jh = decoded?.data?.username;
@@ -116,7 +118,7 @@ export async function PUT(request: Request) {
     // Check authorization - only caretakers can update feeding schedules
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
-    
+
     if (!token) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -128,24 +130,36 @@ export async function PUT(request: Request) {
     const role = decoded?.data?.role;
 
     if (role !== "caretaker") {
-      return new Response(JSON.stringify({ error: "Forbidden: Only caretakers can update feeding schedules" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          error: "Forbidden: Only caretakers can update feeding schedules",
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     const url = new URL(request.url);
     const id_hewan = url.searchParams.get("id_hewan");
     const jadwal = url.searchParams.get("jadwal");
     if (!id_hewan || !jadwal) {
-      return new Response(JSON.stringify({ error: "id_hewan and jadwal required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "id_hewan and jadwal required" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
     const data = await request.json();
     const pakanModel = new Pakan();
-    const updated = await pakanModel.updateMultiple(["id_hewan", "jadwal"], [id_hewan, jadwal], data);
+    const updated = await pakanModel.updateMultiple(
+      ["id_hewan", "jadwal"],
+      [id_hewan, jadwal],
+      data
+    );
     return new Response(JSON.stringify(updated), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -163,7 +177,7 @@ export async function DELETE(request: Request) {
     // Check authorization - only caretakers can delete feeding schedules
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
-    
+
     if (!token) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -175,36 +189,47 @@ export async function DELETE(request: Request) {
     const role = decoded?.data?.role;
 
     if (role !== "caretaker") {
-      return new Response(JSON.stringify({ error: "Forbidden: Only caretakers can delete feeding schedules" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          error: "Forbidden: Only caretakers can delete feeding schedules",
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     const url = new URL(request.url);
     const id_hewan = url.searchParams.get("id_hewan");
     const jadwal = url.searchParams.get("jadwal");
     if (!id_hewan || !jadwal) {
-      return new Response(JSON.stringify({ error: "id_hewan and jadwal required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }    
-    
+      return new Response(
+        JSON.stringify({ error: "id_hewan and jadwal required" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
     const pakanModel = new Pakan();
-    
+
     console.log("DELETE request received for: ", { id_hewan, jadwal });
     // Using the new deleteByPrimaryKey method specifically designed for the composite primary key
     const deleted = await pakanModel.deleteByPrimaryKey(id_hewan, jadwal);
     console.log("Delete result: ", deleted);
-    
+
     if (!deleted) {
-      return new Response(JSON.stringify({ error: "Record not found or could not be deleted" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Record not found or could not be deleted" }),
+        {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
-    
+
     return new Response(JSON.stringify(deleted), {
       status: 200,
       headers: { "Content-Type": "application/json" },
