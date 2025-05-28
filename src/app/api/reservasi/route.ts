@@ -53,10 +53,13 @@ export async function PUT(request: Request) {
 
     const dbStatus = status === "Terjadwal" ? "Aktif" : "Batal";
 
-    await reservasiModel.update("username_P", username_P, {
-      jumlah_tiket,
-      status: dbStatus,
+    await reservasiModel.updateReservation({
+      username_P,
+      nama_fasilitas,
       tanggal_kunjungan: new Date(tanggal_kunjungan),
+      jumlah_tiket,
+      new_status: dbStatus,
+      new_jumlah_tiket: jumlah_tiket,
     });
 
     return NextResponse.json({
