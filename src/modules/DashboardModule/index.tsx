@@ -1,54 +1,40 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { UserRole } from "@/types/user";
 import DashboardShell from "./components/DashboardShell";
 import AdminDashboard from "./components/AdminDashboard";
 import VeterinarianDashboard from "./components/VeterinarianDashboard";
 import TrainerDashboard from "./components/TrainerDashboard";
 import ReservasiTiketDashboardModule from "../ReservasiTiketModule/Pengunjung/Dashboard";
-
-// Mock user data - aligned with the database schema
-const mockUserData = {
-  id: "user-123",
-  username: "johndoe",
-  email: "john.doe@example.com",
-  firstName: "John",
-  middleName: "",
-  lastName: "Doe",
-  phoneNumber: "+62123456789",
-  role: "trainer" as UserRole, // Change this to test different dashboards
-
-  // Role-specific fields
-
-  // For staffs
-  staffId: "STAFF-001",
-
-  // For admin
-  todayTicketSales: 156,
-  todayVisitors: 420,
-  weeklyRevenue: 45000000,
-
-  // For veterinarian
-  certificationNumber: "VET-12345",
-  specializations: ["Large Mammals", "Reptiles"],
-  animalsTreated: 45,
-
-  // For visitor
-  alamat: "123 Main St, Cityville",
-  tanggalLahir: "1990-01-01",
-
-  // For caretaker
-  jumlahHewan: 50,
-
-  // From PELATIH_HEWAN table (if trainer)
-  username_lh: "johndoe", // Same as username from PENGGUNA
-  id_staf: "550e8400-e29b-41d4-a716-446655440010", // UUID format
-};
+import CaretakerDashboard from "./components/CaretakerDashboard";
 
 const DashboardModule: React.FC = () => {
-  // This would typically be fetched from an API or auth context
-  const [user] = useState(mockUserData);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch("/api/profile");
+        if (!res.ok) throw new Error("Failed to fetch user profile");
+        const data = await res.json();
+        setUser(data);
+      } catch (err: any) {
+        setError(err.message || "Unknown error");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  if (loading) return <div>Loading dashboard...</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
+  if (!user) return <div>No user data found.</div>;
 
   // Render different content based on user role
   const renderRoleSpecificContent = () => {
@@ -62,6 +48,7 @@ const DashboardModule: React.FC = () => {
       case "trainer":
         return <TrainerDashboard userData={user} />;
       case "caretaker":
+        return <CaretakerDashboard userData={user} feedingCount={user.feedingCount} />;
       default:
         return <p>Welcome to your dashboard!</p>;
     }
