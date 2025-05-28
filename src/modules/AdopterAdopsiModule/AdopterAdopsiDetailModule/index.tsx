@@ -1,270 +1,445 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Eye, PlusCircle, AlertTriangle, Filter } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AnimalDisplayType } from "@/db/types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription } from "@/components/ui/alert-dialog";
+import { X } from "lucide-react";
 import { getUserData } from "@/hooks/getUserData";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { toast } from "sonner";
+import AdopterIndividuFormModal from "../components/modals/AdopterIndividuFormModal";
+import AdopterOrganisasiFormModal from "../components/modals/AdopterOrganisasiFormModal";
+import AdopterIndividuForm from "../components/forms/AdopterIndividuForm";
+import AdopterOrganisasiForm from "../components/forms/AdopterOrganisasiForm";
 
-interface AnimalDisplay extends AnimalDisplayType {
-  isAdopted: boolean;
+interface Animal {
+  id: string;
+  name: string;
+  species: string;
+  habitat: string;
+  imageUrl: string;
+  startDate: string;
+  endDate: string;
+  ownerId: string;
+  paymentStatus: string;
+  status_kesehatan: string;
+  kontribusi_finansial: number;
 }
 
-export default function AdminAdopsiModule() {
+interface Adopter {
+  id: string;
+  username: string;
+  type: "individu" | "organisasi";
+  address: string;
+  birthDate: string;
+  nik?: string;
+  npp?: string;
+  name?: string;
+  organizationName?: string;
+  noTelp: string;
+  email: string;
+  nama_organisasi?: string;
+  notelp?: string;
+  no_telp?: string;
+  no_telepon?: string;
+  [key: string]: any;
+}
+
+export default function AdopterAdopsiDetailModule({ animalId }: { animalId: string }) {
   const router = useRouter();
-  const [animals, setAnimals] = useState<AnimalDisplay[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("all");
-  // Hapus state stats yang tidak digunakan
-  // const [stats, setStats] = useState({ adopted: 0, unadopted: 0 });
-  
-  // Hapus state refreshTimestamp yang tidak digunakan
-  // const [refreshTimestamp, setRefreshTimestamp] = useState(Date.now());
-  
-  // Dapatkan data user dan cek role
-  const { userData, isValid, isLoading: authLoading } = getUserData();
+  const { userData, isValid, isLoading } = getUserData();
+  const [showAlert, setShowAlert] = useState(false);
+  const [showPaymentAlert, setShowPaymentAlert] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [animal, setAnimal] = useState<Animal | null>(null);
+  const [adopter, setAdopter] = useState<Adopter | null>(null);
+  const [showExtendModal, setShowExtendModal] = useState(false);
 
+  // Fetch animal and adopter details
   useEffect(() => {
-    // Cek apakah user adalah admin
-    if (!authLoading && isValid && userData.role !== "admin") {
-      // Jika bukan admin, redirect ke halaman utama
-      router.push("/");
-    }
-  }, [userData, isValid, authLoading, router]);
-
-  useEffect(() => {
-    // Hanya ambil data jika user valid dan loading auth selesai
-    if (isValid && !authLoading) {
-      // Parse query params untuk memeriksa apakah perlu refresh
-      const url = new URL(window.location.href);
-      const hasRefreshParam = url.searchParams.has('t');
-      
-      if (hasRefreshParam) {
-        router.replace('/admin-adopsi');
+    const fetchData = async () => {
+      if (!isValid || !animalId) {
+        setLoading(false);
+        return;
       }
-      
-      fetchAnimals();
-    }
-  }, [statusFilter, isValid, authLoading, router]);
 
-  const fetchAnimals = async () => {
-    setIsLoading(true);
+      try {
+        console.log(`Fetching data for animal ID: ${animalId}`);
+        const response = await fetch(`/api/adopter-adopsi/${animalId}`);
+        
+        console.log(`API response status: ${response.status}`);
+        
+        if (!response.ok) {
+          let errorMessage = "Error fetching animal details";
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch (e) {
+            console.error("Error parsing error response:", e);
+          }
+          throw new Error(errorMessage);
+        }
+        
+        const data = await response.json();
+        console.log("Received data:", data);
+        
+        setAnimal(data.animal);
+        setAdopter(data.adopter);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError(err instanceof Error ? err.message : "Terjadi kesalahan saat mengambil data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [animalId, isValid]);
+
+  // Check if current user can access this animal's details
+  useEffect(() => {
+    if (!loading && adopter && isValid && userData.username) {
+      if (adopter.username !== userData.username) {
+        toast.error("Anda tidak memiliki akses ke data hewan ini");
+        router.push("/adopter-adopsi");
+      }
+    }
+  }, [loading, adopter, isValid, userData.username, router]);
+
+  // Perbarui fungsi handleStopAdoption
+  const handleStopAdoption = async () => {
+    setShowAlert(false);
+  
     try {
-      // Tambahkan parameter timestamp untuk mencegah caching
-      const response = await fetch(`/api/adopsi?status=${statusFilter}&t=${Date.now()}`);
+      // API call untuk berhenti adopsi
+      const response = await fetch(`/api/adopter-adopsi/${animalId}/stop`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Gagal berhenti mengadopsi");
       }
       
-      const data = await response.json();
-      console.log("Fetched animals data:", data);
+      const result = await response.json();
       
-      setAnimals(data);
+      // Tampilkan toast success
+      toast.success(result.message || "Anda telah berhenti mengadopsi satwa ini!");
       
-      // Calculate stats but don't store in state since it's not used in the UI
-      // const adoptedCount = data.filter((animal: AnimalDisplay) => animal.isAdopted).length;
-      // const unadoptedCount = data.filter((animal: AnimalDisplay) => !animal.isAdopted).length;
-      
+      // Arahkan kembali ke halaman utama adopsi setelah berhasil
+      setTimeout(() => {
+        router.push("/adopter-adopsi"); 
+      }, 1500);
     } catch (error) {
-      console.error("Error fetching animals:", error);
-    } finally {
-      setIsLoading(false);
+      toast.error(error instanceof Error ? error.message : "Gagal berhenti mengadopsi. Silakan coba lagi.");
     }
   };
 
-  // Refresh function if needed elsewhere in the component
-  const refreshData = () => {
-    fetchAnimals();
+  const handleExtendAdoption = () => {
+    if (animal && (animal.paymentStatus.toLowerCase() === "pending" || 
+        animal.paymentStatus.toLowerCase() === "belum lunas")) {
+      setShowPaymentAlert(true);
+      return;
+    }
+    
+    setShowExtendModal(true);
   };
 
-  // Jika masih loading autentikasi, tampilkan loading
-  if (authLoading) {
+  const handleExtendSubmit = async (data: { nominal: string; adoptionPeriod: string }) => {
+    try {
+      // Siapkan data untuk dikirim ke API
+      const extendData = {
+        animalId: animalId,
+        adopterUsername: userData.username,
+        contributionAmount: parseInt(data.nominal),
+        extensionMonths: parseInt(data.adoptionPeriod)
+      };
+  
+      // Kirim request ke API
+      const response = await fetch(`/api/adopter-adopsi/${animalId}/extend`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(extendData)
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Gagal memperpanjang adopsi");
+      }
+  
+      const result = await response.json();
+      
+      // Tutup modal perpanjangan
+      setShowExtendModal(false);
+      
+      // Tampilkan toast success
+      toast.success(result.message || "Perpanjangan adopsi berhasil diajukan!");
+      
+      // Arahkan ke halaman pembayaran
+      setTimeout(() => {
+        router.push(`/adopter-adopsi/payment/${result.paymentId}`);
+      }, 1500);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal memperpanjang adopsi. Silakan coba lagi.");
+    }
+  };
+
+  const handlePayNow = () => {
+    setShowPaymentAlert(false);
+    setToastMessage("Redirecting to payment page...");
+    setShowToast(true);
+    setTimeout(() => {
+      setShowToast(false);
+    }, 3000);
+  };
+
+  
+  const renderExtendForm = () => {
+    if (!animal || !adopter) return null;
+    
+    // Data hewan untuk form
+    const animalData = {
+      id: animal.id,
+      name: animal.name,
+      species: animal.species
+    };
+
+    
+    let phoneNumber = "Tidak tersedia";
+    const possiblePhoneFields = ["noTelp", "notelp", "no_telp", "no_telepon"];
+    for (const field of possiblePhoneFields) {
+      if (adopter[field]) {
+        phoneNumber = adopter[field];
+        break;
+      }
+    }
+
+    if (adopter.type === 'individu') {
+      const adopterData = {
+        name: adopter.name || '',
+        nik: adopter.nik || '',
+        address: adopter.address || '',
+        noTelp: phoneNumber
+      };
+
+      return (
+        <AdopterIndividuFormModal isOpen={showExtendModal} onClose={() => setShowExtendModal(false)}>
+          <div className="py-1">
+            <AdopterIndividuForm 
+              adopter={adopterData}
+              animal={animalData}
+              onSubmit={handleExtendSubmit}
+            />
+          </div>
+        </AdopterIndividuFormModal>
+      );
+    } else {
+      // Perbaiki untuk memastikan nama organisasi diambil dengan benar
+      // Periksa berbagai kemungkinan nama field untuk nama organisasi
+      const organizationName = 
+        adopter.organizationName || 
+        adopter.nama_organisasi || 
+        '';
+      
+      console.log("Organization name from data:", { 
+        organizationName, 
+        fromOrganizationName: adopter.organizationName,
+        fromNamaOrganisasi: adopter.nama_organisasi
+      });
+
+      const adopterData = {
+        organizationName: organizationName,
+        npp: adopter.npp || '',
+        address: adopter.address || '',
+        noTelp: phoneNumber
+      };
+
+      return (
+        <AdopterOrganisasiFormModal isOpen={showExtendModal} onClose={() => setShowExtendModal(false)}>
+          <div className="py-1">
+            <AdopterOrganisasiForm 
+              adopter={adopterData}
+              animal={animalData}
+              onSubmit={handleExtendSubmit}
+            />
+          </div>
+        </AdopterOrganisasiFormModal>
+      );
+    }
+  };
+
+  // Loading state
+  if (loading || isLoading) {
     return (
-      <div className="container mx-auto py-10 px-4 flex justify-center items-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+      <div className="container mx-auto py-10 px-4 text-center">
+        <p>Memuat data...</p>
       </div>
     );
   }
 
-  // Jika user bukan admin, jangan render konten (redirect akan dihandle useEffect)
-  if (!isValid || userData.role !== "admin") {
+  // Error state
+  if (error || !animal || !adopter) {
+    return (
+      <div className="container mx-auto py-10 px-4 text-center">
+        <p className="text-red-500">
+          {error || "Data hewan tidak ditemukan."}
+        </p>
+        <Button 
+          className="mt-4"
+          onClick={() => router.push("/adopter-adopsi")}
+        >
+          Kembali
+        </Button>
+      </div>
+    );
+  }
+
+  // If not logged in
+  if (!isValid) {
+    router.push("/login");
     return null;
   }
 
-  // Kode lainnya tetap sama
-  const handleViewDetail = (animalId: string) => {
-    router.push(`/admin-adopsi/detail/${animalId}`); 
-  };
-
-  const handleRegisterAdmin = (animalId: string) => {
-    const animalData = animals.find((animal) => animal.id_hewan === animalId);
-    if (animalData) {
-      router.push(`/admin-adopsi/register/${animalId}?name=${animalData.nama_hewan}&species=${animalData.spesies}`);
-    }
-  };
-  
-  const getConditionBadgeStyle = (condition: string) => {
-    switch (condition) {
-      case "Sehat":
-        return "bg-green-500 hover:bg-green-600 text-white";
-      case "Sedang Sakit":
-        return "bg-red-500 hover:bg-red-600 text-white";
-      case "Dalam pemantauan":
-        return "bg-amber-500 hover:bg-amber-600 text-white";
-      default:
-        return "";
-    }
-  };
-
-  const getConditionIcon = (condition: string) => {
-    if (condition === "Dalam pemantauan") {
-      return <AlertTriangle className="mr-1 h-3 w-3" />;
-    }
-    return null;
-  };
-
-  // Optional: Stats Display if you want to use them
-  const adoptedCount = animals.filter(animal => animal.isAdopted).length;
-  const unadoptedCount = animals.filter(animal => !animal.isAdopted).length;
-
   return (
     <div className="container mx-auto py-10 px-4 font-outfit">
-      <div className="text-center mb-6">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-primary font-outfit">
-            Program Adopsi Satwa: Bantu Mereka dengan Cinta
-          </CardTitle>
-          <div className="flex justify-center mt-4">
-            <img
-              src="https://cms-artifacts.artlist.io/content/generated-image/image__9/generated-image-94bf53e6-84b8-4e0e-84df-6ede89a96e97.jpg?Expires=2061173726&Key-Pair-Id=K2ZDLYDZI2R1DF&Signature=HCDLrFIR6dxrz0NJon1-8CM-Z-wMbAGVKUbwPja6Rvh8j1kQ5r0uo-SyM3iX8jPSpDVFFWUZylNloednDRuSpk5MVMOiXzxYZcraGX7T9D0zB4CWgbp4RaK0fzWzx8zxeGtDi0ZkAQAAqKC6o5s-TkaOvix4j6hZV-iHs2BL3MTKF16G-L4dA-K5dLPEqQRFb-14rizByqIzvhNB9D~IZqsL8LG~FF6Z8~LbfngviAuW-yRZ1Q2m0wuuQEXzbVSoITRFRo4fdriFQudeDGGavA4wRaYAfEkfY~2CBBQLJElKx7FSYM33uH5krhARFEO7kJC0YKAI7qIUyaRAxFpZ8Q__"
-              alt="Lion hugging a cub"
-              className="rounded-lg shadow-md w-full max-w-md"
-            />
-          </div>
-        </CardHeader>
-      </div>
-
-      {/* Header with filtering */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-semibold font-outfit text-foreground">Pantau Status Adopsi Hewan</h2>
-          {/* Optional: Display stats in UI */}
-          <div className="text-sm text-muted-foreground mt-1">
-            <span className="font-medium">{adoptedCount}</span> diadopsi &bull; <span className="font-medium">{unadoptedCount}</span> belum diadopsi
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <Select 
-            value={statusFilter} 
-            onValueChange={setStatusFilter}
+      
+      <Card className="shadow-md w-full max-w-lg mx-auto">
+        <CardHeader className="relative">
+          <CardTitle className="text-xl font-bold text-center">Informasi Hewan Adopsi</CardTitle>
+          <Button
+            variant="ghost"
+            className="absolute top-6 right-6 text-red-500 hover:bg-red-100 p-2 rounded-full"
+            onClick={() => router.push("/adopter-adopsi")}
           >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Hewan</SelectItem>
-              <SelectItem value="adopted">Diadopsi</SelectItem>
-              <SelectItem value="unadopted">Tidak Diadopsi</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          {/* Optional: Add a refresh button */}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={refreshData}
-            className="ml-2"
-          >
-            Refresh
+            <X className="h-5 w-5" />
           </Button>
-        </div>
-      </div>
+        </CardHeader>
+          <CardContent className="space-y-6 text-center">
+            {/* Gambar Hewan - Circle avatar dengan inisial */}
+            <Avatar className="h-36 w-36 mx-auto bg-green-100 text-black">
+              <AvatarImage src={animal.imageUrl} alt={animal.name} />
+              <AvatarFallback className="text-lg">
+                {animal.name?.substring(0, 2).toUpperCase() || "HW"}
+              </AvatarFallback>
+            </Avatar>
 
-      {isLoading ? (
-        <div className="flex justify-center items-center h-40">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      ) : animals.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-muted-foreground">Tidak ada hewan yang ditemukan dengan filter ini.</p>
+            {/* Informasi Hewan - Teks rata tengah sesuai gambar */}
+            <div className="space-y-3 mt-4">
+              <p className="font-medium text-lg">
+                <span className="font-semibold">Nama hewan:</span> {animal.name || "[nama tidak tersedia]"}
+              </p>
+              <p className="font-medium text-lg">
+                <span className="font-semibold">Jenis hewan:</span> {animal.species}
+              </p>
+              <p className="font-medium text-lg">
+                <span className="font-semibold">Habitat:</span> {animal.habitat || "Tidak tersedia"}
+              </p>
+              <p className="font-medium text-lg">
+                <span className="font-semibold">Tanggal Mulai Adopsi:</span> {animal.startDate}
+              </p>
+              <p className="font-medium text-lg">
+                <span className="font-semibold">Tanggal Akhir Adopsi:</span> {animal.endDate || "Tidak ada batas waktu"}
+              </p>
+              <p className="font-medium text-lg">
+                <span className="font-semibold">Adopter:</span> {adopter.type === 'individu' ? adopter.name : adopter.organizationName}
+              </p>
+            </div>
+
+            {/* Aksi - Tombol hijau dan merah sesuai gambar */}
+            <div className="flex justify-center gap-4 mt-6">
+              <Button
+                className="bg-green-800 text-white hover:bg-green-900 py-2 px-4"
+                onClick={() => router.push(`/adopter-adopsi/kondisi/${animalId}`)}
+              >
+                Pantau Kondisi Hewan
+              </Button>
+              <Button
+                className="bg-green-800 text-white hover:bg-green-900 py-2 px-4"
+                onClick={() => router.push(`/adopter-adopsi/sertifikat/${animal.id}`)}
+              >
+                Lihat Sertifikat Adopsi
+              </Button>
+            </div>
+            
+            <div className="flex justify-center gap-4 mt-2">
+              <Button
+                className="bg-red-500 text-white hover:bg-red-600 py-2 px-4"
+                onClick={() => setShowAlert(true)}
+              >
+                Berhenti Adopsi
+              </Button>
+              <Button
+                className="bg-blue-500 text-white hover:bg-blue-600 py-2 px-4"
+                onClick={handleExtendAdoption}
+              >
+                Perpanjang Periode Adopsi
+              </Button>
+            </div>
           </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4">
-          {animals.map((animal) => (
-            <Card key={animal.id_hewan} className="overflow-hidden border-border shadow-sm relative">
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row gap-4">
-                  {/* Avatar Image */}
-                  <Avatar className="h-32 w-32 rounded-md">
-                    <AvatarImage src={animal.url_foto} alt={animal.nama_hewan} />
-                    <AvatarFallback className="rounded-md">
-                      {animal.nama_hewan?.substring(0, 2).toUpperCase() || "AN"}
-                    </AvatarFallback>
-                  </Avatar>
-            
-                  {/* Animal Details */}
-                  <div className="flex flex-col justify-center">
-                    <p className="font-medium text-xl font-outfit">{animal.nama_hewan || "[Tanpa nama]"}</p>
-                    <p className="text-base text-muted-foreground">{animal.spesies}</p>
-                    <Badge
-                      className={`mt-2 px-3 py-1 text-sm rounded-full ${getConditionBadgeStyle(animal.status_kesehatan)}`}
-                    >
-                      {getConditionIcon(animal.status_kesehatan)}
-                      {animal.status_kesehatan}
-                    </Badge>
-                  </div>
-                </div>
-            
-                {/* Badge and Buttons */}
-                <div className="absolute top-12 right-6 flex flex-col items-end gap-4">
-                  {/* Badge */}
-                  <Badge
-                    variant={animal.isAdopted ? "default" : "outline"}
-                    className="text-sm px-3 py-1"
-                  >
-                    {animal.isAdopted ? "Diadopsi" : "Tidak Diadopsi"}
-                  </Badge>
+      </Card>
 
-                  {/* Buttons */}
-                  {animal.isAdopted ? (
-                    <Button
-                      variant="outline"
-                      className="text-primary border-primary hover:bg-primary/10 text-base font-medium"
-                      onClick={() => handleViewDetail(animal.id_hewan)}
-                    >
-                      <Eye className="mr-2 h-5 w-5" /> Lihat Detail
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="default"
-                      className="bg-primary text-primary-foreground hover:bg-primary/90 text-base font-medium"
-                      onClick={() => handleRegisterAdmin(animal.id_hewan)}
-                    >
-                      <PlusCircle className="mr-2 h-5 w-5" /> Daftarkan Adopter
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      {/* Alert Dialog for stopping adoption */}
+      <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apakah Anda yakin ingin berhenti mengadopsi satwa ini?</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-500 text-white hover:bg-red-600"
+              onClick={handleStopAdoption}
+            >
+              Iya
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Alert Dialog for unpaid payments */}
+      <AlertDialog open={showPaymentAlert} onOpenChange={setShowPaymentAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Pembayaran Belum Lunas</AlertDialogTitle>
+            <AlertDialogDescription>
+              Anda belum melunasi pembayaran untuk periode adopsi saat ini. 
+              Perpanjangan periode adopsi hanya dapat dilakukan setelah pembayaran untuk periode saat ini telah lunas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Tutup</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-primary text-white hover:bg-primary/90"
+              onClick={handlePayNow}
+            >
+              Bayar Sekarang
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
+          {toastMessage}
         </div>
       )}
+      
+      {/* Modal Perpanjangan */}
+      {renderExtendForm()}
+      
     </div>
   );
 }

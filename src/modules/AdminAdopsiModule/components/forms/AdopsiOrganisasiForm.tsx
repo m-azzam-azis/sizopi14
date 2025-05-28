@@ -30,7 +30,7 @@ export default function AdopsiOrganisasiForm({
     },
   });
   const validateName = (value: string) => value.trim() !== "" || "Nama tidak boleh kosong";
-  const validateNPP = (value: string) => /^ORG\d{5}$/.test(value) || "NPP harus berupa angka sepanjang 17 karakter";
+  const validateNPP = (value: string) => /^ORG\d{5}$/.test(value) || "NPP harus berupa karakter kombinasi 'ORG' diikuti 5 digit angka";
   const validateNominal = (value: string) =>
     /^\d+$/.test(value) && parseInt(value) > 0 || "Nominal harus berupa angka lebih dari 0";
 

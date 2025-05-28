@@ -41,7 +41,7 @@ export async function GET(request: Request) {
       });
     }
 
-    const profileData: any = {
+    let profileData: any = {
       username: user.username,
       email: user.email,
       nama_depan: user.nama_depan,
