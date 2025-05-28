@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       return new Response(
         JSON.stringify({
           message: "Failed",
-          error: "Username not found",
+          error: "Email not found",
         }),
         { status: 401 }
       );
