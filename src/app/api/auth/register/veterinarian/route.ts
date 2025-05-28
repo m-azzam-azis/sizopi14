@@ -60,6 +60,7 @@ export async function POST(req: Request) {
       no_telepon,
     });
 
+    // Insert ke tabel DOKTER_HEWAN
     const dokterHewanModel = new DokterHewan();
     await dokterHewanModel.create({
       username_DH: username,
