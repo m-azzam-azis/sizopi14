@@ -7,10 +7,12 @@ export async function GET() {
     const data = await atraksiModel.getDetailedAtraksiData();
 
     return NextResponse.json({ data });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error fetching attractions:", error);
     return NextResponse.json(
-      { message: "Failed to fetch attractions", error: error.message },
+      { message: "Failed to fetch attractions", error: errorMessage },
       { status: 500 }
     );
   }
@@ -69,10 +71,12 @@ export async function POST(req: Request) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error creating attraction:", error);
     return NextResponse.json(
-      { message: "Failed to create attraction", error: error.message },
+      { message: "Failed to create attraction", error: errorMessage },
       { status: 500 }
     );
   }
@@ -100,10 +104,12 @@ export async function PUT(req: Request) {
     return NextResponse.json({
       message: "Attraction updated successfully",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error updating attraction:", error);
     return NextResponse.json(
-      { message: "Failed to update attraction", error: error.message },
+      { message: "Failed to update attraction", error: errorMessage },
       { status: 500 }
     );
   }
@@ -131,10 +137,12 @@ export async function DELETE(req: Request) {
     return NextResponse.json({
       message: "Attraction deleted successfully",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error deleting attraction:", error);
     return NextResponse.json(
-      { message: "Failed to delete attraction", error: error.message },
+      { message: "Failed to delete attraction", error: errorMessage },
       { status: 500 }
     );
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,8 +14,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { DateTimePicker } from "@/components/elements/DateTimePicker/DateTimePicker";
 import { format } from "date-fns";
 
 const createWahanaSchema = z.object({
@@ -178,11 +176,9 @@ export const CreateWahanaForm = ({
 
 export const EditWahanaForm = ({
   onSubmit,
-  isEditing = false,
   initialData,
 }: {
   onSubmit: (data: EditWahanaFormValues) => void;
-  isEditing?: boolean;
   initialData?: { jadwal: string | Date; kapasitas: number };
 }) => {
   const getInitialJadwalValue = () => {
@@ -253,7 +249,7 @@ const WahanaForm = ({
   isEditing = false,
   nama_wahana,
 }: {
-  onSubmit: (data: any) => void;
+  onSubmit: (data: CreateWahanaFormValues | EditWahanaFormValues) => void;
   initialValues?: { jadwal: string | Date; kapasitas: number };
   isEditing?: boolean;
   nama_wahana?: string;
@@ -261,14 +257,23 @@ const WahanaForm = ({
   if (isEditing && initialValues) {
     return (
       <EditWahanaForm
-        onSubmit={onSubmit}
+        onSubmit={(data: EditWahanaFormValues) => {
+          onSubmit(data);
+        }}
         initialData={initialValues}
-        isEditing={isEditing}
       />
     );
   }
 
-  return <CreateWahanaForm onSubmit={onSubmit} />;
+  console.log(nama_wahana)
+
+  return (
+    <CreateWahanaForm
+      onSubmit={(data: CreateWahanaFormValues) => {
+        onSubmit(data);
+      }}
+    />
+  );
 };
 
 export default WahanaForm;

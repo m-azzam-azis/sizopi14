@@ -6,8 +6,8 @@ import DashboardShell from "./components/DashboardShell";
 import AdminDashboard from "./components/AdminDashboard";
 import VeterinarianDashboard from "./components/VeterinarianDashboard";
 import TrainerDashboard from "./components/TrainerDashboard";
-import ReservasiTiketDashboardModule from "../ReservasiTiketModule/Pengunjung/Dashboard";
 import CaretakerDashboard from "./components/CaretakerDashboard";
+import ReservasiTiketVisitorModule from "../ReservasiTiketModule/Visitor";
 
 const DashboardModule: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -44,7 +44,7 @@ const DashboardModule: React.FC = () => {
       case "veterinarian":
         return <VeterinarianDashboard userData={user} />;
       case "visitor":
-        return <ReservasiTiketDashboardModule />;
+        return <ReservasiTiketVisitorModule />;
       case "trainer":
         return <TrainerDashboard userData={user} />;
       case "caretaker":
