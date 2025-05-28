@@ -30,36 +30,29 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const editFormSchema = z.object({
-  jadwal: z.date({
-    required_error: "Jadwal atraksi harus diisi",
+const editAtraksiFormSchema = z.object({
+  jadwal: z.string({
+    required_error: "Jadwal is required",
   }),
   kapasitas: z
     .number({
-      required_error: "Kapasitas harus diisi",
+      required_error: "Kapasitas is required",
     })
-    .min(1, "Kapasitas minimal 1 orang")
-    .int("Kapasitas harus berupa bilangan bulat"),
+    .int()
+    .positive(),
 });
 
-const createFormSchema = z.object({
-  nama_atraksi: z.string().min(1, "Nama atraksi harus diisi"),
-  lokasi: z.string().min(1, "Lokasi harus diisi"),
-  kapasitas: z
-    .number({
-      required_error: "Kapasitas harus diisi",
-    })
-    .min(1, "Kapasitas minimal 1 orang")
-    .int("Kapasitas harus berupa bilangan bulat"),
-  pelatih_id: z.string().min(1, "Pelatih harus dipilih"),
-  jadwal: z.date({
-    required_error: "Jadwal atraksi harus diisi",
-  }),
-  hewan_ids: z.array(z.string()).min(1, "Minimal satu hewan harus dipilih"),
+const createAtraksiSchema = z.object({
+  nama_atraksi: z.string().min(1, "Nama atraksi tidak boleh kosong"),
+  lokasi: z.string().min(1, "Lokasi tidak boleh kosong"),
+  pelatih_id: z.string().optional(),
+  hewan_ids: z.array(z.string()).min(1, "Pilih minimal satu hewan"),
+  kapasitas: z.number().min(1, "Kapasitas harus lebih dari 0"),
+  jadwal: z.string(),
 });
 
-export type EditAtraksiFormValues = z.infer<typeof editFormSchema>;
-export type CreateAtraksiFormValues = z.infer<typeof createFormSchema>;
+export type EditAtraksiFormValues = z.infer<typeof editAtraksiFormSchema>;
+export type CreateAtraksiFormValues = z.infer<typeof createAtraksiSchema>;
 export type AtraksiFormValues = EditAtraksiFormValues | CreateAtraksiFormValues;
 
 interface Pelatih {
@@ -76,7 +69,7 @@ interface Hewan {
 interface AtraksiFormProps {
   onSubmit: (data: any) => void;
   initialValues?: {
-    jadwal: Date;
+    jadwal: string | Date;
     kapasitas: number;
     nama_atraksi?: string;
     lokasi?: string;
@@ -102,16 +95,26 @@ const EditAtraksiForm = ({
   hewan_terlibat,
 }: {
   onSubmit: (data: EditAtraksiFormValues) => void;
-  initialValues: { jadwal: Date; kapasitas: number };
+  initialValues: { jadwal: string | Date; kapasitas: number };
   nama_atraksi?: string;
   lokasi?: string;
   pelatih?: string;
   hewan_terlibat?: string;
 }) => {
-  const form = useForm<EditAtraksiFormValues>({
-    resolver: zodResolver(editFormSchema),
+  const getInitialJadwalValue = () => {
+    if (!initialValues?.jadwal) return "09:00";
+
+    if (typeof initialValues.jadwal === "string") {
+      return initialValues.jadwal.substring(0, 5);
+    } else {
+      return format(initialValues.jadwal, "HH:mm");
+    }
+  };
+
+  const form = useForm<z.infer<typeof editAtraksiFormSchema>>({
+    resolver: zodResolver(editAtraksiFormSchema),
     defaultValues: {
-      jadwal: initialValues?.jadwal || new Date(),
+      jadwal: getInitialJadwalValue(),
       kapasitas: initialValues?.kapasitas || 100,
     },
   });
@@ -163,75 +166,11 @@ const EditAtraksiForm = ({
           control={form.control}
           name="jadwal"
           render={({ field }) => (
-            <FormItem className="flex flex-col">
+            <FormItem>
               <FormLabel>Jadwal Atraksi</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP HH:mm")
-                      ) : (
-                        <span>Pilih tanggal dan waktu</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={(date) => {
-                      if (date) {
-                        const currentDate = field.value || new Date();
-                        date.setHours(currentDate.getHours());
-                        date.setMinutes(currentDate.getMinutes());
-                        field.onChange(date);
-                      }
-                    }}
-                    initialFocus
-                  />
-                  <div className="border-t border-border p-3">
-                    <div className="flex items-center justify-between">
-                      <FormLabel className="text-xs">Waktu</FormLabel>
-                      <div className="flex items-center space-x-2">
-                        <Input
-                          className="w-[4rem]"
-                          type="number"
-                          min={0}
-                          max={23}
-                          onChange={(e) => {
-                            const date = new Date(field.value || new Date());
-                            date.setHours(parseInt(e.target.value) || 0);
-                            field.onChange(date);
-                          }}
-                          value={field.value ? field.value.getHours() : 0}
-                        />
-                        <span>:</span>
-                        <Input
-                          className="w-[4rem]"
-                          type="number"
-                          min={0}
-                          max={59}
-                          onChange={(e) => {
-                            const date = new Date(field.value || new Date());
-                            date.setMinutes(parseInt(e.target.value) || 0);
-                            field.onChange(date);
-                          }}
-                          value={field.value ? field.value.getMinutes() : 0}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <FormControl>
+                <Input type="time" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -257,14 +196,14 @@ const CreateAtraksiForm = ({
   hewanList: Hewan[];
 }) => {
   const form = useForm<CreateAtraksiFormValues>({
-    resolver: zodResolver(createFormSchema),
+    resolver: zodResolver(createAtraksiSchema),
     defaultValues: {
       nama_atraksi: "",
       lokasi: "",
-      kapasitas: 100,
       pelatih_id: "",
-      jadwal: new Date(),
       hewan_ids: [],
+      kapasitas: 100,
+      jadwal: "09:00",
     },
   });
 
@@ -392,75 +331,11 @@ const CreateAtraksiForm = ({
           control={form.control}
           name="jadwal"
           render={({ field }) => (
-            <FormItem className="flex flex-col">
+            <FormItem>
               <FormLabel>Jadwal Atraksi</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP HH:mm")
-                      ) : (
-                        <span>Pilih tanggal dan waktu</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={(date) => {
-                      if (date) {
-                        const currentDate = field.value || new Date();
-                        date.setHours(currentDate.getHours());
-                        date.setMinutes(currentDate.getMinutes());
-                        field.onChange(date);
-                      }
-                    }}
-                    initialFocus
-                  />
-                  <div className="border-t border-border p-3">
-                    <div className="flex items-center justify-between">
-                      <FormLabel className="text-xs">Waktu</FormLabel>
-                      <div className="flex items-center space-x-2">
-                        <Input
-                          className="w-[4rem]"
-                          type="number"
-                          min={0}
-                          max={23}
-                          onChange={(e) => {
-                            const date = new Date(field.value || new Date());
-                            date.setHours(parseInt(e.target.value) || 0);
-                            field.onChange(date);
-                          }}
-                          value={field.value ? field.value.getHours() : 0}
-                        />
-                        <span>:</span>
-                        <Input
-                          className="w-[4rem]"
-                          type="number"
-                          min={0}
-                          max={59}
-                          onChange={(e) => {
-                            const date = new Date(field.value || new Date());
-                            date.setMinutes(parseInt(e.target.value) || 0);
-                            field.onChange(date);
-                          }}
-                          value={field.value ? field.value.getMinutes() : 0}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <FormControl>
+                <Input type="time" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -491,7 +366,9 @@ export const AtraksiForm: React.FC<AtraksiFormProps> = ({
     return (
       <EditAtraksiForm
         onSubmit={onSubmit}
-        initialValues={initialValues as { jadwal: Date; kapasitas: number }}
+        initialValues={
+          initialValues as { jadwal: string | Date; kapasitas: number }
+        }
         nama_atraksi={nama_atraksi}
         lokasi={lokasi}
         pelatih={pelatih}

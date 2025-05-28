@@ -24,7 +24,7 @@ interface AtraksiFormModalProps {
   onClose: () => void;
   onSubmit: (data: any) => void;
   initialData?: {
-    jadwal: Date;
+    jadwal: string | Date;
     kapasitas: number;
   };
   isEditing?: boolean;

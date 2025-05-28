@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     await atraksiModel.customQuery(
       `INSERT INTO FASILITAS(nama, jadwal, kapasitas_max) VALUES($1, $2, $3)`,
-      [nama_atraksi, new Date(jadwal), kapasitas_max]
+      [nama_atraksi, jadwal, kapasitas_max]
     );
 
     await atraksiModel.customQuery(
@@ -94,7 +94,7 @@ export async function PUT(req: Request) {
 
     await atraksiModel.customQuery(
       `UPDATE FASILITAS SET jadwal = $1, kapasitas_max = $2 WHERE nama = $3`,
-      [new Date(jadwal), kapasitas_max, nama_atraksi]
+      [jadwal, kapasitas_max, nama_atraksi]
     );
 
     return NextResponse.json({

@@ -66,7 +66,7 @@ interface AtraksiData {
   nama_atraksi: string;
   lokasi: string;
   kapasitas: number;
-  jadwal: Date;
+  jadwal: string | Date;
   hewan_terlibat: Hewan[];
   pelatih: PelatihHewan | null;
 }
@@ -100,12 +100,14 @@ const AtraksiModule = () => {
       }
       const { data } = await response.json();
 
+      console.log("Raw atraksi data:", data);
+
       const formattedData = data.map((atraksi: any) => ({
         id: `atr-${atraksi.nama_atraksi}`,
         nama_atraksi: atraksi.nama_atraksi,
         lokasi: atraksi.lokasi,
         kapasitas: atraksi.kapasitas_max,
-        jadwal: new Date(atraksi.jadwal),
+        jadwal: atraksi.jadwal,
         hewan_terlibat: atraksi.hewan_terlibat || [],
         pelatih: atraksi.pelatih
           ? {
@@ -304,11 +306,36 @@ const AtraksiModule = () => {
     setIsAddModalOpen(false);
   };
 
-  const formatDateTime = (date: Date) => {
-    return date.toLocaleString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const formatDateTime = (time: string | Date) => {
+    if (!time) return "-";
+
+    if (typeof time === "string") {
+      if (time.includes(":")) {
+        const [hours, minutes] = time.split(":");
+        return `${hours}:${minutes}`;
+      } else if (time.includes("T")) {
+        try {
+          const date = new Date(time);
+          return date.toLocaleString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        } catch {
+          return time;
+        }
+      }
+
+      return time;
+    } else {
+      try {
+        return time.toLocaleString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      } catch {
+        return "Invalid time";
+      }
+    }
   };
 
   if (
