@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription } from "@/components/ui/alert-dialog";
 import { X } from "lucide-react";
+import { getUserData } from "@/hooks/getUserData";
+import { toast } from "sonner";
 import AdopterIndividuFormModal from "../components/modals/AdopterIndividuFormModal";
 import AdopterOrganisasiFormModal from "../components/modals/AdopterOrganisasiFormModal";
 import AdopterIndividuForm from "../components/forms/AdopterIndividuForm";
@@ -22,118 +23,177 @@ interface Animal {
   startDate: string;
   endDate: string;
   ownerId: string;
-  paymentStatus: "Paid" | "Pending"; // Add payment status field
+  paymentStatus: string;
+  status_kesehatan: string;
+  kontribusi_finansial: number;
 }
 
-const animals: Animal[] = [
-  {
-    id: "ani-101",
-    name: "Simba",
-    species: "African Lion",
-    habitat: "Savanna Enclosure",
-    imageUrl: "https://images.unsplash.com/photo-1545006398-2cf48043d3f3?q=80&w=400",
-    startDate: "2025-01-01",
-    endDate: "2025-12-31",
-    ownerId: "d290f1ee-6c54-4b01-90e6-d701748f0851", // rajatacalista
-    paymentStatus: "Paid"
-  },
-  {
-    id: "ani-102",
-    name: "Zara",
-    species: "Plains Zebra",
-    habitat: "Savanna Enclosure",
-    imageUrl: "https://images.unsplash.com/photo-1549975248-52273875de73?q=80&w=400",
-    startDate: "2025-02-01",
-    endDate: "2025-11-30",
-    ownerId: "d290f1ee-6c54-4b01-90e6-d701748f0851", // rajatacalista
-    paymentStatus: "Pending" // Let's make one with Pending for testing
-  },
-  {
-    id: "ani-103",
-    name: "Luna",
-    species: "Kucing",
-    habitat: "Sabana Afrika",
-    imageUrl: "https://example.com/luna.jpg",
-    startDate: "2025-02-01",
-    endDate: "2025-11-30",
-    ownerId: "11d5b3ec-4513-476e-b5ee-7a9ecb2f13f2", // margana08
-    paymentStatus: "Paid"
-  }
-];
-
-const adopters = [
-  {
-    id: "d290f1ee-6c54-4b01-90e6-d701748f0851",
-    username: "rajatacalista",
-    type: "individu",
-    address: "Jalan Pasteur No. 949, Ambon, Jawa Tengah 90622",
-    birthDate: "1997-04-24",
-    nik: "3175091201010001",
-    name: "Prasetya Andriani",
-    noTelp: "089635460305",
-  },
-  {
-    id: "11d5b3ec-4513-476e-b5ee-7a9ecb2f13f2",
-    username: "margana08",
-    type: "organisasi",
-    address: "Gg. Ir. H. Djuanda No. 06, Banjarbaru, LA 79983",
-    birthDate: "1975-03-22",
-    npp: "ORG00001",
-    organizationName: "Yayasan Margana Jaya",
-    noTelp: "080925544576",
-  },
-];
+interface Adopter {
+  id: string;
+  username: string;
+  type: "individu" | "organisasi";
+  address: string;
+  birthDate: string;
+  nik?: string;
+  npp?: string;
+  name?: string;
+  organizationName?: string;
+  noTelp: string;
+  email: string;
+  nama_organisasi?: string;
+  notelp?: string;
+  no_telp?: string;
+  no_telepon?: string;
+  [key: string]: any;
+}
 
 export default function AdopterAdopsiDetailModule({ animalId }: { animalId: string }) {
   const router = useRouter();
+  const { userData, isValid, isLoading } = getUserData();
   const [showAlert, setShowAlert] = useState(false);
-  const [showPaymentAlert, setShowPaymentAlert] = useState(false); // Add alert for payment status
+  const [showPaymentAlert, setShowPaymentAlert] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState(""); // Dynamic toast message
+  const [toastMessage, setToastMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedAdopter, setSelectedAdopter] = useState<any>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [animal, setAnimal] = useState<Animal | null>(null);
+  const [adopter, setAdopter] = useState<Adopter | null>(null);
+  const [showExtendModal, setShowExtendModal] = useState(false);
 
-  // Cari data hewan berdasarkan ID
-  const animal = animals.find((a) => a.id === animalId);
-
+  // Fetch animal and adopter details
   useEffect(() => {
-    if (animal) {
-      const owner = adopters.find(a => a.id === animal.ownerId);
-      if (owner) {
-        setCurrentUser(owner);
+    const fetchData = async () => {
+      if (!isValid || !animalId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        console.log(`Fetching data for animal ID: ${animalId}`);
+        const response = await fetch(`/api/adopter-adopsi/${animalId}`);
+        
+        console.log(`API response status: ${response.status}`);
+        
+        if (!response.ok) {
+          let errorMessage = "Error fetching animal details";
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch (e) {
+            console.error("Error parsing error response:", e);
+          }
+          throw new Error(errorMessage);
+        }
+        
+        const data = await response.json();
+        console.log("Received data:", data);
+        
+        setAnimal(data.animal);
+        setAdopter(data.adopter);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError(err instanceof Error ? err.message : "Terjadi kesalahan saat mengambil data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [animalId, isValid]);
+
+  // Check if current user can access this animal's details
+  useEffect(() => {
+    if (!loading && adopter && isValid && userData.username) {
+      if (adopter.username !== userData.username) {
+        toast.error("Anda tidak memiliki akses ke data hewan ini");
+        router.push("/adopter-adopsi");
       }
     }
-  }, [animal]);
+  }, [loading, adopter, isValid, userData.username, router]);
 
-  if (!animal) {
-    return <p className="text-center">Data hewan tidak ditemukan.</p>;
-  }
-
-  if (!currentUser) {
-    return <p className="text-center">Loading user data...</p>;
-  }
-
-  const handleStopAdoption = () => {
+  // Perbarui fungsi handleStopAdoption
+  const handleStopAdoption = async () => {
     setShowAlert(false);
-    setToastMessage("Anda telah berhenti mengadopsi satwa ini!");
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-      router.push("/adopter-adopsi"); 
-    }, 3000);
+  
+    try {
+      // API call untuk berhenti adopsi
+      const response = await fetch(`/api/adopter-adopsi/${animalId}/stop`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Gagal berhenti mengadopsi");
+      }
+      
+      const result = await response.json();
+      
+      // Tampilkan toast success
+      toast.success(result.message || "Anda telah berhenti mengadopsi satwa ini!");
+      
+      // Arahkan kembali ke halaman utama adopsi setelah berhasil
+      setTimeout(() => {
+        router.push("/adopter-adopsi"); 
+      }, 1500);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal berhenti mengadopsi. Silakan coba lagi.");
+    }
   };
 
   const handleExtendAdoption = () => {
-    // Check payment status first
-    if (animal.paymentStatus === "Pending") {
+    if (animal && (animal.paymentStatus.toLowerCase() === "pending" || 
+        animal.paymentStatus.toLowerCase() === "belum lunas")) {
       setShowPaymentAlert(true);
       return;
     }
     
-    // If paid, proceed with extension
-    setSelectedAdopter({...currentUser, animal});
-    setIsModalOpen(true);
+    setShowExtendModal(true);
+  };
+
+  const handleExtendSubmit = async (data: { nominal: string; adoptionPeriod: string }) => {
+    try {
+      // Siapkan data untuk dikirim ke API
+      const extendData = {
+        animalId: animalId,
+        adopterUsername: userData.username,
+        contributionAmount: parseInt(data.nominal),
+        extensionMonths: parseInt(data.adoptionPeriod)
+      };
+  
+      // Kirim request ke API
+      const response = await fetch(`/api/adopter-adopsi/${animalId}/extend`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(extendData)
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Gagal memperpanjang adopsi");
+      }
+  
+      const result = await response.json();
+      
+      // Tutup modal perpanjangan
+      setShowExtendModal(false);
+      
+      // Tampilkan toast success
+      toast.success(result.message || "Perpanjangan adopsi berhasil diajukan!");
+      
+      // Arahkan ke halaman pembayaran
+      setTimeout(() => {
+        router.push(`/adopter-adopsi/payment/${result.paymentId}`);
+      }, 1500);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal memperpanjang adopsi. Silakan coba lagi.");
+    }
   };
 
   const handlePayNow = () => {
@@ -143,19 +203,120 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
     setTimeout(() => {
       setShowToast(false);
       // In real app, redirect to payment page
-      // For demo, just close the dialog
     }, 3000);
   };
 
-  const handleSuccess = (data: { nominal: string; adoptionPeriod: string }) => {
-    setIsModalOpen(false);
-    setToastMessage(`Perpanjangan periode adopsi berhasil selama ${data.adoptionPeriod} bulan dengan kontribusi Rp ${parseInt(data.nominal).toLocaleString('id-ID')}`);
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-      router.push("/adopter-adopsi");
-    }, 3000);
+  const renderExtendForm = () => {
+    if (!animal || !adopter) return null;
+  
+    
+    const possiblePhoneFields = ["noTelp", "notelp", "no_telp", "no_telepon"];
+    let phoneFound = false;
+    
+    possiblePhoneFields.forEach(field => {
+      if (field in adopter) {
+        phoneFound = true;
+      }
+    });
+    
+    if (!phoneFound) {
+      console.log("No phone field found in adopter data!");
+    }
+    
+    // Data hewan untuk form
+    const animalData = {
+      id: animal.id,
+      name: animal.name,
+      species: animal.species
+    };
+  
+    // Temukan nomor telepon dari berbagai kemungkinan field name
+    let phoneNumber = "Tidak tersedia";
+    for (const field of possiblePhoneFields) {
+      if (adopter[field]) {
+        phoneNumber = adopter[field];
+        break;
+      }
+    }
+  
+    if (adopter.type === 'individu') {
+      const adopterData = {
+        name: adopter.name || '',
+        nik: adopter.nik || '',
+        address: adopter.address || '',
+        noTelp: phoneNumber // Gunakan nilai yang sudah ditemukan
+      };
+  
+      // Log data yang akan diberikan ke form
+      console.log("Data for Individu form:", adopterData);
+  
+      return (
+        <AdopterIndividuFormModal isOpen={showExtendModal} onClose={() => setShowExtendModal(false)}>
+          <div className="py-1">
+            <AdopterIndividuForm 
+              adopter={adopterData}
+              animal={animalData}
+              onSubmit={handleExtendSubmit}
+            />
+          </div>
+        </AdopterIndividuFormModal>
+      );
+    } else {
+      const adopterData = {
+        organizationName: adopter.organizationName || adopter.nama_organisasi || '',
+        npp: adopter.npp || '',
+        address: adopter.address || '',
+        noTelp: phoneNumber
+      };
+  
+      // Log data yang akan diberikan ke form
+      console.log("Data for Organisasi form:", adopterData);
+  
+      return (
+        <AdopterOrganisasiFormModal isOpen={showExtendModal} onClose={() => setShowExtendModal(false)}>
+          <div className="py-1">
+            <AdopterOrganisasiForm 
+              adopter={adopterData}
+              animal={animalData}
+              onSubmit={handleExtendSubmit}
+            />
+          </div>
+        </AdopterOrganisasiFormModal>
+      );
+    }
   };
+
+  // Loading state
+  if (loading || isLoading) {
+    return (
+      <div className="container mx-auto py-10 px-4 text-center">
+        <p>Memuat data...</p>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !animal || !adopter) {
+    return (
+      <div className="container mx-auto py-10 px-4 text-center">
+        <p className="text-red-500">
+          {error || "Data hewan tidak ditemukan."}
+        </p>
+        <Button 
+          className="mt-4"
+          onClick={() => router.push("/adopter-adopsi")}
+        >
+          Kembali
+        </Button>
+      </div>
+    );
+  }
+
+  // If not logged in
+  if (!isValid) {
+    router.push("/login");
+    return null;
+  }
 
   return (
     <div className="container mx-auto py-10 px-4 font-outfit">
@@ -171,64 +332,68 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
             <X className="h-5 w-5" />
           </Button>
         </CardHeader>
-        <CardContent className="space-y-4 text-center">
-          {/* Gambar Hewan */}
-          <Avatar className="h-32 w-32 mx-auto">
-            <AvatarImage src={animal.imageUrl} alt={animal.name} />
-            <AvatarFallback>{animal.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
+          <CardContent className="space-y-6 text-center">
+            {/* Gambar Hewan - Circle avatar dengan inisial */}
+            <Avatar className="h-36 w-36 mx-auto bg-green-100 text-black">
+              <AvatarImage src={animal.imageUrl} alt={animal.name} />
+              <AvatarFallback className="text-lg">
+                {animal.name?.substring(0, 2).toUpperCase() || "HW"}
+              </AvatarFallback>
+            </Avatar>
 
-          {/* Informasi Hewan */}
-          <div className="space-y-2">
-            <p>
-              <span className="font-semibold">Nama hewan:</span> {animal.name || "[nama tidak tersedia]"}
-            </p>
-            <p>
-              <span className="font-semibold">Jenis hewan:</span> {animal.species}
-            </p>
-            <p>
-              <span className="font-semibold">Habitat:</span> {animal.habitat}
-            </p>
-            <p>
-              <span className="font-semibold">Tanggal Mulai Adopsi:</span> {animal.startDate}
-            </p>
-            <p>
-              <span className="font-semibold">Tanggal Akhir Adopsi:</span> {animal.endDate}
-            </p>
-          </div>
+            {/* Informasi Hewan - Teks rata tengah sesuai gambar */}
+            <div className="space-y-3 mt-4">
+              <p className="font-medium text-lg">
+                <span className="font-semibold">Nama hewan:</span> {animal.name || "[nama tidak tersedia]"}
+              </p>
+              <p className="font-medium text-lg">
+                <span className="font-semibold">Jenis hewan:</span> {animal.species}
+              </p>
+              <p className="font-medium text-lg">
+                <span className="font-semibold">Habitat:</span> {animal.habitat || "Tidak tersedia"}
+              </p>
+              <p className="font-medium text-lg">
+                <span className="font-semibold">Tanggal Mulai Adopsi:</span> {animal.startDate}
+              </p>
+              <p className="font-medium text-lg">
+                <span className="font-semibold">Tanggal Akhir Adopsi:</span> {animal.endDate || "Tidak ada batas waktu"}
+              </p>
+              <p className="font-medium text-lg">
+                <span className="font-semibold">Adopter:</span> {adopter.type === 'individu' ? adopter.name : adopter.organizationName}
+              </p>
+            </div>
 
-          {/* Aksi */}
-          <div className="flex justify-center gap-4 mt-4">
-            <Button
-              className="bg-primary text-white px-4 py-2 rounded-md cursor-pointer hover:bg-primary/100"
-              onClick={() => router.push(`/adopter-adopsi/kondisi/${animalId}`)}
-            >
-              Pantau Kondisi Hewan
-            </Button>
-            <Badge
-              className="bg-primary text-white px-4 py-2 rounded-md cursor-pointer hover:bg-primary/100"
-              onClick={() => router.push(`/adopter-adopsi/sertifikat/${animal.id}`)}
-            >
-              Lihat Sertifikat Adopsi
-            </Badge>
-          </div>
-          <div className="flex justify-center gap-4">
-            <Button
-              variant="outline"
-              className="bg-red-500 text-white hover:bg-red-600 hover:text-white"
-              onClick={() => setShowAlert(true)}
-            >
-              Berhenti Adopsi
-            </Button>
-            <Button
-              variant="outline"
-              className="bg-blue-500 text-white hover:bg-blue-600 hover:text-white"
-              onClick={handleExtendAdoption}
-            >
-              Perpanjang Periode Adopsi
-            </Button>
-          </div>
-        </CardContent>
+            {/* Aksi - Tombol hijau dan merah sesuai gambar */}
+            <div className="flex justify-center gap-4 mt-6">
+              <Button
+                className="bg-green-800 text-white hover:bg-green-900 py-2 px-4"
+                onClick={() => router.push(`/adopter-adopsi/kondisi/${animalId}`)}
+              >
+                Pantau Kondisi Hewan
+              </Button>
+              <Button
+                className="bg-green-800 text-white hover:bg-green-900 py-2 px-4"
+                onClick={() => router.push(`/adopter-adopsi/sertifikat/${animal.id}`)}
+              >
+                Lihat Sertifikat Adopsi
+              </Button>
+            </div>
+            
+            <div className="flex justify-center gap-4 mt-2">
+              <Button
+                className="bg-red-500 text-white hover:bg-red-600 py-2 px-4"
+                onClick={() => setShowAlert(true)}
+              >
+                Berhenti Adopsi
+              </Button>
+              <Button
+                className="bg-blue-500 text-white hover:bg-blue-600 py-2 px-4"
+                onClick={handleExtendAdoption}
+              >
+                Perpanjang Periode Adopsi
+              </Button>
+            </div>
+          </CardContent>
       </Card>
 
       {/* Alert Dialog for stopping adoption */}
@@ -271,35 +436,15 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Modal for extending adoption period */}
-      {isModalOpen && selectedAdopter && (
-        <>
-          {selectedAdopter.type === "individu" ? (
-            <AdopterIndividuFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-              <AdopterIndividuForm
-                adopter={selectedAdopter}
-                animal={selectedAdopter.animal} 
-                onSubmit={handleSuccess}
-              />
-            </AdopterIndividuFormModal>
-          ) : (
-            <AdopterOrganisasiFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-              <AdopterOrganisasiForm
-                adopter={selectedAdopter}
-                animal={selectedAdopter.animal} 
-                onSubmit={handleSuccess}
-              />
-            </AdopterOrganisasiFormModal>
-          )}
-        </>
-      )}
-
       {/* Toast Notification */}
       {showToast && (
         <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
           {toastMessage}
         </div>
       )}
+      
+      {/* Modal Perpanjangan */}
+      {renderExtendForm()}
       
     </div>
   );

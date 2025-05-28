@@ -7,10 +7,13 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { getUserData } from "@/hooks/getUserData";
+import { toast } from "sonner";
 
 interface MedicalRecord {
   id: string;
   date: string;
+  displayDate?: string;
   doctorName: string;
   healthStatus: string;
   diagnosis: string;
@@ -19,280 +22,181 @@ interface MedicalRecord {
 }
 
 interface Animal {
-  id: string;
+  id_hewan: string;
   name: string;
   species: string;
   habitat: string;
   condition: string;
   imageUrl: string;
-  startDate: string;
-  endDate: string;
-  isAdopted: boolean;
-  ownerId: string;
   medicalRecords: MedicalRecord[];
+  adopterName?: string;
 }
-
-// Sample data that connects with the data in AdopterAdopsiModule and AdopterAdopsiDetailModule
-const animals: Animal[] = [
-  {
-    id: "ani-101",
-    name: "Simba",
-    species: "African Lion",
-    condition: "Sehat",
-    habitat: "Savanna Enclosure",
-    imageUrl: "https://images.unsplash.com/photo-1545006398-2cf48043d3f3?q=80&w=400",
-    startDate: "2025-01-01",
-    endDate: "2025-12-31",
-    isAdopted: true,
-    ownerId: "d290f1ee-6c54-4b01-90e6-d701748f0851", // rajatacalista
-    medicalRecords: [
-      {
-        id: "med-101-1",
-        date: "2025-04-01",
-        doctorName: "Dr. Siti Aminah",
-        healthStatus: "Sakit",
-        diagnosis: "Infeksi saluran pernapasan",
-        treatment: "Antibiotik selama 7 hari",
-        notes: "Evaluasi kondisi perbaikan ventilasi kandang."
-      },
-      {
-        id: "med-101-2",
-        date: "2025-04-08",
-        doctorName: "Dr. Siti Aminah",
-        healthStatus: "Dalam pemantauan",
-        diagnosis: "Masa pemulihan dari infeksi pernapasan",
-        treatment: "Vitamin dan suplemen",
-        notes: "Kondisi membaik, nafsu makan kembali normal."
-      },
-      {
-        id: "med-101-3",
-        date: "2025-04-15",
-        doctorName: "Dr. Ahmad Fauzi",
-        healthStatus: "Sehat",
-        diagnosis: "Pemeriksaan rutin",
-        treatment: "Tidak ada",
-        notes: "Pulih sepenuhnya dari infeksi saluran pernapasan."
-      }
-    ]
-  },
-  {
-    id: "ani-102",
-    name: "Zara",
-    species: "Plains Zebra",
-    condition: "Sehat",
-    habitat: "Savanna Enclosure",
-    imageUrl: "https://images.unsplash.com/photo-1549975248-52273875de73?q=80&w=400",
-    startDate: "2025-02-01",
-    endDate: "2025-11-30",
-    isAdopted: true,
-    ownerId: "d290f1ee-6c54-4b01-90e6-d701748f0851", // rajatacalista
-    medicalRecords: [
-      {
-        id: "med-102-1",
-        date: "2025-03-15",
-        doctorName: "Dr. Ahmad Fauzi",
-        healthStatus: "Sehat",
-        diagnosis: "Pemeriksaan rutin",
-        treatment: "Vitamin dan mineral",
-        notes: "Kondisi fisik dan mental optimal."
-      },
-      {
-        id: "med-102-2",
-        date: "2025-03-30",
-        doctorName: "Dr. Maya Putri",
-        healthStatus: "Dalam pemantauan",
-        diagnosis: "Luka kecil pada kaki depan",
-        treatment: "Pembersihan luka dan antiseptik",
-        notes: "Periksa ulang dalam 3 hari, hindari benda tajam di kandang."
-      },
-      {
-        id: "med-102-3",
-        date: "2025-04-02",
-        doctorName: "Dr. Maya Putri",
-        healthStatus: "Sehat",
-        diagnosis: "Luka sembuh dengan baik",
-        treatment: "Tidak ada",
-        notes: "Luka sudah menutup sempurna, tidak ada tanda infeksi."
-      }
-    ]
-  },
-  {
-    id: "ani-103",
-    name: "Luna",
-    species: "Kucing",
-    condition: "Sakit",
-    habitat: "Sabana Afrika",
-    imageUrl: "https://example.com/luna.jpg",
-    startDate: "2025-02-01",
-    endDate: "2025-11-30",
-    isAdopted: true,
-    ownerId: "11d5b3ec-4513-476e-b5ee-7a9ecb2f13f2", // margana08
-    medicalRecords: [
-      {
-        id: "med-103-1",
-        date: "2025-03-20",
-        doctorName: "Dr. Bambang Sulistyo",
-        healthStatus: "Sakit",
-        diagnosis: "Demam dan kehilangan nafsu makan",
-        treatment: "Pengobatan suportif dan antibiotik",
-        notes: "Perlu pantau asupan makanan dan cairan."
-      },
-      {
-        id: "med-103-2",
-        date: "2025-03-25",
-        doctorName: "Dr. Bambang Sulistyo",
-        healthStatus: "Dalam pemantauan",
-        diagnosis: "Demam berkurang, nafsu makan masih rendah",
-        treatment: "Lanjutkan antibiotik dan tambah suplemen",
-        notes: "Beri makanan basah untuk meningkatkan nafsu makan."
-      },
-      {
-        id: "med-103-3",
-        date: "2025-04-01",
-        doctorName: "Dr. Dewi Rahmawati",
-        healthStatus: "Sakit",
-        diagnosis: "Infeksi saluran kemih",
-        treatment: "Antibiotik khusus untuk infeksi saluran kemih",
-        notes: "Kondisi memburuk, diperlukan pemeriksaan lanjutan."
-      }
-    ]
-  }
-];
-
-const adopters = [
-  {
-    id: "d290f1ee-6c54-4b01-90e6-d701748f0851",
-    username: "rajatacalista",
-    type: "individu",
-    name: "Prasetya Andriani"
-  },
-  {
-    id: "11d5b3ec-4513-476e-b5ee-7a9ecb2f13f2",
-    username: "margana08",
-    type: "organisasi",
-    organizationName: "Yayasan Margana Jaya"
-  }
-];
 
 export default function KondisiPage({ animalId }: { animalId: string }) {
   const router = useRouter();
+  const { userData, isValid } = getUserData();
   const [animal, setAnimal] = useState<Animal | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    // Find the animal data based on the animalId
-    const foundAnimal = animals.find(a => a.id === animalId);
-    if (foundAnimal) {
-      setAnimal(foundAnimal);
-      
-      // Find the owner
-      const owner = adopters.find(a => a.id === foundAnimal.ownerId);
-      if (owner) {
-        setCurrentUser(owner);
+    const fetchHealthRecords = async () => {
+      if (!isValid || !userData.username) {
+        setLoading(false);
+        return;
       }
-    }
-  }, [animalId]);
+      
+      setLoading(true);
+      try {
+        console.log(`Fetching health records for animal ID: ${animalId}`);
+        const response = await fetch(`/api/adopter-adopsi/health/${animalId}`);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to fetch health records");
+        }
+        
+        const data = await response.json();
+        console.log("Health records data:", data);
+        setAnimal(data);
+      } catch (err) {
+        console.error("Error fetching health records:", err);
+        setError(err instanceof Error ? err.message : "Failed to fetch health records");
+        toast.error("Gagal memuat rekam medis hewan");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (!animal || !currentUser) {
-    return <p className="text-center p-8">Data hewan tidak ditemukan.</p>;
-  }
+    fetchHealthRecords();
+  }, [animalId, userData.username, isValid]);
 
   const getStatusBadgeStyle = (status: string) => {
-    switch (status) {
-      case "Sehat":
-        return "bg-green-500 hover:bg-green-600 text-white";
-      case "Sakit":
-        return "bg-red-500 hover:bg-red-600 text-white";
-      case "Dalam pemantauan":
-        return "bg-amber-500 hover:bg-amber-600 text-white";
+    switch (status?.toLowerCase() || '') {
+      case "sehat":
+        return "bg-green-500";
+      case "sakit":
+        return "bg-red-500";
+      case "dalam pemantauan":
+        return "bg-orange-400";
       default:
-        return "bg-gray-500 hover:bg-gray-600 text-white";
+        return "bg-red-500";
     }
   };
 
+  if (loading) {
+    return <p className="text-center p-8">Memuat data...</p>;
+  }
+
+  if (error || !animal) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-red-500 mb-4">{error || "Data hewan tidak ditemukan."}</p>
+        <Button onClick={() => router.back()}>Kembali</Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto py-10 px-4 font-outfit"> 
+    <div className="container mx-auto py-6 px-4 bg-primary-500 min-h-screen font-outfit"> 
       <Button 
         variant="ghost" 
         className="mb-4 flex items-center gap-2"
-        onClick={() => router.push(`/adopter-adopsi/detail/${animalId}`)}
+        onClick={() => router.back()}
       >
         <ArrowLeft className="h-4 w-4" /> Kembali
       </Button>
 
-      <Card className="mb-6">
+      <Card className="mb-6 border-green-600 border">
         <CardHeader className="text-center pb-2">
           <CardTitle className="text-2xl font-bold">Laporan Kondisi Satwa</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center">
-          <Avatar className="h-32 w-32 mb-4">
-            <AvatarImage src={animal.imageUrl} alt={animal.name} />
-            <AvatarFallback>{animal.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+          <Avatar className="h-32 w-32 mb-4 bg-green-100">
+            {animal.imageUrl ? (
+              <AvatarImage src={animal.imageUrl} alt={animal.name} />
+            ) : (
+              <AvatarFallback className="bg-green-100 text-green-800">
+                {animal.name?.substring(0, 2).toUpperCase() || "AN"}
+              </AvatarFallback>
+            )}
           </Avatar>
 
           <div className="text-center mb-6">
-            <p><span className="font-semibold">Nama:</span> {animal.name}</p>
-            <p><span className="font-semibold">Jenis:</span> {animal.species}</p>
-            <p><span className="font-semibold">Habitat:</span> {animal.habitat}</p>
-            <p className="mt-2">
-              <Badge className={`px-3 py-1 ${getStatusBadgeStyle(animal.condition)}`}>
+            <p className="mb-1"><span className="font-semibold">Nama:</span> {animal.name}</p>
+            <p className="mb-1"><span className="font-semibold">Jenis:</span> {animal.species}</p>
+            <p className="mb-1"><span className="font-semibold">Habitat:</span> {animal.habitat}</p>
+            <p className="mt-4">
+              <Badge className={`px-3 py-1 rounded-md ${getStatusBadgeStyle(animal.condition)} text-white`}>
                 Kondisi Saat Ini: {animal.condition}
               </Badge>
             </p>
-            <p className="mt-2">
-              <span className="font-semibold">Diadopsi oleh:</span> {
-                currentUser.type === "individu" ? currentUser.name : currentUser.organizationName
-              }
-            </p>
+            <p className="mt-4"><span className="font-semibold">Diadopsi oleh:</span> {animal.adopterName}</p>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
+      <Card className="border-green-600 border">
+        <CardHeader className="bg-white">
           <CardTitle className="text-xl font-bold">Rekam Medis Satwa</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border p-2 text-left">Tanggal Pemeriksaan</th>
-                  <th className="border p-2 text-left">Nama Dokter</th>
-                  <th className="border p-2 text-left">Status Kesehatan</th>
-                  <th className="border p-2 text-left">Diagnosa</th>
-                  <th className="border p-2 text-left">Pengobatan</th>
-                  <th className="border p-2 text-left">Catatan Tindak Lanjut</th>
-                </tr>
-              </thead>
-              <tbody>
-                {animal.medicalRecords.length > 0 ? (
-                  animal.medicalRecords.map((record) => (
-                    <tr key={record.id}>
-                      <td className="border p-2">{record.date}</td>
-                      <td className="border p-2">{record.doctorName}</td>
-                      <td className="border p-2">
-                        <Badge className={`${getStatusBadgeStyle(record.healthStatus)}`}>
-                          {record.healthStatus}
-                        </Badge>
-                      </td>
-                      <td className="border p-2">{record.diagnosis}</td>
-                      <td className="border p-2">{record.treatment}</td>
-                      <td className="border p-2">{record.notes}</td>
+          <CardContent className="p-4 sm:p-6">
+            <div className="overflow-x-auto rounded-lg">
+              <div className="p-2 mb-4">
+                <table className="w-full border-collapse rounded-lg overflow-hidden">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border p-3 px-4 text-left font-semibold">Tanggal Pemeriksaan</th>
+                      <th className="border p-3 px-4 text-left font-semibold">Nama Dokter</th>
+                      <th className="border p-3 px-4 text-left font-semibold">Status Kesehatan</th>
+                      <th className="border p-3 px-4 text-left font-semibold">Diagnosa</th>
+                      <th className="border p-3 px-4 text-left font-semibold">Pengobatan</th>
+                      <th className="border p-3 px-4 text-left font-semibold">Catatan Tindak Lanjut</th>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="border p-4 text-center">
-                      Belum ada rekam medis untuk satwa ini.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
+                  </thead>
+                  <tbody>
+                    {animal.medicalRecords && animal.medicalRecords.length > 0 ? (
+                      animal.medicalRecords.map((record) => (
+                        <tr key={record.id} className="hover:bg-gray-50">
+                          <td className="border p-3 px-4">{record.displayDate || formatDate(record.date)}</td>
+                          <td className="border p-3 px-4">{record.doctorName}</td>
+                          <td className="border p-3 px-4 text-center">
+                            <Badge className={`inline-flex px-3 py-1 rounded-full ${
+                              getStatusBadgeStyle(record.healthStatus)
+                            } text-white`}>
+                              {record.healthStatus}
+                            </Badge>
+                          </td>
+                          <td className="border p-3 px-4">{record.diagnosis}</td>
+                          <td className="border p-3 px-4">{record.treatment}</td>
+                          <td className="border p-3 px-4">{record.notes}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={6} className="border p-6 text-center text-gray-500">
+                          Belum ada rekam medis untuk satwa ini setelah tanggal adopsi.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </CardContent>
       </Card>
     </div>
   );
+}
+
+// Format tanggal untuk tampilan
+function formatDate(dateString: string) {
+  if (!dateString) return "-";
+  
+  const date = new Date(dateString);
+  return date.toLocaleDateString('id-ID', { 
+    day: 'numeric', 
+    month: 'long', 
+    year: 'numeric' 
+  });
 }

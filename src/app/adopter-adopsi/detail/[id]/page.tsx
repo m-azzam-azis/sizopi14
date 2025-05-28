@@ -1,11 +1,16 @@
-import React from "react";
 import AdopterAdopsiDetailModule from "@/modules/AdopterAdopsiModule/AdopterAdopsiDetailModule";
+import { Suspense } from "react";
 
-export default function AdopterAdopsiDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params; 
+interface PageProps {
+  params: { id: string };
+}
+
+export default async function AdopterAdopsiDetailPage({ params }: PageProps) {
   return (
     <div>
-      <AdopterAdopsiDetailModule animalId={id} />
+      <Suspense fallback={<div>Loading...</div>}>
+        <AdopterAdopsiDetailModule animalId={params.id} />
+      </Suspense>
     </div>
   );
 }
