@@ -22,10 +22,12 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ data });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error fetching reservation data:", error);
     return NextResponse.json(
-      { message: "Failed to fetch reservation data", error: error.message },
+      { message: "Failed to fetch reservation data", error: errorMessage },
       { status: 500 }
     );
   }
@@ -124,10 +126,12 @@ export async function PUT(request: Request) {
         type === "attraction" ? "Attraction" : "Ride"
       } reservation updated successfully`,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error updating reservation:", error);
     return NextResponse.json(
-      { message: "Failed to update reservation", error: error.message },
+      { message: "Failed to update reservation", error: errorMessage },
       { status: 500 }
     );
   }

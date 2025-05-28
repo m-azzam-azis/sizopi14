@@ -12,10 +12,12 @@ import {
   EditWahanaFormValues,
 } from "../forms/WahanaForm";
 
-interface WahanaFormModalProps {
+interface WahanaFormModalProps<
+  T = CreateWahanaFormValues | EditWahanaFormValues
+> {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: T) => void;
   isEditing: boolean;
   nama_wahana?: string;
   initialData?: {
@@ -24,18 +26,20 @@ interface WahanaFormModalProps {
   };
 }
 
-const WahanaFormModal: React.FC<WahanaFormModalProps> = ({
+const WahanaFormModal = <
+  T extends CreateWahanaFormValues | EditWahanaFormValues
+>({
   isOpen,
   onClose,
   onSubmit,
   initialData,
   isEditing = false,
   nama_wahana,
-}) => {
+}: WahanaFormModalProps<T>) => {
   const handleSubmit = (
     data: CreateWahanaFormValues | EditWahanaFormValues
   ) => {
-    onSubmit(data);
+    onSubmit(data as T);
     onClose();
   };
 

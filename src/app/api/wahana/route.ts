@@ -15,10 +15,12 @@ export async function GET() {
     }));
 
     return NextResponse.json({ data: formattedData });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error fetching wahana data:", error);
     return NextResponse.json(
-      { message: "Failed to fetch wahana data", error: error.message },
+      { message: "Failed to fetch wahana data", error: errorMessage },
       { status: 500 }
     );
   }
@@ -68,10 +70,12 @@ export async function POST(req: Request) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error creating wahana:", error);
     return NextResponse.json(
-      { message: "Failed to create wahana", error: error.message },
+      { message: "Failed to create wahana", error: errorMessage },
       { status: 500 }
     );
   }
@@ -98,10 +102,12 @@ export async function PUT(req: Request) {
     return NextResponse.json({
       message: "Wahana updated successfully",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error updating wahana:", error);
     return NextResponse.json(
-      { message: "Failed to update wahana", error: error.message },
+      { message: "Failed to update wahana", error: errorMessage },
       { status: 500 }
     );
   }
@@ -125,10 +131,12 @@ export async function DELETE(req: Request) {
     return NextResponse.json({
       message: "Wahana deleted successfully",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error deleting wahana:", error);
     return NextResponse.json(
-      { message: "Failed to delete wahana", error: error.message },
+      { message: "Failed to delete wahana", error: errorMessage },
       { status: 500 }
     );
   }

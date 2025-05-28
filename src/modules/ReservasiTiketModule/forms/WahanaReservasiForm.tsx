@@ -104,12 +104,15 @@ export const WahanaReservasiForm: React.FC<WahanaReservasiFormProps> = ({
         <FormField
           control={form.control}
           name="nama_fasilitas"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nama Wahana</FormLabel>
-              <Input value={ride.nama_wahana} disabled className="bg-muted" />
-            </FormItem>
-          )}
+          render={
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            ({ field: _ }) => (
+              <FormItem>
+                <FormLabel>Nama Wahana</FormLabel>
+                <Input value={ride.nama_wahana} disabled className="bg-muted" />
+              </FormItem>
+            )
+          }
         />
 
         <FormItem>
@@ -140,21 +143,21 @@ export const WahanaReservasiForm: React.FC<WahanaReservasiFormProps> = ({
           <FormField
             control={form.control}
             name="tanggal_kunjungan"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
+            render={({ field: renderField }) => (
+              <FormItem>
                 <FormLabel>Tanggal</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
-                        variant={"outline"}
+                        variant="outline"
                         className={cn(
                           "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
+                          !renderField.value && "text-muted-foreground"
                         )}
                       >
-                        {field.value ? (
-                          format(field.value, "dd MMMM yyyy")
+                        {renderField.value ? (
+                          format(renderField.value, "dd MMMM yyyy")
                         ) : (
                           <span>Pilih tanggal</span>
                         )}
@@ -165,21 +168,8 @@ export const WahanaReservasiForm: React.FC<WahanaReservasiFormProps> = ({
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) => {
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        date.setHours(0, 0, 0, 0);
-
-                        return (
-                          date < today ||
-                          date >
-                            new Date(
-                              new Date().setMonth(new Date().getMonth() + 9)
-                            )
-                        );
-                      }}
+                      selected={renderField.value}
+                      onSelect={renderField.onChange}
                       initialFocus
                     />
                   </PopoverContent>

@@ -21,30 +21,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AtraksiFormModal from "./modals/AtraksiFormModal";
-import { AtraksiFormValues, EditAtraksiFormValues } from "./forms/AtraksiForm";
+import {
+  EditAtraksiFormValues,
+  CreateAtraksiFormValues,
+} from "./forms/AtraksiForm";
 import { toast } from "sonner";
 import { getUserData } from "@/hooks/getUserData";
 import Link from "next/link";
-
-interface Fasilitas {
-  nama: string;
-  jadwal: Date;
-  kapasitas_max: number;
-}
-
-interface Atraksi {
-  nama_atraksi: string;
-  lokasi: string;
-}
-
-interface Pengguna {
-  username: string;
-  nama_depan: string;
-  nama_belakang: string;
-}
 
 interface PelatihHewan {
   id_staf: string;
@@ -71,15 +56,18 @@ interface AtraksiData {
   pelatih: PelatihHewan | null;
 }
 
+interface AtraksiApiResponse {
+  nama_atraksi: string;
+  lokasi: string;
+  kapasitas_max: number;
+  jadwal: string;
+  hewan_terlibat?: Hewan[];
+  pelatih?: PelatihHewan;
+}
+
 const AtraksiModule = () => {
-  const router = useRouter();
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-  const {
-    userData,
-    isValid,
-    isLoading: authLoading,
-    authState,
-  } = getUserData();
+  const { isLoading: authLoading, authState } = getUserData();
   const [atraksiToDelete, setAtraksiToDelete] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -98,32 +86,23 @@ const AtraksiModule = () => {
       if (!response.ok) {
         throw new Error("Failed to fetch attractions");
       }
+
       const { data } = await response.json();
 
-      console.log("Raw atraksi data:", data);
-
-      const formattedData = data.map((atraksi: any) => ({
+      const formattedData = data.map((atraksi: AtraksiApiResponse) => ({
         id: `atr-${atraksi.nama_atraksi}`,
         nama_atraksi: atraksi.nama_atraksi,
         lokasi: atraksi.lokasi,
         kapasitas: atraksi.kapasitas_max,
         jadwal: atraksi.jadwal,
         hewan_terlibat: atraksi.hewan_terlibat || [],
-        pelatih: atraksi.pelatih
-          ? {
-              id_staf: "",
-              nama_belakang: atraksi.pelatih.nama_belakang,
-              nama_depan: atraksi.pelatih.nama_depan,
-              username: atraksi.pelatih.username_lh,
-              username_lh: atraksi.pelatih.username_lh,
-            }
-          : null,
+        pelatih: atraksi.pelatih || null,
       }));
 
       setAtraksiData(formattedData);
     } catch (error) {
       console.error("Error fetching attractions:", error);
-      toast.error("Failed to load attractions data");
+      toast.error("Failed to load attraction data");
     } finally {
       setIsLoading(false);
     }
@@ -275,7 +254,7 @@ const AtraksiModule = () => {
     spesies: animal.spesies,
   }));
 
-  const handleAddAtraksi = async (data: any) => {
+  const handleAddAtraksi = async (data: CreateAtraksiFormValues) => {
     try {
       const response = await fetch("/api/atraksi", {
         method: "POST",

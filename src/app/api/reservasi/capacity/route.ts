@@ -6,7 +6,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const facilityName = searchParams.get("facility");
     const dateStr = searchParams.get("date");
-    const username = searchParams.get("username");
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _username = searchParams.get("username");
     const currentTickets = searchParams.get("currentTickets");
     const status = searchParams.get("status");
 
@@ -21,7 +23,6 @@ export async function GET(request: Request) {
     const month = dateStr.substring(5, 7);
     const day = dateStr.substring(8, 10);
     const formattedDateStr = `${year}-${month}-${day}`;
-    const date = new Date(formattedDateStr);
 
     console.log("Checking capacity for date:", formattedDateStr);
 
@@ -65,10 +66,12 @@ export async function GET(request: Request) {
     };
 
     return NextResponse.json(adjustedCapacity);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error checking capacity:", error);
     return NextResponse.json(
-      { message: "Error checking capacity", error: error.message },
+      { message: "Error checking capacity", error: errorMessage },
       { status: 500 }
     );
   }

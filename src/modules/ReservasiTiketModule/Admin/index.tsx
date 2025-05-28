@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -58,9 +58,11 @@ const ReservasiTiketAdmin = () => {
   const [cancelType, setCancelType] = useState<"attraction" | "ride">(
     "attraction"
   );
-  const [itemToCancel, setItemToCancel] = useState<any>(null);
+  const [itemToCancel, setItemToCancel] = useState<
+    ReservasiTiketAtraksi | ReservasiTiketWahana | null
+  >(null);
 
-  const fetchAttractionReservations = async () => {
+  const fetchAttractionReservations = useCallback(async () => {
     setIsAtraksiLoading(true);
     try {
       const response = await fetch("/api/reservasi?type=attraction");
@@ -70,7 +72,14 @@ const ReservasiTiketAdmin = () => {
 
       const { data } = await response.json();
 
-      const formattedData = data.map((item: any) => ({
+      const formattedData = data.map((item: {
+        username_p: string;
+        nama_atraksi: string;
+        tanggal_kunjungan: string;
+        jumlah_tiket: number;
+        lokasi: string;
+        status: string;
+      }) => ({
         username_P: item.username_p,
         nama_fasilitas: item.nama_atraksi,
         tanggal_kunjungan: new Date(item.tanggal_kunjungan),
@@ -90,9 +99,9 @@ const ReservasiTiketAdmin = () => {
     } finally {
       setIsAtraksiLoading(false);
     }
-  };
+  }, [toast]);
 
-  const fetchRideReservations = async () => {
+  const fetchRideReservations = useCallback(async () => {
     setIsWahanaLoading(true);
     try {
       const response = await fetch("/api/reservasi?type=ride");
@@ -102,7 +111,14 @@ const ReservasiTiketAdmin = () => {
 
       const { data } = await response.json();
 
-      const formattedData = data.map((item: any) => ({
+      const formattedData = data.map((item: {
+        username_p: string;
+        nama_wahana: string;
+        tanggal_kunjungan: string;
+        jumlah_tiket: number;
+        peraturan: string | null;
+        status: string;
+      }) => ({
         username_P: item.username_p,
         nama_fasilitas: item.nama_wahana,
         tanggal_kunjungan: new Date(item.tanggal_kunjungan),
@@ -124,7 +140,7 @@ const ReservasiTiketAdmin = () => {
     } finally {
       setIsWahanaLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     if (!authLoading && isValid && userRole === "admin") {
@@ -133,7 +149,15 @@ const ReservasiTiketAdmin = () => {
         fetchRideReservations();
       }
     }
-  }, [authLoading, isValid, userRole]);
+  }, [
+    authLoading,
+    isValid,
+    userRole,
+    atraksiReservations.length,
+    wahanaReservations.length,
+    fetchAttractionReservations,
+    fetchRideReservations,
+  ]);
 
   const handleEditAtraksiReservation = (reservation: ReservasiTiketAtraksi) => {
     setCurrentAtraksiReservation(reservation);
