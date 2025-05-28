@@ -33,7 +33,7 @@ import ReservasiTiketCancelModal from "../modals/ReservasiTiketCancelModal";
 import WahanaReservasiFormModal from "../modals/WahanaReservasiFormModal";
 
 interface Facility {
-  jadwal: Date;
+  jadwal: string;
   kapasitas_max: number;
   kapasitas_tersedia: number;
 }
@@ -118,7 +118,7 @@ const ReservasiTiketVisitorModule = () => {
       const formattedReservations = data.reservations.map((res: any) => ({
         ...res,
         tanggal_kunjungan: new Date(res.tanggal_kunjungan),
-        jadwal: new Date(res.jadwal),
+        jadwal: res.jadwal,
       }));
 
       setUserReservations(formattedReservations);
@@ -465,7 +465,26 @@ const ReservasiTiketVisitorModule = () => {
   };
 
   const formatTime = (timeString: string) => {
+    if (!timeString) return "-";
+
+    if (timeString.includes(":")) {
+      const [hours, minutes] = timeString.split(":");
+      return `${hours}:${minutes}`;
+    }
+
     return timeString;
+  };
+
+  const formatDateTime = (time: string | Date) => {
+    if (typeof time === "string") {
+      const [hours, minutes] = time.split(":");
+      return `${hours}:${minutes}`;
+    } else {
+      return time.toLocaleString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
   };
 
   return (
@@ -692,7 +711,8 @@ const ReservasiTiketVisitorModule = () => {
                                 </TableCell>
                                 <TableCell>{attraction.lokasi}</TableCell>
                                 <TableCell>
-                                  {format(new Date(attraction.jadwal), "HH:mm")}
+                                  {formatTime(attraction.jadwal)}{" "}
+                                  {/* Replace format(new Date(attraction.jadwal), "HH:mm") */}
                                 </TableCell>
                                 <TableCell>
                                   {formatCapacity(
@@ -775,7 +795,8 @@ const ReservasiTiketVisitorModule = () => {
                                   {displayPeraturan(ride.peraturan)}
                                 </TableCell>
                                 <TableCell>
-                                  {format(new Date(ride.jadwal), "HH:mm")}
+                                  {formatTime(ride.jadwal)}{" "}
+                                  {/* Replace format(new Date(ride.jadwal), "HH:mm") */}
                                 </TableCell>
                                 <TableCell>
                                   {formatCapacity(
