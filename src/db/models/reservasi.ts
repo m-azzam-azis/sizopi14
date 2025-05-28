@@ -48,7 +48,6 @@ export class Reservasi extends BaseModel<ReservasiType> {
     return await this.customQuery(query);
   }
 
-  // Get all reservations for a specific visitor
   async getVisitorReservations(username: string) {
     const query = `
       SELECT 
@@ -76,9 +75,8 @@ export class Reservasi extends BaseModel<ReservasiType> {
     return await this.customQuery(query, [username]);
   }
 
-  // Get all available attractions with capacity info
   async getAvailableAttractions(date: Date = new Date()) {
-    const formattedDate = date.toISOString().split("T")[0]; // YYYY-MM-DD format
+    const formattedDate = date.toISOString().split("T")[0];
 
     const query = `
       SELECT 
@@ -99,9 +97,8 @@ export class Reservasi extends BaseModel<ReservasiType> {
     return await this.customQuery(query, [formattedDate]);
   }
 
-  // Get all available rides with capacity info
   async getAvailableRides(date: Date = new Date()) {
-    const formattedDate = date.toISOString().split("T")[0]; // YYYY-MM-DD format
+    const formattedDate = date.toISOString().split("T")[0];
 
     const query = `
     SELECT 
@@ -122,9 +119,8 @@ export class Reservasi extends BaseModel<ReservasiType> {
     return await this.customQuery(query, [formattedDate]);
   }
 
-  // Get details of a specific attraction
   async getAttractionDetails(nama_atraksi: string, date: Date = new Date()) {
-    const formattedDate = date.toISOString().split("T")[0]; // YYYY-MM-DD format
+    const formattedDate = date.toISOString().split("T")[0];
 
     const query = `
     SELECT 
@@ -148,9 +144,8 @@ export class Reservasi extends BaseModel<ReservasiType> {
     return results.length > 0 ? results[0] : null;
   }
 
-  // Get details of a specific ride
   async getRideDetails(nama_wahana: string, date: Date = new Date()) {
-    const formattedDate = date.toISOString().split("T")[0]; // YYYY-MM-DD format
+    const formattedDate = date.toISOString().split("T")[0];
 
     const query = `
     SELECT 
@@ -171,7 +166,6 @@ export class Reservasi extends BaseModel<ReservasiType> {
     return results.length > 0 ? results[0] : null;
   }
 
-  // Create a new reservation
   async createReservation(data: {
     username_P: string;
     nama_fasilitas: string;
@@ -195,7 +189,6 @@ export class Reservasi extends BaseModel<ReservasiType> {
     return result[0];
   }
 
-  // Update an existing reservation
   async updateReservation(data: {
     username_P: string;
     nama_fasilitas: string;
@@ -205,50 +198,54 @@ export class Reservasi extends BaseModel<ReservasiType> {
     new_jumlah_tiket?: number;
     new_status?: string;
   }) {
-    const updateFields = [];
-    const values = [
-      data.username_P,
-      data.nama_fasilitas,
-      data.tanggal_kunjungan,
-    ];
-    let paramIndex = 4;
+    try {
+      const updateFields = [];
+      const values = [
+        data.username_P,
+        data.nama_fasilitas,
+        data.tanggal_kunjungan,
+      ];
+      let paramIndex = 4;
 
-    if (data.new_tanggal_kunjungan) {
-      updateFields.push(`tanggal_kunjungan = $${paramIndex}`);
-      values.push(data.new_tanggal_kunjungan);
-      paramIndex++;
+      if (data.new_tanggal_kunjungan) {
+        updateFields.push(`tanggal_kunjungan = $${paramIndex}`);
+        values.push(data.new_tanggal_kunjungan);
+        paramIndex++;
+      }
+
+      if (data.new_jumlah_tiket) {
+        updateFields.push(`jumlah_tiket = $${paramIndex}`);
+        values.push(data.new_jumlah_tiket.toString());
+        paramIndex++;
+      }
+
+      if (data.new_status) {
+        updateFields.push(`status = $${paramIndex}`);
+        values.push(data.new_status);
+        paramIndex++;
+      }
+
+      if (updateFields.length === 0) {
+        return null;
+      }
+
+      const query = `
+        UPDATE RESERVASI
+        SET ${updateFields.join(", ")}
+        WHERE username_P = $1 
+          AND nama_fasilitas = $2 
+          AND tanggal_kunjungan = $3
+        RETURNING *
+      `;
+
+      const result = await this.customQuery(query, values);
+      return result.length > 0 ? result[0] : null;
+    } catch (error) {
+      console.error("Database error in updateReservation:", error);
+      throw error;
     }
-
-    if (data.new_jumlah_tiket) {
-      updateFields.push(`jumlah_tiket = $${paramIndex}`);
-      values.push(data.new_jumlah_tiket.toString());
-      paramIndex++;
-    }
-
-    if (data.new_status) {
-      updateFields.push(`status = $${paramIndex}`);
-      values.push(data.new_status);
-      paramIndex++;
-    }
-
-    if (updateFields.length === 0) {
-      return null; // Nothing to update
-    }
-
-    const query = `
-      UPDATE RESERVASI
-      SET ${updateFields.join(", ")}
-      WHERE username_P = $1 
-        AND nama_fasilitas = $2 
-        AND tanggal_kunjungan = $3
-      RETURNING *
-    `;
-
-    const result = await this.customQuery(query, values);
-    return result.length > 0 ? result[0] : null;
   }
 
-  // Cancel a reservation
   async cancelReservation(
     username_P: string,
     nama_fasilitas: string,
@@ -271,7 +268,6 @@ export class Reservasi extends BaseModel<ReservasiType> {
     return result.length > 0 ? result[0] : null;
   }
 
-  // Check if there's enough capacity for a reservation
   async checkCapacity(
     nama_fasilitas: string,
     tanggal_kunjungan: Date,

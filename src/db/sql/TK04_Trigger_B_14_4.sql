@@ -13,7 +13,7 @@ BEGIN
     FROM RESERVASI
     WHERE nama_fasilitas = NEW.nama_fasilitas
       AND tanggal_kunjungan = NEW.tanggal_kunjungan
-      AND status != 'Dibatalkan'
+      AND status != 'Batal'
       AND (username_P != NEW.username_P 
            OR nama_fasilitas != NEW.nama_fasilitas 
            OR tanggal_kunjungan != NEW.tanggal_kunjungan);
@@ -21,7 +21,7 @@ BEGIN
     remaining_capacity := capacity_max - tickets_sold;
     
     IF TG_OP = 'UPDATE' THEN
-        IF OLD.status != 'Dibatalkan' THEN
+        IF OLD.status != 'Batal' THEN
             remaining_capacity := remaining_capacity + OLD.jumlah_tiket;
         END IF;
     END IF;
