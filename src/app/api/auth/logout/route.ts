@@ -5,6 +5,8 @@ export async function POST(req: Request) {
 
   cookieStore.delete("token");
 
+  console.log(req);
+
   return new Response(
     JSON.stringify({
       message: "Success",
