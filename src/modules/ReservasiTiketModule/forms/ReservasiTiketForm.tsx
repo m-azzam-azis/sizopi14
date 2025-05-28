@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,13 +19,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -53,16 +46,6 @@ interface ReservasiFormData {
   jadwal?: string;
   tanggal_kunjungan: Date;
   jumlah_tiket: number;
-}
-
-interface Atraksi {
-  nama_atraksi: string;
-  lokasi: string;
-  fasilitas: {
-    jadwal: Date | string;
-    kapasitas_tersedia: number;
-    kapasitas_max: number;
-  };
 }
 
 interface ReservasiTiketFormProps {
@@ -132,16 +115,19 @@ export const ReservasiTiketForm: React.FC<ReservasiTiketFormProps> = ({
         <FormField
           control={form.control}
           name="nama_fasilitas"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nama Atraksi</FormLabel>
-              <Input
-                value={attraction.nama_atraksi}
-                disabled
-                className="bg-muted"
-              />
-            </FormItem>
-          )}
+          render={
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            ({ field: _ }) => (
+              <FormItem>
+                <FormLabel>Nama Atraksi</FormLabel>
+                <Input
+                  value={attraction.nama_atraksi}
+                  disabled
+                  className="bg-muted"
+                />
+              </FormItem>
+            )
+          }
         />
 
         <div className="grid grid-cols-1 gap-4">
@@ -162,7 +148,6 @@ export const ReservasiTiketForm: React.FC<ReservasiTiketFormProps> = ({
           </FormItem>
         </div>
 
-        
         {isEditing ? (
           <FormField
             control={form.control}

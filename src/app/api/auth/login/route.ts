@@ -145,12 +145,14 @@ export async function POST(req: Request) {
         },
       }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error(error);
     return new Response(
       JSON.stringify({
         message: "Failed",
-        error: error.message,
+        error: errorMessage,
       }),
       { status: 500 }
     );

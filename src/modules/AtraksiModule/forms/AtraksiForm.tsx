@@ -12,15 +12,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { CalendarIcon, Check } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -29,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { format } from "date-fns";
 
 const editAtraksiFormSchema = z.object({
   jadwal: z.string({
@@ -67,7 +59,7 @@ interface Hewan {
 }
 
 interface AtraksiFormProps {
-  onSubmit: (data: any) => void;
+  onSubmit: (data: CreateAtraksiFormValues | EditAtraksiFormValues) => void;
   initialValues?: {
     jadwal: string | Date;
     kapasitas: number;

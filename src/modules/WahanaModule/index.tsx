@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useRouter } from "next/navigation";
+import { getUserData } from "@/hooks/getUserData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import WahanaFormModal from "./modals/WahanaFormModal";
 import {
@@ -29,7 +29,6 @@ import {
   EditWahanaFormValues,
 } from "./forms/WahanaForm";
 import { toast } from "sonner";
-import { getUserData } from "@/hooks/getUserData";
 import Link from "next/link";
 
 interface WahanaData {
@@ -41,14 +40,8 @@ interface WahanaData {
 }
 
 const WahanaModule = () => {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const {
-    userData,
-    isValid,
-    isLoading: authLoading,
-    authState,
-  } = getUserData();
+  const { isLoading: authLoading, authState } = getUserData();
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [wahanaToDelete, setWahanaToDelete] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -66,7 +59,7 @@ const WahanaModule = () => {
 
       const { data } = await response.json();
 
-      const formattedData = data.map((wahana: any) => ({
+      const formattedData = data.map((wahana: WahanaData) => ({
         id: `whn-${wahana.nama_wahana}`,
         nama_wahana: wahana.nama_wahana,
         kapasitas_max: wahana.kapasitas_max,

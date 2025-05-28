@@ -7,6 +7,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AtraksiForm } from "../forms/AtraksiForm";
+import {
+  CreateAtraksiFormValues,
+  EditAtraksiFormValues,
+} from "../forms/AtraksiForm";
 
 interface Pelatih {
   id: string;
@@ -19,25 +23,28 @@ interface Hewan {
   spesies: string;
 }
 
-interface AtraksiFormModalProps {
+interface AtraksiFormModalProps<
+  T = CreateAtraksiFormValues | EditAtraksiFormValues
+> {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: T) => void;
   initialData?: {
     jadwal: string | Date;
     kapasitas: number;
   };
-  isEditing?: boolean;
+  isEditing: boolean;
   nama_atraksi?: string;
   lokasi?: string;
   pelatih?: string;
   hewan_terlibat?: string;
-
   pelatihList?: Pelatih[];
   hewanList?: Hewan[];
 }
 
-const AtraksiFormModal: React.FC<AtraksiFormModalProps> = ({
+const AtraksiFormModal = <
+  T extends CreateAtraksiFormValues | EditAtraksiFormValues
+>({
   isOpen,
   onClose,
   onSubmit,
@@ -49,9 +56,11 @@ const AtraksiFormModal: React.FC<AtraksiFormModalProps> = ({
   hewan_terlibat,
   pelatihList = [],
   hewanList = [],
-}) => {
-  const handleSubmit = (data: any) => {
-    onSubmit(data);
+}: AtraksiFormModalProps<T>) => {
+  const handleSubmit = (
+    data: CreateAtraksiFormValues | EditAtraksiFormValues
+  ) => {
+    onSubmit(data as T);
     onClose();
   };
 

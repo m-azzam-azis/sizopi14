@@ -70,27 +70,29 @@ export const LoginModule: React.FC = () => {
       setTimeout(() => {
         switch (role) {
           case "visitor":
-            router.push("/reservasi/dashboard");
+            router.push("/");
             break;
           case "admin":
-            router.push("/dashboard");
+            router.push("/");
             break;
           case "veterinarian":
-            router.push("/rekam-medis");
+            router.push("/");
             break;
           case "caretaker":
-            router.push("/pakan");
+            router.push("/");
             break;
           case "trainer":
-            router.push("/atraksi");
+            router.push("/");
             break;
           default:
-            router.push("/dashboard");
+            router.push("/");
         }
       }, 1000);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
       console.error("Login error:", error);
-      toast.error(error.message || "Invalid credentials");
+      toast.error(errorMessage || "Invalid credentials");
     } finally {
       setIsLoading(false);
     }

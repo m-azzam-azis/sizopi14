@@ -97,8 +97,12 @@ export const VisitorRegisterModule: React.FC = () => {
 
       toast.success("Registration successful!");
       router.push("/login");
-    } catch (error: any) {
-      toast.error(error.message || "Registration failed. Please try again.");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Registration failed. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Eye, Pencil, Trash } from "lucide-react";
+import { Eye, Pencil, Trash } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -31,12 +31,6 @@ import ReservasiTiketFormModal from "../modals/ReservasiTiketFormModal";
 import ReservasiTiketDetailModal from "../modals/ReservasiTiketDetailModal";
 import ReservasiTiketCancelModal from "../modals/ReservasiTiketCancelModal";
 import WahanaReservasiFormModal from "../modals/WahanaReservasiFormModal";
-
-interface Facility {
-  jadwal: string;
-  kapasitas_max: number;
-  kapasitas_tersedia: number;
-}
 
 interface Attraction {
   nama_atraksi: string;
@@ -74,12 +68,7 @@ interface Reservation {
 
 const ReservasiTiketVisitorModule = () => {
   const { toast } = useToast();
-  const {
-    userData,
-    isValid,
-    isLoading: authLoading,
-    authState,
-  } = getUserData();
+  const { userData, isValid, authState } = getUserData();
 
   const username = userData?.username || "";
 
@@ -103,7 +92,7 @@ const ReservasiTiketVisitorModule = () => {
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  const fetchUserReservations = async () => {
+  const fetchUserReservations = useCallback(async () => {
     if (!isValid || !username) return;
 
     setIsReservationsLoading(true);
@@ -115,11 +104,23 @@ const ReservasiTiketVisitorModule = () => {
 
       const data = await response.json();
 
-      const formattedReservations = data.reservations.map((res: any) => ({
-        ...res,
-        tanggal_kunjungan: new Date(res.tanggal_kunjungan),
-        jadwal: res.jadwal,
-      }));
+      const formattedReservations = data.reservations.map(
+        (res: {
+          username_P: string;
+          nama_fasilitas: string;
+          tanggal_kunjungan: string;
+          jumlah_tiket: number;
+          status: string;
+          jenis_reservasi: string;
+          jadwal: string;
+          lokasi?: string;
+          peraturan?: string;
+        }) => ({
+          ...res,
+          tanggal_kunjungan: new Date(res.tanggal_kunjungan),
+          jadwal: res.jadwal,
+        })
+      );
 
       setUserReservations(formattedReservations);
     } catch (error) {
@@ -132,60 +133,88 @@ const ReservasiTiketVisitorModule = () => {
     } finally {
       setIsReservationsLoading(false);
     }
-  };
+  }, [isValid, username, toast]);
 
-  const fetchAvailableFacilities = async (date: Date = selectedDate) => {
-    setIsAvailableLoading(true);
-    try {
-      const dateParam = format(date, "yyyy-MM-dd");
-      const response = await fetch(
-        `/api/reservasi-visitor?type=available&date=${dateParam}`
-      );
+  const fetchAvailableFacilities = useCallback(
+    async (date: Date = selectedDate) => {
+      setIsAvailableLoading(true);
+      try {
+        const dateParam = format(date, "yyyy-MM-dd");
+        const response = await fetch(
+          `/api/reservasi-visitor?type=available&date=${dateParam}`
+        );
 
-      if (!response.ok) throw new Error("Failed to fetch available facilities");
+        if (!response.ok)
+          throw new Error("Failed to fetch available facilities");
 
-      const data = await response.json();
+        const data = await response.json();
 
-      const formattedAttractions = data.attractions.map((attr: any) => ({
-        nama_atraksi: attr.nama_atraksi,
-        lokasi: attr.lokasi,
-        jadwal: attr.jadwal,
-        kapasitas_max: parseInt(attr.kapasitas_max),
-        kapasitas_tersedia: parseInt(attr.kapasitas_tersedia),
-        tiket_terjual: parseInt(attr.tiket_terjual || 0),
-        jenis_reservasi: "Atraksi",
-      }));
+        const formattedAttractions = data.attractions.map(
+          (attr: {
+            nama_atraksi: string;
+            lokasi: string;
+            jadwal: string;
+            kapasitas_max: string | number;
+            kapasitas_tersedia: string | number;
+            tiket_terjual: string | number;
+          }) => ({
+            nama_atraksi: attr.nama_atraksi,
+            lokasi: attr.lokasi,
+            jadwal: attr.jadwal,
+            kapasitas_max: parseInt(attr.kapasitas_max.toString()),
+            kapasitas_tersedia: parseInt(attr.kapasitas_tersedia.toString()),
+            tiket_terjual: parseInt(attr.tiket_terjual?.toString() || "0"),
+            jenis_reservasi: "Atraksi",
+          })
+        );
 
-      const formattedRides = data.rides.map((ride: any) => ({
-        nama_wahana: ride.nama_wahana,
-        peraturan: ride.peraturan,
-        jadwal: ride.jadwal,
-        kapasitas_max: parseInt(ride.kapasitas_max),
-        kapasitas_tersedia: parseInt(ride.kapasitas_tersedia),
-        tiket_terjual: parseInt(ride.tiket_terjual || 0),
-        jenis_reservasi: "Wahana",
-      }));
+        const formattedRides = data.rides.map(
+          (ride: {
+            nama_wahana: string;
+            peraturan: string;
+            jadwal: string;
+            kapasitas_max: string | number;
+            kapasitas_tersedia: string | number;
+            tiket_terjual: string | number;
+          }) => ({
+            nama_wahana: ride.nama_wahana,
+            peraturan: ride.peraturan,
+            jadwal: ride.jadwal,
+            kapasitas_max: parseInt(ride.kapasitas_max.toString()),
+            kapasitas_tersedia: parseInt(ride.kapasitas_tersedia.toString()),
+            tiket_terjual: parseInt(ride.tiket_terjual?.toString() || "0"),
+            jenis_reservasi: "Wahana",
+          })
+        );
 
-      setAttractions(formattedAttractions);
-      setRides(formattedRides);
-    } catch (error) {
-      console.error("Error fetching available facilities:", error);
-      toast({
-        title: "Error",
-        description: "Gagal memuat data fasilitas tersedia",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAvailableLoading(false);
-    }
-  };
+        setAttractions(formattedAttractions);
+        setRides(formattedRides);
+      } catch (error) {
+        console.error("Error fetching available facilities:", error);
+        toast({
+          title: "Error",
+          description: "Gagal memuat data fasilitas tersedia",
+          variant: "destructive",
+        });
+      } finally {
+        setIsAvailableLoading(false);
+      }
+    },
+    [toast, selectedDate]
+  );
 
   useEffect(() => {
-    if (!authLoading && isValid) {
+    if (authState === "authenticated" && isValid) {
       fetchUserReservations();
       fetchAvailableFacilities(selectedDate);
     }
-  }, [authLoading, isValid, username, selectedDate]);
+  }, [
+    authState,
+    isValid,
+    selectedDate,
+    fetchUserReservations,
+    fetchAvailableFacilities,
+  ]);
 
   const handleCreateAttractionReservation = async (data: {
     nama_fasilitas: string;
@@ -473,18 +502,6 @@ const ReservasiTiketVisitorModule = () => {
     }
 
     return timeString;
-  };
-
-  const formatDateTime = (time: string | Date) => {
-    if (typeof time === "string") {
-      const [hours, minutes] = time.split(":");
-      return `${hours}:${minutes}`;
-    } else {
-      return time.toLocaleString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    }
   };
 
   return (
