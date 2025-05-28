@@ -35,12 +35,35 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    // Check authorization - only caretakers can create feeding schedules
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+    
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const decoded: any = decode(token);
+    const username_jh = decoded?.data?.username;
+    const role = decoded?.data?.role;
+
+    if (!username_jh || role !== "caretaker") {
+      return new Response(JSON.stringify({ error: "Forbidden: Only caretakers can create feeding schedules" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const data = await request.json();
     // Set status default ke 'tersedia' jika tidak dikirim dari frontend
     if (!data.status) {
       data.status = 'tersedia';
     }
     const pakanModel = new Pakan();
+
     const created = await pakanModel.create(data);
 
     // Insert into MEMBERI table for relationship
@@ -51,6 +74,7 @@ export async function POST(request: Request) {
       const decoded: any = decode(token);
       username_jh = decoded?.data?.username;
     }
+
     if (username_jh) {
       const memberiModel = new Memberi();
       let jadwalValue: Date;
@@ -89,6 +113,27 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    // Check authorization - only caretakers can update feeding schedules
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+    
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const decoded: any = decode(token);
+    const role = decoded?.data?.role;
+
+    if (role !== "caretaker") {
+      return new Response(JSON.stringify({ error: "Forbidden: Only caretakers can update feeding schedules" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const url = new URL(request.url);
     const id_hewan = url.searchParams.get("id_hewan");
     const jadwal = url.searchParams.get("jadwal");
@@ -115,6 +160,27 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    // Check authorization - only caretakers can delete feeding schedules
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+    
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const decoded: any = decode(token);
+    const role = decoded?.data?.role;
+
+    if (role !== "caretaker") {
+      return new Response(JSON.stringify({ error: "Forbidden: Only caretakers can delete feeding schedules" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const url = new URL(request.url);
     const id_hewan = url.searchParams.get("id_hewan");
     const jadwal = url.searchParams.get("jadwal");
@@ -123,7 +189,10 @@ export async function DELETE(request: Request) {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
-    }    const pakanModel = new Pakan();
+    }    
+    
+    const pakanModel = new Pakan();
+    
     console.log("DELETE request received for: ", { id_hewan, jadwal });
     // Using the new deleteByPrimaryKey method specifically designed for the composite primary key
     const deleted = await pakanModel.deleteByPrimaryKey(id_hewan, jadwal);

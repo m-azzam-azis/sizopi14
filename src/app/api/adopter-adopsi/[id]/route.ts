@@ -1,53 +1,54 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/db/db";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const { id } = await params;
-    
-    const query = `
-      SELECT 
-        h.id,
-        h.nama as name,
-        h.spesies as species, 
-        h.nama_habitat as habitat,
-        h.url_foto as imageUrl,
-        h.status_kesehatan,
-        a.id_adopter as ownerId,
-        a.tgl_mulai_adopsi as startDate,
-        a.tgl_berhenti_adopsi as endDate,
-        a.status_pembayaran as paymentStatus,
-        a.kontribusi_finansial,
-        CASE 
-          WHEN i.nama IS NOT NULL THEN i.nama
-          WHEN o.nama_organisasi IS NOT NULL THEN o.nama_organisasi
-          ELSE 'Unknown'
-        END as adopter_name,
-        CASE 
-          WHEN i.id_adopter IS NOT NULL THEN 'individu'
-          WHEN o.id_adopter IS NOT NULL THEN 'organisasi'
-          ELSE NULL
-        END as adopter_type,
-        ad.username_adopter
-      FROM hewan h
-      JOIN adopsi a ON h.id = a.id_hewan
-      JOIN adopter ad ON a.id_adopter = ad.id_adopter
-      LEFT JOIN individu i ON a.id_adopter = i.id_adopter
-      LEFT JOIN organisasi o ON a.id_adopter = o.id_adopter
-      WHERE h.id = $1
-    `;
-    
-    const result = await pool.query(query, [id]);
-    
-    if (result.rows.length === 0) {
-      return NextResponse.json(
-        { error: "Data hewan adopsi tidak ditemukan" },
-        { status: 404 }
-      );
-    }
+  export async function GET(
+    request: NextRequest,
+    { params }: { params: { id: string } }
+  ) {
+    try {
+      const { id } = await params;
+      
+      const query = `
+        SELECT 
+          h.id,
+          h.nama as name,
+          h.spesies as species, 
+          h.nama_habitat as habitat,
+          h.url_foto as imageUrl,
+          h.status_kesehatan,
+          a.id_adopter as ownerId,
+          a.tgl_mulai_adopsi as startDate,
+          a.tgl_berhenti_adopsi as endDate,
+          a.status_pembayaran as paymentStatus,
+          a.kontribusi_finansial,
+          CASE 
+            WHEN i.nama IS NOT NULL THEN i.nama
+            WHEN o.nama_organisasi IS NOT NULL THEN o.nama_organisasi
+            ELSE 'Unknown'
+          END as adopter_name,
+          CASE 
+            WHEN i.id_adopter IS NOT NULL THEN 'individu'
+            WHEN o.id_adopter IS NOT NULL THEN 'organisasi'
+            ELSE NULL
+          END as adopter_type,
+          o.nama_organisasi, 
+          ad.username_adopter
+        FROM hewan h
+        JOIN adopsi a ON h.id = a.id_hewan
+        JOIN adopter ad ON a.id_adopter = ad.id_adopter
+        LEFT JOIN individu i ON a.id_adopter = i.id_adopter
+        LEFT JOIN organisasi o ON a.id_adopter = o.id_adopter
+        WHERE h.id = $1
+      `;
+      
+      const result = await pool.query(query, [id]);
+      
+      if (result.rows.length === 0) {
+        return NextResponse.json(
+          { error: "Data hewan adopsi tidak ditemukan" },
+          { status: 404 }
+        );
+      }
   
     
     // Get adopter details

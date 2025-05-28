@@ -4,46 +4,57 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { ReservasiTiketForm } from "../forms/ReservasiTiketForm";
-import { Atraksi, ReservasiFormData } from "@/types/schema";
 
 interface ReservasiTiketFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: ReservasiFormData) => void;
-  atraksiList: Atraksi[];
-  isEditing: boolean;
-  initialData?: ReservasiFormData;
+  onSubmit: (data: {
+    nama_fasilitas: string;
+    tanggal_kunjungan: Date;
+    jumlah_tiket: number;
+  }) => void;
+  attraction: {
+    nama_atraksi: string;
+    lokasi: string;
+    fasilitas: {
+      jadwal: Date | string;
+      kapasitas_tersedia: number;
+      kapasitas_max: number;
+    };
+  };
+  isEditing?: boolean;
+  initialData?: {
+    tanggal_kunjungan: Date;
+    jumlah_tiket: number;
+  };
+  selectedDate: Date;
 }
 
 const ReservasiTiketFormModal: React.FC<ReservasiTiketFormModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
-  atraksiList,
-  isEditing,
+  attraction,
+  isEditing = false,
   initialData,
+  selectedDate,
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[525px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Reservasi" : "Buat Reservasi"}
+            {isEditing ? "Edit Reservasi" : "Form Reservasi"}
           </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? "Edit detail reservasi tiket anda di bawah ini."
-              : "Silahkan isi form di bawah untuk mereservasi tiket."}
-          </DialogDescription>
         </DialogHeader>
         <ReservasiTiketForm
           onSubmit={onSubmit}
-          atraksiList={atraksiList}
+          attraction={attraction}
           isEditing={isEditing}
           initialData={initialData}
+          selectedDate={selectedDate}
         />
       </DialogContent>
     </Dialog>

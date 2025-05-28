@@ -7,50 +7,24 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { VeterinarianData } from "@/types/user";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-interface VeterinarianDashboardProps {
-  userData: VeterinarianData;
+interface MedicalRecord {
+  id: string;
+  animalId: string;
+  animalName: string;
+  species: string;
+  date: string;
+  diagnosis: string;
+  status: string;
 }
 
-// Mock data for recent medical records
-const recentMedicalRecords = [
-  {
-    id: 1,
-    animalId: "A001",
-    animalName: "Leo",
-    species: "Lion",
-    date: "2025-04-25",
-    diagnosis: "Annual checkup",
-    status: "Healthy",
-  },
-  {
-    id: 2,
-    animalId: "A015",
-    animalName: "Gerry",
-    species: "Giraffe",
-    date: "2025-04-24",
-    diagnosis: "Minor skin infection",
-    status: "Under Treatment",
-  },
-  {
-    id: 3,
-    animalId: "A042",
-    animalName: "Slithers",
-    species: "Python",
-    date: "2025-04-22",
-    diagnosis: "Respiratory infection",
-    status: "Improving",
-  },
-];
+interface VeterinarianDashboardProps {
+  userData: VeterinarianData & {
+    medicalRecords?: MedicalRecord[];
+  };
+}
 
 const VeterinarianDashboard: React.FC<VeterinarianDashboardProps> = ({
   userData,
@@ -68,7 +42,7 @@ const VeterinarianDashboard: React.FC<VeterinarianDashboardProps> = ({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {userData.animalsTreated || 0}
+              {userData.animalsTreated ?? 0}
             </div>
             <p className="text-xs text-muted-foreground">+5 new this week</p>
           </CardContent>
@@ -80,7 +54,7 @@ const VeterinarianDashboard: React.FC<VeterinarianDashboardProps> = ({
           </CardHeader>
           <CardContent>
             <div className="text-md font-medium">
-              {userData.certificationNumber}
+              {userData.certificationNumber || "-"}
             </div>
             <p className="text-xs text-muted-foreground">Valid until 2026</p>
           </CardContent>
@@ -94,7 +68,7 @@ const VeterinarianDashboard: React.FC<VeterinarianDashboardProps> = ({
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {userData.specializations.map((spec, index) => (
+              {(userData.specializations || []).map((spec, index) => (
                 <Badge key={index} variant="secondary">
                   {spec}
                 </Badge>
@@ -104,40 +78,38 @@ const VeterinarianDashboard: React.FC<VeterinarianDashboardProps> = ({
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Medical Records</CardTitle>
-          <CardDescription>Latest animals you've treated</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Animal</TableHead>
-                <TableHead>Species</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Diagnosis</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentMedicalRecords.map((record) => (
-                <TableRow key={record.id}>
-                  <TableCell className="font-medium">
-                    {record.animalName}
-                  </TableCell>
-                  <TableCell>{record.species}</TableCell>
-                  <TableCell>{record.date}</TableCell>
-                  <TableCell>{record.diagnosis}</TableCell>
-                  <TableCell>
-                    <Badge>{record.status}</Badge>
-                  </TableCell>
+      {userData.medicalRecords && userData.medicalRecords.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Medical Records</CardTitle>
+            <CardDescription>Latest animals you've treated</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Animal</TableHead>
+                  <TableHead>Species</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Diagnosis</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {userData.medicalRecords.map((record) => (
+                  <TableRow key={record.id}>
+                    <TableCell className="font-medium">{record.animalName}</TableCell>
+                    <TableCell>{record.species}</TableCell>
+                    <TableCell>{record.date}</TableCell>
+                    <TableCell>{record.diagnosis}</TableCell>
+                    <TableCell><Badge>{record.status}</Badge></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </>
   );
 };

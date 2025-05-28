@@ -9,4 +9,8 @@ export class PenjagaHewan extends BaseModel<PenjagaHewanType> {
   async findByUsername(username: string) {
     return this.findBy("username_JH", username);
   }
+
+  async updateByUsername(username: string, data: Partial<PenjagaHewanType>) {
+    return this.update("username_JH", username, data);
+  }
 }

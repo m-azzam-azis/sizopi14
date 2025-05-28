@@ -43,7 +43,7 @@ export interface DokterHewanType {
 
 export interface FasilitasType {
   nama: string;
-  jadwal: Date;
+  jadwal: string; // Changed from Date to string
   kapasitas_max: number;
 }
 
@@ -131,7 +131,7 @@ export interface PenjagaHewanType {
 
 export interface ReservasiType {
   username_P: string;
-  nama_atraksi: string;
+  nama_fasilitas: string;
   tanggal_kunjungan: Date;
   jumlah_tiket: number;
   status: string;

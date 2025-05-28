@@ -55,3 +55,21 @@ export interface ReservasiFormData {
   tanggal_kunjungan: Date;
   jumlah_tiket: number;
 }
+
+export interface ReservasiTiketAtraksi {
+  username_P: string;
+  nama_fasilitas: string;
+  tanggal_kunjungan: Date;
+  jumlah_tiket: number;
+  lokasi: string;
+  status: ReservationStatus;
+}
+
+export interface ReservasiTiketWahana {
+  username_P: string;
+  nama_fasilitas: string;
+  tanggal_kunjungan: Date;
+  jumlah_tiket: number;
+  peraturan: string[];
+  status: ReservationStatus;
+}

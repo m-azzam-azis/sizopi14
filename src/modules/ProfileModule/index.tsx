@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
@@ -17,7 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { z } from "zod";
+import { useToast } from "@/hooks/use-toast";
+import { getUserData } from "@/hooks/getUserData";
 
 import {
   AdminData,
@@ -51,33 +53,59 @@ const specializations = [
   { id: "other", label: "Other" },
 ];
 
-// Mock user data
-const userData = {
-  id: "user-123",
-  username: "johndoe",
-  email: "john.doe@example.com",
-  firstName: "John",
-  middleName: "",
-  lastName: "Doe",
-  phoneNumber: "+62123456789",
-  role: "admin" as UserRole, // Change this to test different role forms
-
-  // Role-specific fields
-  // For visitor
-  address: "123 Main Street, City",
-  birthDate: "1990-01-01",
-
-  // For veterinarian
-  certificationNumber: "VET-12345",
-  specializations: ["Large Mammals", "Reptiles"],
-
-  // For staff (admin, caretaker, trainer)
-  staffId: "STAFF-54321",
-};
+interface ProfileData {
+  username: string;
+  email: string;
+  nama_depan: string;
+  nama_tengah: string;
+  nama_belakang: string;
+  no_telepon: string;
+  role: string;
+  alamat?: string;
+  tgl_lahir?: string;
+  no_str?: string;
+  nama_spesialisasi?: string[];
+  id_staf?: string;
+}
 
 const ProfileModule: React.FC = () => {
-  const [user, setUser] = useState(userData);
+  const { userData, isValid, isLoading } = getUserData();
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [activeTab, setActiveTab] = useState("general");
+  const { toast } = useToast();
+
+  // Fetch profile data from API
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!isValid || !userData.username) return;
+      
+      try {
+        const response = await fetch("/api/profile");
+        if (response.ok) {
+          const data = await response.json();
+          setProfileData(data);
+        } else {
+          console.error("Failed to fetch profile data");
+          toast({
+            title: "Error",
+            description: "Failed to load profile data",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        toast({
+          title: "Error", 
+          description: "Failed to load profile data",
+
+        });
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    fetchProfileData();
+  }, [isValid, userData.username, toast]);
 
   // Role-specific schemas
   const visitorSchema = z.object({
@@ -97,17 +125,66 @@ const ProfileModule: React.FC = () => {
   const staffSchema = z.object({
     staffId: z.string().min(1, "Staff ID is required"),
   });
-
   // Handle form submission
-  const handleProfileUpdate = (data: any) => {
-    console.log("Updated profile:", data);
-    // In a real app, this would send the data to an API
-    setUser({ ...user, ...data });
-  };
+  const handleProfileUpdate = async (data: any) => {
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nama_depan: data.firstName,
+          nama_tengah: data.middleName,
+          nama_belakang: data.lastName,
+          email: data.email,
+          no_telepon: data.phoneNumber,
+          // Role-specific fields
+          ...(data.address && { alamat: data.address }),
+          ...(data.birthDate && { tgl_lahir: data.birthDate }),
+        }),
+      });
 
+      if (response.ok) {
+        // Update local state
+        if (profileData) {
+          const updatedProfile = {
+            ...profileData,
+            nama_depan: data.firstName,
+            nama_tengah: data.middleName,
+            nama_belakang: data.lastName,
+            email: data.email,
+            no_telepon: data.phoneNumber,
+            ...(data.address && { alamat: data.address }),
+            ...(data.birthDate && { tgl_lahir: data.birthDate }),
+          };
+          setProfileData(updatedProfile);
+        }
+        
+        toast({
+          title: "Profile updated",
+          description: "Your profile information has been updated successfully.",
+        });
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.error || "Failed to update profile",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+      });
+    }
+  };
   // Get role-specific form fields
   const getRoleSpecificFields = () => {
-    switch (user.role) {
+    if (!profileData) return null;
+
+    switch (profileData.role) {
       case "visitor":
         return (
           <>
@@ -116,7 +193,7 @@ const ProfileModule: React.FC = () => {
               <FormControl>
                 <Input
                   name="address"
-                  defaultValue={(user as VisitorData).address}
+                  defaultValue={profileData.alamat || ""}
                 />
               </FormControl>
               <FormMessage />
@@ -131,11 +208,11 @@ const ProfileModule: React.FC = () => {
                       variant="outline"
                       className={cn(
                         "w-full pl-3 text-left font-normal",
-                        !user.birthDate && "text-muted-foreground"
+                        !profileData.tgl_lahir && "text-muted-foreground"
                       )}
                     >
-                      {user.birthDate ? (
-                        format(new Date(user.birthDate), "PPP")
+                      {profileData.tgl_lahir ? (
+                        format(new Date(profileData.tgl_lahir), "PPP")
                       ) : (
                         <span>Pick a date</span>
                       )}
@@ -147,13 +224,13 @@ const ProfileModule: React.FC = () => {
                   <Calendar
                     mode="single"
                     selected={
-                      user.birthDate ? new Date(user.birthDate) : undefined
+                      profileData.tgl_lahir ? new Date(profileData.tgl_lahir) : undefined
                     }
                     onSelect={(date) => {
-                      if (date) {
-                        setUser({
-                          ...user,
-                          birthDate: date.toISOString().split("T")[0],
+                      if (date && profileData) {
+                        setProfileData({
+                          ...profileData,
+                          tgl_lahir: date.toISOString().split("T")[0],
                         });
                       }
                     }}
@@ -167,9 +244,7 @@ const ProfileModule: React.FC = () => {
               <FormMessage />
             </FormItem>
           </>
-        );
-
-      case "veterinarian":
+        );      case "veterinarian":
         return (
           <>
             <FormItem>
@@ -177,36 +252,21 @@ const ProfileModule: React.FC = () => {
               <FormControl>
                 <Input
                   name="certificationNumber"
-                  defaultValue={(user as VeterinarianData).certificationNumber}
+                  defaultValue={profileData.no_str || ""}
                   disabled
                 />
               </FormControl>
             </FormItem>
 
             <FormItem>
-              <FormLabel>Specializations</FormLabel>
+              <FormLabel>Specializations (Read Only)</FormLabel>
               <div className="space-y-2">
                 {specializations.map((spec) => (
                   <div key={spec.id} className="flex items-center space-x-2">
                     <Checkbox
                       id={spec.id}
-                      checked={(
-                        user as VeterinarianData
-                      ).specializations.includes(spec.label)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          const newSpecs = [
-                            ...(user as VeterinarianData).specializations,
-                            spec.label,
-                          ];
-                          setUser({ ...user, specializations: newSpecs });
-                        } else {
-                          const newSpecs = (
-                            user as VeterinarianData
-                          ).specializations.filter((s) => s !== spec.label);
-                          setUser({ ...user, specializations: newSpecs });
-                        }
-                      }}
+                      checked={(profileData.nama_spesialisasi || []).includes(spec.label)}
+                      disabled
                     />
                     <label
                       htmlFor={spec.id}
@@ -219,16 +279,14 @@ const ProfileModule: React.FC = () => {
               </div>
             </FormItem>
           </>
-        );
-
-      case "admin":
+        );      case "admin":
       case "caretaker":
       case "trainer":
         return (
           <FormItem>
             <FormLabel>Staff ID (Read Only)</FormLabel>
             <FormControl>
-              <Input name="staffId" defaultValue={user.staffId} disabled />
+              <Input name="staffId" defaultValue={profileData.id_staf || ""} disabled />
             </FormControl>
           </FormItem>
         );
@@ -240,7 +298,9 @@ const ProfileModule: React.FC = () => {
 
   // Get role-specific schema
   const getRoleSpecificSchema = () => {
-    switch (user.role) {
+    if (!profileData) return null;
+
+    switch (profileData.role) {
       case "visitor":
         return visitorSchema;
       case "veterinarian":
@@ -253,6 +313,30 @@ const ProfileModule: React.FC = () => {
         return null;
     }
   };
+
+  // Show loading state
+  if (isLoading || loadingProfile || !profileData) {
+    return (
+      <div className="container max-w-4xl mx-auto py-8 px-4">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading profile...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if user is not valid
+  if (!isValid) {
+    return (
+      <div className="container max-w-4xl mx-auto py-8 px-4">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600">Access Denied</h2>
+          <p className="text-gray-600 mt-2">Please log in to view your profile.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
@@ -271,10 +355,16 @@ const ProfileModule: React.FC = () => {
               <CardDescription>
                 Update your personal information and account settings.
               </CardDescription>
-            </CardHeader>
-            <CardContent>
+            </CardHeader>            <CardContent>
               <ProfileForm
-                user={user}
+                user={{
+                  username: profileData.username,
+                  firstName: profileData.nama_depan,
+                  middleName: profileData.nama_tengah || "",
+                  lastName: profileData.nama_belakang,
+                  email: profileData.email,
+                  phoneNumber: profileData.no_telepon,
+                }}
                 onSubmit={handleProfileUpdate}
                 extraFields={getRoleSpecificFields()}
                 extraSchema={getRoleSpecificSchema()}

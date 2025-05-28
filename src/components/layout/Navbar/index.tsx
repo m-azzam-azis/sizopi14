@@ -176,7 +176,7 @@ export const Navbar = () => {
             ) : uiRole === "admin" ? (
               <>
                 <Link
-                  href="/dashboard/admin/reservasi"
+                  href="/kelola-pengunjung"
                   className="max-md:hidden text-base text-primary font-outfit font-medium"
                 >
                   Kelola Pengunjung
@@ -220,7 +220,7 @@ export const Navbar = () => {
                 )}
 
                 <Link
-                  href="/reservasi/dashboard"
+                  href="/reservasi"
                   className="max-md:hidden text-base text-primary font-outfit font-medium"
                 >
                   Reservasi Tiket

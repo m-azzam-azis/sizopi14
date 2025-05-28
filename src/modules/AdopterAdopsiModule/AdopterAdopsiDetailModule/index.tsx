@@ -202,26 +202,12 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
     setShowToast(true);
     setTimeout(() => {
       setShowToast(false);
-      // In real app, redirect to payment page
     }, 3000);
   };
 
+  
   const renderExtendForm = () => {
     if (!animal || !adopter) return null;
-  
-    
-    const possiblePhoneFields = ["noTelp", "notelp", "no_telp", "no_telepon"];
-    let phoneFound = false;
-    
-    possiblePhoneFields.forEach(field => {
-      if (field in adopter) {
-        phoneFound = true;
-      }
-    });
-    
-    if (!phoneFound) {
-      console.log("No phone field found in adopter data!");
-    }
     
     // Data hewan untuk form
     const animalData = {
@@ -229,27 +215,25 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
       name: animal.name,
       species: animal.species
     };
-  
-    // Temukan nomor telepon dari berbagai kemungkinan field name
+
+    
     let phoneNumber = "Tidak tersedia";
+    const possiblePhoneFields = ["noTelp", "notelp", "no_telp", "no_telepon"];
     for (const field of possiblePhoneFields) {
       if (adopter[field]) {
         phoneNumber = adopter[field];
         break;
       }
     }
-  
+
     if (adopter.type === 'individu') {
       const adopterData = {
         name: adopter.name || '',
         nik: adopter.nik || '',
         address: adopter.address || '',
-        noTelp: phoneNumber // Gunakan nilai yang sudah ditemukan
+        noTelp: phoneNumber
       };
-  
-      // Log data yang akan diberikan ke form
-      console.log("Data for Individu form:", adopterData);
-  
+
       return (
         <AdopterIndividuFormModal isOpen={showExtendModal} onClose={() => setShowExtendModal(false)}>
           <div className="py-1">
@@ -262,16 +246,26 @@ export default function AdopterAdopsiDetailModule({ animalId }: { animalId: stri
         </AdopterIndividuFormModal>
       );
     } else {
+      // Perbaiki untuk memastikan nama organisasi diambil dengan benar
+      // Periksa berbagai kemungkinan nama field untuk nama organisasi
+      const organizationName = 
+        adopter.organizationName || 
+        adopter.nama_organisasi || 
+        '';
+      
+      console.log("Organization name from data:", { 
+        organizationName, 
+        fromOrganizationName: adopter.organizationName,
+        fromNamaOrganisasi: adopter.nama_organisasi
+      });
+
       const adopterData = {
-        organizationName: adopter.organizationName || adopter.nama_organisasi || '',
+        organizationName: organizationName,
         npp: adopter.npp || '',
         address: adopter.address || '',
         noTelp: phoneNumber
       };
-  
-      // Log data yang akan diberikan ke form
-      console.log("Data for Organisasi form:", adopterData);
-  
+
       return (
         <AdopterOrganisasiFormModal isOpen={showExtendModal} onClose={() => setShowExtendModal(false)}>
           <div className="py-1">
