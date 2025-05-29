@@ -19,15 +19,7 @@ export async function POST(
         }
       );
     }
-    
-    const columnQuery = `
-      SELECT character_maximum_length 
-      FROM information_schema.columns 
-      WHERE table_name = 'adopsi' AND column_name = 'status_pembayaran';
-    `;
-    
-    const columnInfo = await pool.query(columnQuery);
-    
+
     const checkQuery = `
       SELECT 
         a.id_adopter,
@@ -59,7 +51,6 @@ export async function POST(
     const currentAdoption = checkResult.rows[0];
     const animalName = currentAdoption.nama_hewan;
     
-    // 4. Pastikan pembayaran saat ini sudah lunas
     if (currentAdoption.status_pembayaran.toLowerCase() !== "lunas") {
       return new Response(
         JSON.stringify({ error: "Pembayaran adopsi saat ini belum lunas" }),

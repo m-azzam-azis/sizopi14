@@ -12,16 +12,40 @@ import AdopsiIndividuFormModal from "../components/modals/AdopsiIndividuFormModa
 import AdopsiOrganisasiFormModal from "../components/modals/AdopsiOrganisasiFormModal";
 import { getUserData } from "@/hooks/getUserData";
 
-export default function AdminAdopsiRegisterModule({ animalId, animalData }: { animalId: string; animalData: any }) {
+// Define types for props and state
+interface AnimalData {
+  id: string;
+  name: string;
+  species: string;
+  habitat: string;
+  health_status: string;
+  image_url?: string;
+  status_adopsi?: string;
+}
+
+interface Adopter {
+  id_adopter: string;
+  username_adopter: string;
+  name?: string;
+  nama?: string;
+  address?: string;
+  alamat?: string;
+  noTelp?: string;
+  no_telepon?: string;
+  nik?: string;
+  npp?: string;
+}
+
+export default function AdminAdopsiRegisterModule({ animalId, animalData }: { animalId: string; animalData: AnimalData }) {
   const [username, setUsername] = useState("");
   const [adopterType, setAdopterType] = useState("individu");
   const [errorMessage, setErrorMessage] = useState("");
-  const [isVerified, setIsVerified] = useState(false);
+  // Menghapus isVerified yang tidak digunakan
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
   const [showForm, setShowForm] = useState(false);
-  const [adopter, setAdopter] = useState<any>(null);
+  const [adopter, setAdopter] = useState<Adopter | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
   const router = useRouter();
@@ -52,16 +76,16 @@ export default function AdminAdopsiRegisterModule({ animalId, animalData }: { an
 
       if (response.ok && data.found) {
         setAdopter(data.adopter);
-        setIsVerified(true);
+        // Tidak perlu mengubah isVerified karena showForm sudah bisa menggantikan fungsinya
         setShowForm(true);
       } else {
         setErrorMessage("Akun dengan username ini tidak ditemukan atau tipe adopter tidak sesuai.");
-        setIsVerified(false);
+        // Tidak perlu mengubah isVerified
       }
     } catch (error) {
       console.error("Error verifying account:", error);
       setErrorMessage("Terjadi kesalahan saat memverifikasi akun.");
-      setIsVerified(false);
+      // Tidak perlu mengubah isVerified
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +101,7 @@ export default function AdminAdopsiRegisterModule({ animalId, animalData }: { an
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          id_adopter: adopter.id_adopter,
+          id_adopter: adopter?.id_adopter,
           id_hewan: animalId,
           kontribusi_finansial: data.nominal,
           adoption_period: data.adoptionPeriod,
@@ -120,7 +144,7 @@ export default function AdminAdopsiRegisterModule({ animalId, animalData }: { an
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          id_adopter: adopter.id_adopter,
+          id_adopter: adopter?.id_adopter,
           id_hewan: animalId,
           kontribusi_finansial: data.nominal,
           adoption_period: data.adoptionPeriod,
@@ -237,7 +261,11 @@ export default function AdminAdopsiRegisterModule({ animalId, animalData }: { an
         <AdopsiIndividuFormModal isOpen={showForm} onClose={handleCancel} title="">
           <AdopsiIndividuForm
             onSubmit={handleSubmitIndividuForm}
-            adopter={adopter || { name: "", address: "", noTelp: "" }}
+            adopter={{
+              name: adopter?.name || "",
+              address: adopter?.address || "",
+              noTelp: adopter?.noTelp || "",
+            }}
             animalData={animalData}
           />
         </AdopsiIndividuFormModal>
@@ -245,7 +273,10 @@ export default function AdminAdopsiRegisterModule({ animalId, animalData }: { an
         <AdopsiOrganisasiFormModal isOpen={showForm} onClose={handleCancel} title="">
           <AdopsiOrganisasiForm
             onSubmit={handleSubmitOrganisasiForm}
-            adopter={adopter || { address: "", noTelp: "" }}
+            adopter={{
+              address: adopter?.address || "",
+              noTelp: adopter?.noTelp || "",
+            }}
             animalData={animalData}
           />
         </AdopsiOrganisasiFormModal>

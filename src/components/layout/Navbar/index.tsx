@@ -49,40 +49,39 @@ export const Navbar = () => {
       if (isValid && userData.username) {
         try {
           console.log("Checking adopter status for:", userData.username);
-          
-          // Tambahkan timeout untuk menghindari fetch terlalu lama
+
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 5000);
-          
+
           const response = await fetch(
-            `/api/adopter-adopsi/check-type?username=${userData.username}`, 
+            `/api/adopter-adopsi/check-type?username=${userData.username}`,
             { signal: controller.signal }
           );
           clearTimeout(timeoutId);
-          
+
           console.log("Adopter check response status:", response.status);
-          
+
           if (response.ok) {
             const data = await response.json();
             console.log("User is an adopter:", data);
             setIsAdopter(true);
-            localStorage.setItem('isAdopter', 'true');
+            localStorage.setItem("isAdopter", "true");
           } else {
             console.log("User is not an adopter");
             setIsAdopter(false);
-            localStorage.removeItem('isAdopter');
+            localStorage.removeItem("isAdopter");
           }
         } catch (error) {
           console.error("Error checking adopter status:", error);
-          // Coba ambil dari cache jika ada error jaringan
-          const cachedStatus = localStorage.getItem('isAdopter');
-          setIsAdopter(cachedStatus === 'true');
+
+          const cachedStatus = localStorage.getItem("isAdopter");
+          setIsAdopter(cachedStatus === "true");
         }
       } else {
         setIsAdopter(false);
       }
     };
-  
+
     checkIfAdopter();
   }, [isValid, userData.username]);
 
@@ -115,7 +114,6 @@ export const Navbar = () => {
     userData.nama_depan && userData.nama_belakang
       ? `${userData.nama_depan} ${userData.nama_belakang}`
       : "User";
-  
 
   return (
     <nav className="fixed top-0 p-5 px-5 sm:px-16 md:px-14 lg:px-20 w-full bg-accent/70 backdrop-blur-md z-50">
@@ -158,12 +156,6 @@ export const Navbar = () => {
             ) : uiRole === "penjaga" ? (
               <>
                 <Link
-                  href="/catatan-perawatan-hewan"
-                  className="max-md:hidden text-base text-primary font-outfit font-medium"
-                >
-                  Catatan Perawatan
-                </Link>
-                <Link
                   href="/pakan"
                   className="max-md:hidden text-base text-primary font-outfit font-medium"
                 >
@@ -193,20 +185,13 @@ export const Navbar = () => {
               </>
             ) : uiRole === "pelatih" ? (
               <Link
-                href="/atraksi"
+                href="/jadwal-pertunjukan"
                 className="max-md:hidden text-base text-primary font-outfit font-medium"
               >
                 Jadwal Pertunjukan
               </Link>
             ) : uiRole === "pengunjung" ? (
               <>
-                <Link
-                  href="/informasi"
-                  className="max-md:hidden text-base text-primary font-outfit font-medium"
-                >
-                  Informasi Kebun Binatang
-                </Link>
-                
                 {isAdopter && (
                   <Link
                     href="/adopter-adopsi"
@@ -298,12 +283,6 @@ export const Navbar = () => {
                   ) : uiRole === "penjaga" ? (
                     <>
                       <Link
-                        href="/catatan-perawatan-hewan"
-                        className="text-base text-primary font-outfit"
-                      >
-                        Catatan Perawatan
-                      </Link>
-                      <Link
                         href="/pakan"
                         className="text-base text-primary font-outfit"
                       >
@@ -313,7 +292,7 @@ export const Navbar = () => {
                   ) : uiRole === "admin" ? (
                     <>
                       <Link
-                        href="/dashboard/admin/reservasi"
+                        href="/kelola-pengunjung"
                         className="text-base text-primary font-outfit"
                       >
                         Kelola Pengunjung
@@ -333,20 +312,13 @@ export const Navbar = () => {
                     </>
                   ) : uiRole === "pelatih" ? (
                     <Link
-                      href="/atraksi"
+                      href="/jadwal-pertunjukan"
                       className="text-base text-primary font-outfit"
                     >
                       Jadwal Pertunjukan
                     </Link>
                   ) : uiRole === "pengunjung" ? (
                     <>
-                      <Link
-                        href="/informasi"
-                        className="text-base text-primary font-outfit"
-                      >
-                        Informasi Kebun Binatang
-                      </Link>
-                      
                       {isAdopter && (
                         <Link
                           href="/adopter-adopsi"
@@ -355,9 +327,9 @@ export const Navbar = () => {
                           Hewan Adopsi
                         </Link>
                       )}
-                      
+
                       <Link
-                        href="/reservasi/dashboard"
+                        href="/reservasi"
                         className="text-base text-primary font-outfit"
                       >
                         Reservasi Tiket

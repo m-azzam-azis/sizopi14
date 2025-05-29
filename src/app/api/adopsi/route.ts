@@ -2,6 +2,26 @@ import { Adopsi } from "@/db/models/adopsi";
 import pool from "@/db/db";
 import { NextResponse } from "next/server";
 
+interface PostgresNotice {
+    message: string;
+    severity?: string;
+    code?: string;
+    detail?: string;
+    hint?: string;
+    position?: string;
+    internalPosition?: string;
+    internalQuery?: string;
+    where?: string;
+    schema?: string;
+    table?: string;
+    column?: string;
+    dataType?: string;
+    constraint?: string;
+    file?: string;
+    line?: string;
+    routine?: string;
+  }
+
 
 export async function GET(request: Request) {
   try {
@@ -31,7 +51,6 @@ export async function GET(request: Request) {
       ) a ON h.id = a.id_hewan
     `;
     
-    // Filter berdasarkan status adopsi jika parameter diberikan
     if (status === "adopted") {
       query += ` WHERE a.id_hewan IS NOT NULL`;
     } else if (status === "unadopted") {
@@ -124,12 +143,13 @@ export async function PUT(request: Request) {
       
       // Mulai transaksi untuk menangkap pesan NOTICE
       const client = await pool.connect();
-      let triggerMessages: string[] = [];
+      const triggerMessages: string[] = [];
       
       try {
         await client.query('BEGIN');
         
-        client.on('notice', (msg: any) => {
+        // Perbaikan tipe any menggunakan interface PostgresNotice
+        client.addListener('notice', (msg: PostgresNotice) => {
           console.log('Database Notice:', msg.message);
           if (msg.message && msg.message.includes('SUKSES:')) {
             triggerMessages.push(msg.message);
@@ -186,46 +206,46 @@ export async function PUT(request: Request) {
           noticeMessages: triggerMessages
         });
         
-      } catch (error) {
-        await client.query('ROLLBACK');
-        throw error;
-      } finally {
-        client.release();
-      }
-      
-    } catch (error) {
-      console.error("Error updating adoption:", error);
-      return NextResponse.json(
-        { error: "Gagal mengupdate data adopsi", details: (error as Error).message },
-        { status: 500 }
-      );
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+        
+        } catch (error) {
+        console.error("Error updating adoption:", error);
+        return NextResponse.json(
+            { error: "Gagal mengupdate data adopsi", details: (error as Error).message },
+            { status: 500 }
+        );
+        }
     }
-  }
 
 export async function DELETE(request: Request) {
-  try {
-    const url = new URL(request.url);
-    const id_adopter = url.searchParams.get("id_adopter");
-    const id_hewan = url.searchParams.get("id_hewan");
-    
-    if (!id_adopter || !id_hewan) {
-      return new Response(JSON.stringify({ error: "id_adopter and id_hewan required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-    
-    const checkQuery = `
-      SELECT * FROM adopsi 
-      WHERE id_adopter = $1 AND id_hewan = $2
-    `;
-    const checkResult = await pool.query(checkQuery, [id_adopter, id_hewan]);
-    
-    if (checkResult.rows.length === 0) {
-      return new Response(JSON.stringify({ error: "Adoption not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+    try {
+        const url = new URL(request.url);
+        const id_adopter = url.searchParams.get("id_adopter");
+        const id_hewan = url.searchParams.get("id_hewan");
+        
+        if (!id_adopter || !id_hewan) {
+        return new Response(JSON.stringify({ error: "id_adopter and id_hewan required" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+        });
+        }
+        
+        const checkQuery = `
+        SELECT * FROM adopsi 
+        WHERE id_adopter = $1 AND id_hewan = $2
+        `;
+        const checkResult = await pool.query(checkQuery, [id_adopter, id_hewan]);
+        
+        if (checkResult.rows.length === 0) {
+        return new Response(JSON.stringify({ error: "Adoption not found" }), {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+        });
     }
     
     const adoption = checkResult.rows[0];
@@ -250,12 +270,15 @@ export async function DELETE(request: Request) {
       `, [adoption.kontribusi_finansial, id_adopter]);
     }
     
-    const adopsiModel = new Adopsi();
+    // Hapus variabel adopsiModel yang tidak digunakan
+    // const adopsiModel = new Adopsi();
     const deleteQuery = `
       DELETE FROM adopsi 
       WHERE id_adopter = $1 AND id_hewan = $2
     `;
-    const deleted = await pool.query(deleteQuery, [id_adopter, id_hewan]);
+    
+    // Hapus variabel deleted yang tidak digunakan
+    await pool.query(deleteQuery, [id_adopter, id_hewan]);
     
     return new Response(JSON.stringify({ 
       success: true,
@@ -269,8 +292,8 @@ export async function DELETE(request: Request) {
     return new Response(JSON.stringify({ 
       error: "Failed to delete adoption",
     }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
   }
-}

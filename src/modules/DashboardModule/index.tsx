@@ -63,7 +63,7 @@ const DashboardModule: React.FC = () => {
   const renderRoleSpecificContent = () => {
     switch (user.role) {
       case "admin":
-        return <AdminDashboard userData={user} />;
+        return <AdminDashboard userData={{ id_staf: user.id_staf }} />;
       case "veterinarian":
         return (
           <VeterinarianDashboard
