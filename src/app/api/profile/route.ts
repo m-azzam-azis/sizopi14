@@ -163,18 +163,42 @@ export async function PUT(request: Request) {
           
           await pengunjungModel.updateByUsername(username, updateData);
         }
+        break;      case "veterinarian":
+        if (data.no_str) {
+          const dokterHewanModel = new DokterHewan();
+          await dokterHewanModel.updateByUsername(username, {
+            no_str: data.no_str
+          });
+        }
+        // Note: Specializations updates would be handled separately if needed
         break;
 
-      case "veterinarian":
-        // Note: For veterinarian, certification number (no_str) and specializations are typically read-only
-        // But if you want to allow updates, you can implement it here
-        break;
-
-      // Staff roles (caretaker, trainer, admin) typically don't update their staff IDs
+      // Staff roles (caretaker, trainer, admin) might need to update their staff IDs in some cases
       case "caretaker":
+        if (data.id_staf) {
+          const penjagaHewanModel = new PenjagaHewan();
+          await penjagaHewanModel.updateByUsername(username, {
+            id_staf: data.id_staf
+          });
+        }
+        break;
+        
       case "trainer":
+        if (data.id_staf) {
+          const pelatihHewanModel = new PelatihHewan();
+          await pelatihHewanModel.updateByUsername(username, {
+            id_staf: data.id_staf
+          });
+        }
+        break;
+        
       case "admin":
-        // Staff ID is typically read-only
+        if (data.id_staf) {
+          const stafAdminModel = new StafAdmin();
+          await stafAdminModel.updateByUsername(username, {
+            id_staf: data.id_staf
+          });
+        }
         break;
     }
 

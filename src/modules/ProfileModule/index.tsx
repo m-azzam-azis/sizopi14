@@ -9,25 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon, Loader2 } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
-import {
-  FormControl,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { z } from "zod";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getUserData } from "@/hooks/getUserData";
 
@@ -42,16 +24,8 @@ import {
 } from "@/types/user";
 
 import ProfileForm from "./components/ProfileForm";
+import ProfileRoleSpecificForm from "./components/ProfileRoleSpecificForm";
 import PasswordChangeForm from "./components/PasswordChangeForm";
-
-// Specializations options
-const specializations = [
-  { id: "large-mammals", label: "Large Mammals" },
-  { id: "reptiles", label: "Reptiles" },
-  { id: "exotic-birds", label: "Exotic Birds" },
-  { id: "primates", label: "Primates" },
-  { id: "other", label: "Other" },
-];
 
 interface ProfileData {
   username: string;
@@ -102,29 +76,9 @@ const ProfileModule: React.FC = () => {
       } finally {
         setLoadingProfile(false);
       }
-    };
-
-    fetchProfileData();
+    };    fetchProfileData();
   }, [isValid, userData.username, toast]);
 
-  // Role-specific schemas
-  const visitorSchema = z.object({
-    address: z.string().min(1, "Address is required"),
-    birthDate: z.date({
-      required_error: "Birth date is required",
-    }),
-  });
-
-  const veterinarianSchema = z.object({
-    certificationNumber: z.string().min(1, "Certification number is required"),
-    specializations: z
-      .array(z.string())
-      .min(1, "Select at least one specialization"),
-  });
-
-  const staffSchema = z.object({
-    staffId: z.string().min(1, "Staff ID is required"),
-  });
   // Handle form submission
   const handleProfileUpdate = async (data: any) => {
     try {
@@ -160,11 +114,13 @@ const ProfileModule: React.FC = () => {
           };
           setProfileData(updatedProfile);
         }
-        
-        toast({
+          toast({
           title: "Profile updated",
           description: "Your profile information has been updated successfully.",
         });
+
+        // Dispatch custom event to notify navbar about profile update
+        window.dispatchEvent(new CustomEvent('profileUpdated'));
       } else {
         const errorData = await response.json();
         toast({
@@ -178,141 +134,7 @@ const ProfileModule: React.FC = () => {
         title: "Error",
         description: "Failed to update profile",
       });
-    }
-  };
-  // Get role-specific form fields
-  const getRoleSpecificFields = () => {
-    if (!profileData) return null;
-
-    switch (profileData.role) {
-      case "visitor":
-        return (
-          <>
-            <FormItem>
-              <FormLabel>Address</FormLabel>
-              <FormControl>
-                <Input
-                  name="address"
-                  defaultValue={profileData.alamat || ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-
-            <FormItem className="flex flex-col">
-              <FormLabel>Date of Birth</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !profileData.tgl_lahir && "text-muted-foreground"
-                      )}
-                    >
-                      {profileData.tgl_lahir ? (
-                        format(new Date(profileData.tgl_lahir), "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={
-                      profileData.tgl_lahir ? new Date(profileData.tgl_lahir) : undefined
-                    }
-                    onSelect={(date) => {
-                      if (date && profileData) {
-                        setProfileData({
-                          ...profileData,
-                          tgl_lahir: date.toISOString().split("T")[0],
-                        });
-                      }
-                    }}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          </>
-        );      case "veterinarian":
-        return (
-          <>
-            <FormItem>
-              <FormLabel>Certification Number (Read Only)</FormLabel>
-              <FormControl>
-                <Input
-                  name="certificationNumber"
-                  defaultValue={profileData.no_str || ""}
-                  disabled
-                />
-              </FormControl>
-            </FormItem>
-
-            <FormItem>
-              <FormLabel>Specializations (Read Only)</FormLabel>
-              <div className="space-y-2">
-                {specializations.map((spec) => (
-                  <div key={spec.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={spec.id}
-                      checked={(profileData.nama_spesialisasi || []).includes(spec.label)}
-                      disabled
-                    />
-                    <label
-                      htmlFor={spec.id}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {spec.label}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </FormItem>
-          </>
-        );      case "admin":
-      case "caretaker":
-      case "trainer":
-        return (
-          <FormItem>
-            <FormLabel>Staff ID (Read Only)</FormLabel>
-            <FormControl>
-              <Input name="staffId" defaultValue={profileData.id_staf || ""} disabled />
-            </FormControl>
-          </FormItem>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  // Get role-specific schema
-  const getRoleSpecificSchema = () => {
-    if (!profileData) return null;
-
-    switch (profileData.role) {
-      case "visitor":
-        return visitorSchema;
-      case "veterinarian":
-        return veterinarianSchema;
-      case "admin":
-      case "caretaker":
-      case "trainer":
-        return staffSchema;
-      default:
-        return null;
-    }
-  };
+    }  };
 
   // Show loading state
   if (isLoading || loadingProfile || !profileData) {
@@ -355,7 +177,8 @@ const ProfileModule: React.FC = () => {
               <CardDescription>
                 Update your personal information and account settings.
               </CardDescription>
-            </CardHeader>            <CardContent>
+            </CardHeader>            <CardContent className="space-y-6">
+              {/* Basic Profile Information */}
               <ProfileForm
                 user={{
                   username: profileData.username,
@@ -366,9 +189,26 @@ const ProfileModule: React.FC = () => {
                   phoneNumber: profileData.no_telepon,
                 }}
                 onSubmit={handleProfileUpdate}
-                extraFields={getRoleSpecificFields()}
-                extraSchema={getRoleSpecificSchema()}
               />
+              
+              {/* Role-specific Information */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold mb-4">Role-specific Information</h3>
+                <ProfileRoleSpecificForm
+                  user={{
+                    id: profileData.username,
+                    role: profileData.role as any,
+                    // For visitor
+                    address: profileData.alamat,
+                    birthDate: profileData.tgl_lahir,
+                    // For veterinarian
+                    certificationNumber: profileData.no_str,
+                    specializations: profileData.nama_spesialisasi,
+                    // For staff
+                    staffId: profileData.id_staf,
+                  }}
+                />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

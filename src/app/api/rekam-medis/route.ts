@@ -1,4 +1,5 @@
 import { CatatanMedis } from "@/db/models/catatanMedis";
+import pool from "@/db/db";
 
 export async function GET(request: Request) {
   try {
@@ -40,9 +41,21 @@ export async function POST(request: Request) {
     }
 
     const catatanMedisModel = new CatatanMedis();
-    const createdRecord = await catatanMedisModel.create(data);
-
-    return new Response(JSON.stringify(createdRecord), {
+    // Use the enhanced method to capture PostgreSQL notices
+    const result = await catatanMedisModel.createWithNotices(data);
+    
+    // Extract success message from PostgreSQL NOTICE if available
+    let successMessage = null;
+    if (result.pgNotices && result.pgNotices.length > 0) {
+      // Extract the notice text - typically in format "NOTICE: SUKSES: Jadwal..."
+      const noticeText = result.pgNotices[0];
+      successMessage = noticeText.replace(/^NOTICE:\s+/i, '');
+    }
+    
+    return new Response(JSON.stringify({
+      data: result.createdRecord,
+      message: successMessage
+    }), {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });
@@ -100,17 +113,40 @@ export async function PUT(request: Request) {
       });
     }
 
+    // Add updateWithNotices method to CatatanMedis model
     const catatanMedisModel = new CatatanMedis();
-    const updatedRecord = await catatanMedisModel.update("id_hewan", data.id_hewan, data);
+    
+    // Check if we need to use the special update method with notices
+    // Only use it if the status is being changed to "Sedang Sakit"
+    let result;
+    if (data.status_kesehatan === "Sedang Sakit") {
+      // Use the enhanced method to capture PostgreSQL notices
+      result = await catatanMedisModel.updateWithNotices("id_hewan", data.id_hewan, data);
+    } else {
+      // Use normal update if not setting status to "Sedang Sakit"
+      const updatedRecord = await catatanMedisModel.update("id_hewan", data.id_hewan, data);
+      result = { updatedRecord, pgNotices: [] };
+    }
 
-    if (!updatedRecord) {
+    if (!result.updatedRecord) {
       return new Response(JSON.stringify({ error: "Record not found" }), {
         status: 404,
         headers: { "Content-Type": "application/json" },
       });
     }
+    
+    // Extract success message from PostgreSQL NOTICE if available
+    let successMessage = null;
+    if (result.pgNotices && result.pgNotices.length > 0) {
+      // Extract the notice text - typically in format "NOTICE: SUKSES: Jadwal..."
+      const noticeText = result.pgNotices[0];
+      successMessage = noticeText.replace(/^NOTICE:\s+/i, '');
+    }
 
-    return new Response(JSON.stringify(updatedRecord), {
+    return new Response(JSON.stringify({
+      data: result.updatedRecord,
+      message: successMessage
+    }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

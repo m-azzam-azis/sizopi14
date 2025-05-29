@@ -24,6 +24,7 @@ export type ReturnType = {
   isValid: boolean;
   isLoading: boolean;
   authState: "initializing" | "loading" | "authenticated" | "unauthenticated";
+  refreshUserData: () => void;
 };
 
 type sessionType = {
@@ -324,11 +325,11 @@ export const getUserData: () => ReturnType = () => {
         id_staf_LH: "",
         no_str: "",
         nama_spesialisasi: [],
-        id_staf_sa: "",
-      },
+        id_staf_sa: "",      },
       isValid: false,
       isLoading,
       authState,
+      refreshUserData: fetchCookie,
     };
   }
 
@@ -352,5 +353,6 @@ export const getUserData: () => ReturnType = () => {
     isValid: true,
     isLoading,
     authState,
+    refreshUserData: fetchCookie,
   };
 };

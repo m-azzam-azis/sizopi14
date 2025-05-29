@@ -49,11 +49,29 @@ const StaffProfileForm: React.FC<StaffProfileFormProps> = ({ user }) => {
       staffId: user.staffId || "",
     },
   });
-
-  const onSubmit = (data: StaffFormValues) => {
-    // In a real app, this would make an API call to update the user profile
-    console.log("Updated staff information:", data);
-    toast.success("Staff profile updated successfully!");
+  const onSubmit = async (data: StaffFormValues) => {
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id_staf: data.staffId,
+        }),
+      });      if (response.ok) {
+        toast.success("Staff profile updated successfully!");
+        
+        // Dispatch custom event to notify navbar about profile update
+        window.dispatchEvent(new CustomEvent('profileUpdated'));
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Failed to update profile");
+      }
+    } catch (error) {
+      console.error("Error updating staff profile:", error);
+      toast.error("Failed to update profile. Please try again.");
+    }
   };
 
   return (

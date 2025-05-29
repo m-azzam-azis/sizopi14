@@ -32,7 +32,7 @@ interface ProfileFormProps {
     lastName: string;
     email: string;
     phoneNumber: string;
-  };
+  }; 
   onSubmit: (data: any) => void;
   extraFields?: React.ReactNode;
   extraSchema?: any;
@@ -62,14 +62,47 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
       phoneNumber: user.phoneNumber,
       // Other fields are passed through defaultValues in the parent component
     },
-  });
-
-  const handleSubmit = (data: any) => {
-    onSubmit(data);
-    toast({
-      title: "Profile updated",
-      description: "Your profile information has been updated successfully.",
-    });
+  });  const handleSubmit = async (data: any) => {
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nama_depan: data.firstName,
+          nama_tengah: data.middleName,
+          nama_belakang: data.lastName,
+          email: data.email,
+          no_telepon: data.phoneNumber,
+        }),
+      });      if (response.ok) {
+        toast({
+          title: "Profile updated",
+          description: "Your basic profile information has been updated successfully.",
+        });
+        
+        // Dispatch custom event to notify navbar about profile update
+        window.dispatchEvent(new CustomEvent('profileUpdated'));
+        
+        // Call the parent onSubmit if provided (for additional handling)
+        if (onSubmit) {
+          await onSubmit(data);
+        }
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.error || "Failed to update profile",
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem updating your profile. Please try again.",
+      });
+    }
   };
 
   return (

@@ -46,7 +46,6 @@ export async function PUT(request: Request) {
       type,
     } = body;
 
-    console.log(body)
 
     if (!username_P || !nama_fasilitas || !tanggal_kunjungan) {
       return NextResponse.json(
@@ -57,13 +56,11 @@ export async function PUT(request: Request) {
 
     const reservasiModel = new Reservasi();
 
-    function formatDateForQuery(date: string | Date) {
-      const d = new Date(date);
-      d.setDate(d.getDate() + 1);
-      return d.toISOString().split("T")[0];
+    function formatDateString(dateStr: string): string {
+      return dateStr.split("T")[0];
     }
 
-    const dateString = formatDateForQuery(tanggal_kunjungan);
+    const dateString = formatDateString(tanggal_kunjungan);
 
     if (status === "Dibatalkan") {
       const dbStatus = "Batal";
@@ -88,7 +85,7 @@ export async function PUT(request: Request) {
       FROM RESERVASI
       WHERE username_P = $1 
       AND nama_fasilitas = $2 
-      AND tanggal_kunjungan::text = $3
+      AND DATE(tanggal_kunjungan) = DATE($3::date)
     `;
 
     const currentReservation = await reservasiModel.customQuery(query, [
@@ -97,10 +94,12 @@ export async function PUT(request: Request) {
       dateString,
     ]);
 
-    console.log("username_P", username_P);
-    console.log("nama_fasilitas", nama_fasilitas);
-    console.log("date used", dateString);
-    console.log("currentReservation", currentReservation);
+    console.log("Search parameters:", {
+      username_P,
+      nama_fasilitas,
+      dateString,
+    });
+    console.log("Found reservation:", currentReservation);
 
     if (currentReservation.length === 0) {
       return NextResponse.json(
@@ -110,16 +109,16 @@ export async function PUT(request: Request) {
     }
 
     const currentTickets = parseInt(currentReservation[0].jumlah_tiket);
-    const newDate = new_tanggal_kunjungan
-      ? new Date(new_tanggal_kunjungan)
-      : new Date(tanggal_kunjungan);
+    const newDateStr = new_tanggal_kunjungan
+      ? formatDateString(new_tanggal_kunjungan)
+      : dateString;
 
     if (jumlah_tiket > currentTickets) {
       const additionalTickets = jumlah_tiket - currentTickets;
 
       const capacityCheck = await reservasiModel.checkCapacity(
         nama_fasilitas,
-        newDate,
+        newDateStr,
         additionalTickets
       );
 
@@ -140,7 +139,7 @@ export async function PUT(request: Request) {
       jumlah_tiket,
       new_status: dbStatus,
       new_jumlah_tiket: jumlah_tiket,
-      new_tanggal_kunjungan: new_tanggal_kunjungan.split("T")[0]
+      new_tanggal_kunjungan: newDateStr,
     });
 
     return NextResponse.json({

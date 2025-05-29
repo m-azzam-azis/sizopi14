@@ -25,6 +25,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUserData } from "@/hooks/getUserData";
+import { handleDbNotification } from "@/utils/dbNotifications";
+import toast from "react-hot-toast";
 
 interface Adopter {
   id: string;
@@ -61,7 +63,6 @@ const AdopterRiwayatModule = () => {
     }
   }, [userData, isValid, authLoading, router]);
 
-  // Fetch data from API
   useEffect(() => {
     // Only fetch data if user is valid and auth loading is finished
     if (isValid && !authLoading) {
@@ -108,8 +109,14 @@ const AdopterRiwayatModule = () => {
         if (topResponse.ok) {
           const topData = await topResponse.json();
           console.log("Fetched top adopters:", topData);
-          if (Array.isArray(topData)) {
-            setTopAdopters(topData);
+          
+          if (topData.data && Array.isArray(topData.data)) {
+            setTopAdopters(topData.data);
+            
+            // Tampilkan pesan trigger jika ada
+            if (topData.triggerMessage) {
+              handleDbNotification(topData.triggerMessage);
+            }
           } else {
             setTopAdopters([]);
           }
@@ -123,7 +130,7 @@ const AdopterRiwayatModule = () => {
       }
     } catch (error) {
       console.error("Error fetching adopters:", error);
-      showToastMessage(`Gagal memuat data adopter`);
+      toast.error(`Gagal memuat data adopter`);
     } finally {
       setIsLoading(false);
     }
@@ -153,14 +160,22 @@ const AdopterRiwayatModule = () => {
 
         if (!response.ok) {
           if (response.status === 403) {
-            // Adopter masih aktif mengadopsi
-            showToastMessage(result.message || "Adopter masih aktif mengadopsi");
+            toast.error(result.message || "Adopter masih aktif mengadopsi");
           } else {
             throw new Error(result.error || `HTTP error! Status: ${response.status}`);
           }
           setShowDeleteAlert(false);
           setAdopterToDelete(null);
           return;
+        }
+
+        // Refresh top adopters untuk memicu update peringkat
+        const topResponse = await fetch("/api/adopter/top");
+        if (topResponse.ok) {
+          const topData = await topResponse.json();
+          if (topData.triggerMessage) {
+            handleDbNotification(topData.triggerMessage);
+          }
         }
 
         setAdopters(adopters.filter((adopter) => adopter.id !== adopterToDelete));
@@ -172,10 +187,10 @@ const AdopterRiwayatModule = () => {
         ));
         setTopAdopters(topAdopters.filter((adopter) => adopter.id !== adopterToDelete));
         
-        showToastMessage("Adopter berhasil dihapus");
+        toast.success("Adopter berhasil dihapus");
       } catch (error) {
         console.error("Error deleting adopter:", error);
-        showToastMessage("Gagal menghapus adopter");
+        toast.error("Gagal menghapus adopter");
       }
     }
     setShowDeleteAlert(false);

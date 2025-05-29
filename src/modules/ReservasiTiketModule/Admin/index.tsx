@@ -87,6 +87,8 @@ const ReservasiTiketAdmin = () => {
           jumlah_tiket: item.jumlah_tiket,
           lokasi: item.lokasi,
           status: item.status as ReservationStatus,
+          jenis_reservasi: "Atraksi" as const,
+          jadwal: "",
         })
       );
 
@@ -130,6 +132,8 @@ const ReservasiTiketAdmin = () => {
             ? item.peraturan.split(",").map((p: string) => p.trim())
             : [],
           status: item.status as ReservationStatus,
+          jenis_reservasi: "Wahana" as const,
+          jadwal: "",
         })
       );
 
@@ -168,6 +172,22 @@ const ReservasiTiketAdmin = () => {
     setIsAtraksiEditModalOpen(true);
   };
 
+  const formatDateForAPI = (date: Date | string): string => {
+    if (typeof date === "string") {
+      return date.split("T")[0];
+    }
+
+    console.log("Date object received:", date);
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    console.log("Formatted date components:", { year, month, day });
+
+    return `${year}-${month}-${day}`;
+  };
+
   const handleUpdateAtraksiReservation = async (data: {
     jumlah_tiket: number;
     tanggal_kunjungan: Date;
@@ -176,12 +196,17 @@ const ReservasiTiketAdmin = () => {
     if (!currentAtraksiReservation) return;
 
     try {
-      const adjustedDate = new Date(data.tanggal_kunjungan);
-      adjustedDate.setHours(12, 0, 0, 0);
-
-      const originalDate = new Date(
+      const formattedOriginalDate = formatDateForAPI(
         currentAtraksiReservation.tanggal_kunjungan
       );
+      console.log(
+        "Original date (JS):",
+        currentAtraksiReservation.tanggal_kunjungan
+      );
+      console.log("Formatted original date:", formattedOriginalDate);
+      const formattedNewDate = formatDateForAPI(data.tanggal_kunjungan);
+      console.log("New date (JS):", data.tanggal_kunjungan);
+      console.log("Formatted new date:", formattedNewDate);
 
       const response = await fetch("/api/reservasi", {
         method: "PUT",
@@ -191,8 +216,8 @@ const ReservasiTiketAdmin = () => {
         body: JSON.stringify({
           username_P: currentAtraksiReservation.username_P,
           nama_fasilitas: currentAtraksiReservation.nama_fasilitas,
-          tanggal_kunjungan: originalDate.toISOString(),
-          new_tanggal_kunjungan: adjustedDate.toISOString(),
+          tanggal_kunjungan: formattedOriginalDate,
+          new_tanggal_kunjungan: formattedNewDate,
           jumlah_tiket: data.jumlah_tiket,
           status: data.status,
           type: "attraction",
@@ -241,6 +266,18 @@ const ReservasiTiketAdmin = () => {
     setIsWahanaEditModalOpen(true);
   };
 
+  const handleShowCancelAtraksi = (reservation: ReservasiTiketAtraksi) => {
+    setItemToCancel(reservation);
+    setCancelType("attraction");
+    setIsCancelModalOpen(true);
+  };
+
+  const handleShowCancelWahana = (reservation: ReservasiTiketWahana) => {
+    setItemToCancel(reservation);
+    setCancelType("ride");
+    setIsCancelModalOpen(true);
+  };
+
   const handleUpdateWahanaReservation = async (data: {
     jumlah_tiket: number;
     tanggal_kunjungan: Date;
@@ -249,10 +286,18 @@ const ReservasiTiketAdmin = () => {
     if (!currentWahanaReservation) return;
 
     try {
-      const adjustedDate = new Date(data.tanggal_kunjungan);
-      adjustedDate.setHours(12, 0, 0, 0);
+      const formattedOriginalDate = formatDateForAPI(
+        currentWahanaReservation.tanggal_kunjungan
+      );
+      console.log(
+        "Original date (JS):",
+        currentWahanaReservation.tanggal_kunjungan
+      );
+      console.log("Formatted original date:", formattedOriginalDate);
 
-      const originalDate = new Date(currentWahanaReservation.tanggal_kunjungan);
+      const formattedNewDate = formatDateForAPI(data.tanggal_kunjungan);
+      console.log("New date (JS):", data.tanggal_kunjungan);
+      console.log("Formatted new date:", formattedNewDate);
 
       const response = await fetch("/api/reservasi", {
         method: "PUT",
@@ -262,22 +307,12 @@ const ReservasiTiketAdmin = () => {
         body: JSON.stringify({
           username_P: currentWahanaReservation.username_P,
           nama_fasilitas: currentWahanaReservation.nama_fasilitas,
-          tanggal_kunjungan: originalDate.toISOString(),
-          new_tanggal_kunjungan: adjustedDate.toISOString(),
+          tanggal_kunjungan: formattedOriginalDate,
+          new_tanggal_kunjungan: formattedNewDate,
           jumlah_tiket: data.jumlah_tiket,
           status: data.status,
           type: "ride",
         }),
-      });
-
-      console.log("body:", {
-        username_P: currentWahanaReservation.username_P,
-        nama_fasilitas: currentWahanaReservation.nama_fasilitas,
-        tanggal_kunjungan: originalDate.toISOString(),
-        new_tanggal_kunjungan: adjustedDate.toISOString(),
-        jumlah_tiket: data.jumlah_tiket,
-        status: data.status,
-        type: "ride",
       });
 
       if (!response.ok) {
@@ -317,34 +352,23 @@ const ReservasiTiketAdmin = () => {
     setCurrentWahanaReservation(null);
   };
 
-  const handleShowCancelAtraksi = (reservation: ReservasiTiketAtraksi) => {
-    setItemToCancel(reservation);
-    setCancelType("attraction");
-    setIsCancelModalOpen(true);
-  };
-
-  const handleShowCancelWahana = (reservation: ReservasiTiketWahana) => {
-    setItemToCancel(reservation);
-    setCancelType("ride");
-    setIsCancelModalOpen(true);
-  };
-
-  const handleCancelReservation = async () => {
-    if (!itemToCancel) return;
-
+  const handleCancelReservation = async (reservation: any) => {
     try {
+      const formattedDate = formatDateForAPI(reservation.tanggal_kunjungan);
+
       const response = await fetch("/api/reservasi", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username_P: itemToCancel.username_P,
-          nama_fasilitas: itemToCancel.nama_fasilitas,
-          tanggal_kunjungan: itemToCancel.tanggal_kunjungan,
-          jumlah_tiket: itemToCancel.jumlah_tiket,
+          username_P: reservation.username_P,
+          nama_fasilitas: reservation.nama_fasilitas,
+          tanggal_kunjungan: formattedDate,
+          jumlah_tiket: reservation.jumlah_tiket,
           status: "Dibatalkan",
-          type: cancelType,
+          type:
+            reservation.jenis_reservasi === "Atraksi" ? "attraction" : "ride",
         }),
       });
 
@@ -355,8 +379,8 @@ const ReservasiTiketAdmin = () => {
       if (cancelType === "attraction") {
         const updatedReservations = atraksiReservations.map((res) => {
           if (
-            res.username_P === itemToCancel.username_P &&
-            res.nama_fasilitas === itemToCancel.nama_fasilitas
+            res.username_P === reservation.username_P &&
+            res.nama_fasilitas === reservation.nama_fasilitas
           ) {
             return {
               ...res,
@@ -369,8 +393,8 @@ const ReservasiTiketAdmin = () => {
       } else {
         const updatedReservations = wahanaReservations.map((res) => {
           if (
-            res.username_P === itemToCancel.username_P &&
-            res.nama_fasilitas === itemToCancel.nama_fasilitas
+            res.username_P === reservation.username_P &&
+            res.nama_fasilitas === reservation.nama_fasilitas
           ) {
             return {
               ...res,
@@ -397,6 +421,50 @@ const ReservasiTiketAdmin = () => {
 
     setIsCancelModalOpen(false);
     setItemToCancel(null);
+  };
+
+  const handleReactivateReservation = async (reservation: any) => {
+    try {
+      const formattedDate = formatDateForAPI(reservation.tanggal_kunjungan);
+
+      const response = await fetch("/api/reservasi", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username_P: reservation.username_P,
+          nama_fasilitas: reservation.nama_fasilitas,
+          tanggal_kunjungan: formattedDate,
+          jumlah_tiket: reservation.jumlah_tiket,
+          status: "Terjadwal",
+          type:
+            reservation.jenis_reservasi === "Atraksi" ? "attraction" : "ride",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Failed to reactivate reservation"
+        );
+      }
+
+      toast({
+        title: "Success",
+        description: "Reservasi berhasil diaktifkan kembali",
+      });
+
+      fetchAttractionReservations();
+      fetchRideReservations();
+    } catch (error: any) {
+      console.error("Error reactivating reservation:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Gagal mengaktifkan kembali reservasi",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatDate = (date: Date) => {
@@ -663,7 +731,11 @@ const ReservasiTiketAdmin = () => {
           setIsCancelModalOpen(false);
           setItemToCancel(null);
         }}
-        onConfirm={handleCancelReservation}
+        onConfirm={() => {
+          if (itemToCancel) {
+            handleCancelReservation(itemToCancel);
+          }
+        }}
       />
     </div>
   );
