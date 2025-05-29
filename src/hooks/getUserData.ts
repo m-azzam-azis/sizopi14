@@ -52,11 +52,50 @@ const adminOnlyRoutes = [
   "/kelola-pengunjung",
   "/kelola-pengunjung/atraksi",
   "/kelola-pengunjung/wahana",
+  "/admin-adopsi",
+  "/admin-adopsi/detail",
+  "/admin-adopsi/register",
   "/api/wahana",
   "/api/atraksi",
 ];
 
 const visitorRoutes = ["/reservasi"];
+
+const adopterRoutes = [
+  "/adopter",
+  "/adopter/",
+  "/adopter-adopsi",
+  "/adopter-adopsi/detail",
+  "/adopter-adopsi/sertifikat",
+  "/adopter-adopsi/kondisi",
+];
+
+const veterinarianRoutes = [
+  "/rekam-medis",
+  "/jadwal-pemeriksaan",
+  "/api/rekam-medis",
+  //"/api/hewan",
+  "/api/dokter",
+  "/api/jadwal-pemeriksaan"
+];
+
+const trainerRoutes = [
+  "/jadwal-pertunjukan",
+  "/api/trainer-animals",
+  "/api/jadwal-penugasan",
+];
+
+const caretakerRoutes = [
+  "/pakan",
+  "/pakan/",
+  "/pakan/riwayat",
+  "/habitat",
+  "/habitat/",
+  "/satwa",
+  "/api/pakan",
+  "/api/feeding-history"
+  //"/api/hewan",
+];
 
 export const getUserData: () => ReturnType = () => {
   const [token, setToken] = useState<string | null>(null);
@@ -117,6 +156,16 @@ export const getUserData: () => ReturnType = () => {
       return;
     }
 
+    const isAdopterRoute = adopterRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+    if (isAdopterRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
+      }
+    }
+
     if (
       authState === "authenticated" &&
       nonAuthenticatedRoutes.some((route) => pathname.startsWith(route))
@@ -138,7 +187,7 @@ export const getUserData: () => ReturnType = () => {
         authState === "authenticated" &&
         decodedToken?.data.role !== "admin"
       ) {
-        router.push("/dashboard");
+        router.push("/");
         return;
       }
     }
@@ -155,6 +204,59 @@ export const getUserData: () => ReturnType = () => {
       if (
         authState === "authenticated" &&
         decodedToken?.data.role !== "visitor"
+      ) {
+        router.push("/");
+        return;
+      }
+    }
+
+    const isVeterinarianRoute = veterinarianRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+    if (isVeterinarianRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
+      }   
+
+      if (
+          authState === "authenticated" &&
+          decodedToken?.data.role !== "veterinarian"
+        ) {
+          router.push("/");
+          return;
+        }
+    }
+
+    const isCaretakerRoute = caretakerRoutes.some((route) =>
+      pathname.startsWith(route)
+    );  
+    if (isCaretakerRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
+      }
+
+    if (
+        authState === "authenticated" &&
+        decodedToken?.data.role !== "caretaker"
+      ) {
+        router.push("/");
+        return;
+      }
+    }
+
+    const isTrainerRoute = trainerRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+    if (isTrainerRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
+      }
+      if (
+        authState === "authenticated" &&
+        decodedToken?.data.role !== "trainer"
       ) {
         router.push("/");
         return;

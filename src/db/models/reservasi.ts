@@ -192,19 +192,20 @@ export class Reservasi extends BaseModel<ReservasiType> {
   async updateReservation(data: {
     username_P: string;
     nama_fasilitas: string;
-    tanggal_kunjungan: Date;
+    tanggal_kunjungan: Date | string;
     jumlah_tiket: number;
     new_tanggal_kunjungan?: Date;
     new_jumlah_tiket?: number;
     new_status?: string;
   }) {
+    const tanggalDate =
+      typeof data.tanggal_kunjungan === "string"
+        ? new Date(data.tanggal_kunjungan)
+        : data.tanggal_kunjungan;
+
     try {
       const updateFields = [];
-      const values = [
-        data.username_P,
-        data.nama_fasilitas,
-        data.tanggal_kunjungan,
-      ];
+      const values = [data.username_P, data.nama_fasilitas, tanggalDate];
       let paramIndex = 4;
 
       if (data.new_tanggal_kunjungan) {

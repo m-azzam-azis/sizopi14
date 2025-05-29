@@ -172,6 +172,11 @@ const ReservasiTiketAdmin = () => {
     if (!currentAtraksiReservation) return;
 
     try {
+      const adjustedDate = new Date(data.tanggal_kunjungan);
+      adjustedDate.setHours(12, 0, 0, 0);
+
+      const originalDate = new Date(currentAtraksiReservation.tanggal_kunjungan);
+
       const response = await fetch("/api/reservasi", {
         method: "PUT",
         headers: {
@@ -180,7 +185,8 @@ const ReservasiTiketAdmin = () => {
         body: JSON.stringify({
           username_P: currentAtraksiReservation.username_P,
           nama_fasilitas: currentAtraksiReservation.nama_fasilitas,
-          tanggal_kunjungan: data.tanggal_kunjungan,
+          tanggal_kunjungan: originalDate.toISOString(), 
+          new_tanggal_kunjungan: adjustedDate.toISOString(), 
           jumlah_tiket: data.jumlah_tiket,
           status: data.status,
           type: "attraction",
@@ -237,6 +243,11 @@ const ReservasiTiketAdmin = () => {
     if (!currentWahanaReservation) return;
 
     try {
+      const adjustedDate = new Date(data.tanggal_kunjungan);
+      adjustedDate.setHours(12, 0, 0, 0);
+
+      const originalDate = new Date(currentWahanaReservation.tanggal_kunjungan);
+
       const response = await fetch("/api/reservasi", {
         method: "PUT",
         headers: {
@@ -245,7 +256,8 @@ const ReservasiTiketAdmin = () => {
         body: JSON.stringify({
           username_P: currentWahanaReservation.username_P,
           nama_fasilitas: currentWahanaReservation.nama_fasilitas,
-          tanggal_kunjungan: data.tanggal_kunjungan,
+          tanggal_kunjungan: originalDate.toISOString(),
+          new_tanggal_kunjungan: adjustedDate.toISOString(),
           jumlah_tiket: data.jumlah_tiket,
           status: data.status,
           type: "ride",
