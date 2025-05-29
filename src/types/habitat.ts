@@ -5,3 +5,5 @@ export interface Habitat {
   status: string;
   jumlah_hewan?: number; // For count queries
 }
+
+const test = ["a"];
