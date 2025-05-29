@@ -232,6 +232,9 @@ const ReservasiTiketVisitorModule = () => {
     jumlah_tiket: number;
   }) => {
     try {
+      const adjustedDate = new Date(data.tanggal_kunjungan);
+      adjustedDate.setHours(12, 0, 0, 0);
+
       const response = await fetch("/api/reservasi-visitor", {
         method: "POST",
         headers: {
@@ -240,7 +243,7 @@ const ReservasiTiketVisitorModule = () => {
         body: JSON.stringify({
           username_P: username,
           nama_fasilitas: data.nama_fasilitas,
-          tanggal_kunjungan: data.tanggal_kunjungan,
+          tanggal_kunjungan: adjustedDate.toISOString(),
           jumlah_tiket: data.jumlah_tiket,
         }),
       });
@@ -289,6 +292,9 @@ const ReservasiTiketVisitorModule = () => {
     jumlah_tiket: number;
   }) => {
     try {
+      const adjustedDate = new Date(data.tanggal_kunjungan);
+      adjustedDate.setHours(12, 0, 0, 0);
+
       const response = await fetch("/api/reservasi-visitor", {
         method: "POST",
         headers: {
@@ -297,7 +303,7 @@ const ReservasiTiketVisitorModule = () => {
         body: JSON.stringify({
           username_P: username,
           nama_fasilitas: data.nama_fasilitas,
-          tanggal_kunjungan: data.tanggal_kunjungan,
+          tanggal_kunjungan: adjustedDate.toISOString(),
           jumlah_tiket: data.jumlah_tiket,
         }),
       });
@@ -347,6 +353,12 @@ const ReservasiTiketVisitorModule = () => {
     if (!currentReservation) return;
 
     try {
+      const adjustedDate = new Date(data.tanggal_kunjungan);
+      adjustedDate.setHours(12, 0, 0, 0);
+
+      const originalDate = new Date(currentReservation.tanggal_kunjungan);
+      originalDate.setHours(12, 0, 0, 0);
+
       const response = await fetch("/api/reservasi-visitor", {
         method: "PUT",
         headers: {
@@ -355,8 +367,8 @@ const ReservasiTiketVisitorModule = () => {
         body: JSON.stringify({
           username_P: username,
           nama_fasilitas: currentReservation.nama_fasilitas,
-          tanggal_kunjungan: currentReservation.tanggal_kunjungan,
-          new_tanggal_kunjungan: data.tanggal_kunjungan,
+          tanggal_kunjungan: originalDate.toISOString(),
+          new_tanggal_kunjungan: adjustedDate.toISOString(),
           new_jumlah_tiket: data.jumlah_tiket,
         }),
       });
@@ -406,13 +418,13 @@ const ReservasiTiketVisitorModule = () => {
     if (!currentReservation) return;
 
     try {
+      const adjustedDate = new Date(currentReservation.tanggal_kunjungan);
+      adjustedDate.setHours(12, 0, 0, 0);
+
       const response = await fetch(
         `/api/reservasi-visitor?username=${username}&facility=${
           currentReservation.nama_fasilitas
-        }&date=${format(
-          currentReservation.tanggal_kunjungan,
-          "yyyy-MM-dd HH:mm:ss"
-        )}`,
+        }&date=${adjustedDate.toISOString()}`,
         {
           method: "DELETE",
         }
