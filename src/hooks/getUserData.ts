@@ -110,27 +110,26 @@ export const getUserData: () => ReturnType = () => {
   const pathname = usePathname();
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchCookie = async () => {
-      try {
-        setAuthState("loading");
-        const res = await fetch("/api/auth/cookies");
-        const data: { message: string; token: string } = await res.json();
-        if (data.token) {
-          setToken(data.token);
-        } else {
-          setToken(null);
-          setAuthState("unauthenticated");
-        }
-      } catch (error) {
-        console.error("Error fetching cookie:", error);
+  const fetchCookie = async () => {
+    try {
+      setAuthState("loading");
+      const res = await fetch("/api/auth/cookies");
+      const data: { message: string; token: string } = await res.json();
+      if (data.token) {
+        setToken(data.token);
+      } else {
         setToken(null);
         setAuthState("unauthenticated");
-      } finally {
-        setIsLoading(false);
       }
-    };
-
+    } catch (error) {
+      console.error("Error fetching cookie:", error);
+      setToken(null);
+      setAuthState("unauthenticated");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  useEffect(() => {
     fetchCookie();
   }, []);
 
@@ -325,7 +324,8 @@ export const getUserData: () => ReturnType = () => {
         id_staf_LH: "",
         no_str: "",
         nama_spesialisasi: [],
-        id_staf_sa: "",      },
+        id_staf_sa: "",
+      },
       isValid: false,
       isLoading,
       authState,
