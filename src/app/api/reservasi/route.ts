@@ -46,6 +46,8 @@ export async function PUT(request: Request) {
       type,
     } = body;
 
+    console.log(body)
+
     if (!username_P || !nama_fasilitas || !tanggal_kunjungan) {
       return NextResponse.json(
         { message: "Missing required fields" },
@@ -55,16 +57,21 @@ export async function PUT(request: Request) {
 
     const reservasiModel = new Reservasi();
 
+    function formatDateForQuery(date: string | Date) {
+      const d = new Date(date);
+      d.setDate(d.getDate() + 1);
+      return d.toISOString().split("T")[0];
+    }
+
+    const dateString = formatDateForQuery(tanggal_kunjungan);
+
     if (status === "Dibatalkan") {
       const dbStatus = "Batal";
-
-      const formattedDate = formatDateForUpdate(tanggal_kunjungan);
-      const dateObject = new Date(formattedDate);
 
       await reservasiModel.updateReservation({
         username_P,
         nama_fasilitas,
-        tanggal_kunjungan: dateObject,
+        tanggal_kunjungan: dateString,
         jumlah_tiket,
         new_status: dbStatus,
       });
@@ -83,19 +90,6 @@ export async function PUT(request: Request) {
       AND nama_fasilitas = $2 
       AND tanggal_kunjungan::text = $3
     `;
-
-    function formatDateForQuery(date: string | Date) {
-      const d = new Date(date);
-      d.setDate(d.getDate() + 1);
-      return d.toISOString().split("T")[0];
-    }
-
-    function formatDateForUpdate(date: string | Date) {
-      const d = new Date(date);
-      return d.toISOString().split("T")[0];
-    }
-
-    const dateString = formatDateForQuery(tanggal_kunjungan);
 
     const currentReservation = await reservasiModel.customQuery(query, [
       username_P,
@@ -139,19 +133,14 @@ export async function PUT(request: Request) {
 
     const dbStatus = status === "Terjadwal" ? "Aktif" : "Batal";
 
-    const formattedOriginalDate = formatDateForUpdate(tanggal_kunjungan);
-    const dateObject = new Date(formattedOriginalDate);
-
     await reservasiModel.updateReservation({
       username_P,
       nama_fasilitas,
-      tanggal_kunjungan: dateObject,
+      tanggal_kunjungan: dateString,
       jumlah_tiket,
       new_status: dbStatus,
       new_jumlah_tiket: jumlah_tiket,
-      new_tanggal_kunjungan: new_tanggal_kunjungan
-        ? new Date(formatDateForUpdate(new_tanggal_kunjungan))
-        : undefined,
+      new_tanggal_kunjungan: new_tanggal_kunjungan.split("T")[0]
     });
 
     return NextResponse.json({

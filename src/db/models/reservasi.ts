@@ -192,20 +192,15 @@ export class Reservasi extends BaseModel<ReservasiType> {
   async updateReservation(data: {
     username_P: string;
     nama_fasilitas: string;
-    tanggal_kunjungan: Date | string;
+    tanggal_kunjungan: string;
     jumlah_tiket: number;
-    new_tanggal_kunjungan?: Date;
+    new_tanggal_kunjungan?: string;
     new_jumlah_tiket?: number;
     new_status?: string;
   }) {
-    const tanggalDate =
-      typeof data.tanggal_kunjungan === "string"
-        ? new Date(data.tanggal_kunjungan)
-        : data.tanggal_kunjungan;
-
     try {
       const updateFields = [];
-      const values = [data.username_P, data.nama_fasilitas, tanggalDate];
+      const values = [data.username_P, data.nama_fasilitas, data.tanggal_kunjungan];
       let paramIndex = 4;
 
       if (data.new_tanggal_kunjungan) {
@@ -238,6 +233,10 @@ export class Reservasi extends BaseModel<ReservasiType> {
           AND tanggal_kunjungan = $3
         RETURNING *
       `;
+
+      console.log("Executing query:", query);
+      console.log("With values:", values);
+      console.log("Data for update:", data);
 
       const result = await this.customQuery(query, values);
       return result.length > 0 ? result[0] : null;
