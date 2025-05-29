@@ -1,8 +1,10 @@
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
-export const handleDbNotification = (message: string | null | undefined): boolean => {
+export const handleDbNotification = (
+  message: string | null | undefined
+): boolean => {
   if (!message) return false;
-  
+
   if (message.includes("SUKSES:")) {
     toast.success(message, {
       duration: 5000,

@@ -3,7 +3,7 @@ import { Hewan } from "@/db/models/hewan";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json();
@@ -31,7 +31,8 @@ export async function PUT(
     }
 
     const hewan = new Hewan();
-    const updatedHewan = await hewan.updateById(await params.id, {
+    const { id } = await params;
+    const updatedHewan = await hewan.updateById(await id, {
       nama,
       spesies,
       asal_hewan,
@@ -69,11 +70,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const hewan = new Hewan();
-    const deleted = await hewan.deleteById(await params.id);
+    const deleted = await hewan.deleteById(await id);
 
     if (!deleted) {
       return NextResponse.json(

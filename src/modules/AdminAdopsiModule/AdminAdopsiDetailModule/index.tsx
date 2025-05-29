@@ -4,7 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,8 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { X } from "lucide-react";
-import toast from "react-hot-toast";
-import { handleDbNotification } from "@/utils/dbNotifications";
+import { toast } from "sonner";
 
 interface AnimalAdoption {
   animal: {
@@ -34,7 +39,11 @@ interface AnimalAdoption {
   } | null;
 }
 
-export default function AdminAdopsiDetailModule({ animalId }: { animalId: string }) {
+export default function AdminAdopsiDetailModule({
+  animalId,
+}: {
+  animalId: string;
+}) {
   const router = useRouter();
   const [animalData, setAnimalData] = useState<AnimalAdoption | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -54,16 +63,16 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
     try {
       console.log(`Fetching data for animal ID: ${animalId}`);
       const response = await fetch(`/api/adopsi/${animalId}`);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       console.log("Animal data received:", data);
-      
+
       setAnimalData(data);
-      
+
       if (data.currentAdoption) {
         // Set default status ke "tertunda" jika status dari database kosong
         const status = data.currentAdoption.status_pembayaran || "Tertunda";
@@ -81,7 +90,10 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
     }
   };
 
-  const showToastMessage = (message: string, type: "success" | "error" = "success") => {
+  const showToastMessage = (
+    message: string,
+    type: "success" | "error" = "success"
+  ) => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
@@ -95,31 +107,35 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
       toast.error("Data adopsi tidak ditemukan");
       return;
     }
-    
+
     try {
       console.log("Saving payment status:", paymentStatus);
-      
-      const formattedStatus = paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1);
+
+      const formattedStatus =
+        paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1);
       console.log("Formatted status:", formattedStatus);
-      
-      const response = await fetch(`/api/adopsi/${animalData.animal.id_hewan}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id_adopter: animalData.currentAdoption.id_adopter,
-          status_pembayaran: formattedStatus
-        }),
-      });
+
+      const response = await fetch(
+        `/api/adopsi/${animalData.animal.id_hewan}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id_adopter: animalData.currentAdoption.id_adopter,
+            status_pembayaran: formattedStatus,
+          }),
+        }
+      );
 
       console.log("Response status:", response.status);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Error response:", errorText);
         let errorMessage = `HTTP error! Status: ${response.status}`;
-        
+
         try {
           const errorData = JSON.parse(errorText);
           if (errorData.error) {
@@ -129,13 +145,13 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
           // Jika tidak bisa parse sebagai JSON, gunakan error text asli
           if (errorText) errorMessage = errorText;
         }
-        
+
         throw new Error(errorMessage);
       }
-      
+
       const data = await response.json();
       console.log("Response data:", data);
-      
+
       // Menampilkan pesan dari trigger jika ada
       if (data.triggerMessage) {
         toast.success(data.triggerMessage, { duration: 5000 });
@@ -146,7 +162,6 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
       setTimeout(() => {
         router.push(`/admin-adopsi?t=${Date.now()}`);
       }, 2000);
-      
     } catch (err) {
       console.error("Error saving payment status:", err);
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
@@ -156,15 +171,15 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
 
   const handleStopAdoption = async () => {
     if (!animalData?.currentAdoption) return;
-    
+
     try {
       // pake tanggal kemarin buat mastiin adopsi dianggap udah selesai
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
-      
+      const yesterdayStr = yesterday.toISOString().split("T")[0];
+
       console.log("Stopping adoption with end date:", yesterdayStr);
-      
+
       const response = await fetch(`/api/adopsi`, {
         method: "PUT",
         headers: {
@@ -173,19 +188,21 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
         body: JSON.stringify({
           id_adopter: animalData.currentAdoption.id_adopter,
           id_hewan: animalData.animal.id_hewan,
-          tgl_berhenti_adopsi: yesterdayStr
+          tgl_berhenti_adopsi: yesterdayStr,
         }),
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Error: ${response.status} - ${errorData.message || "Unknown error"}`);
+        throw new Error(
+          `Error: ${response.status} - ${errorData.message || "Unknown error"}`
+        );
       }
-      
+
       showToastMessage("Adopsi berhasil dihentikan", "success");
-      
+
       setIsDialogOpen(false);
-      
+
       setTimeout(() => {
         router.push(`/admin-adopsi?t=${Date.now()}`);
       }, 1500);
@@ -216,8 +233,8 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
     return (
       <div className="container mx-auto py-10 px-4 text-center">
         <p className="text-red-500">{error || "Data tidak ditemukan"}</p>
-        <Button 
-          variant="default" 
+        <Button
+          variant="default"
           className="mt-4"
           onClick={() => router.push("/admin-adopsi")}
         >
@@ -233,7 +250,9 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
     <div className="container mx-auto py-10 px-4 font-outfit flex flex-col items-center">
       <Card className="shadow-md w-full max-w-lg">
         <CardHeader className="relative">
-          <CardTitle className="text-center text-xl font-bold">Detail Adopsi Hewan</CardTitle>
+          <CardTitle className="text-center text-xl font-bold">
+            Detail Adopsi Hewan
+          </CardTitle>
           <Button
             variant="ghost"
             className="absolute top-2 right-2 text-muted-foreground hover:text-red-500"
@@ -245,24 +264,31 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
         <CardContent>
           <div className="space-y-2">
             <p>
-              <span className="font-bold">Nama Hewan:</span> {animal?.nama_hewan || "(kalau ada)"}
+              <span className="font-bold">Nama Hewan:</span>{" "}
+              {animal?.nama_hewan || "(kalau ada)"}
             </p>
             <p>
-              <span className="font-bold">Jenis Hewan:</span> {animal?.spesies || "[jenis]"}
+              <span className="font-bold">Jenis Hewan:</span>{" "}
+              {animal?.spesies || "[jenis]"}
             </p>
             {currentAdoption ? (
               <>
                 <p>
-                  <span className="font-bold">Adopter Saat Ini:</span> {currentAdoption.nama_adopter || "[nama adopter]"}
+                  <span className="font-bold">Adopter Saat Ini:</span>{" "}
+                  {currentAdoption.nama_adopter || "[nama adopter]"}
                 </p>
                 <p>
-                  <span className="font-bold">Tanggal Mulai Adopsi:</span> {currentAdoption.tgl_mulai_adopsi || "[tanggal awal]"}
+                  <span className="font-bold">Tanggal Mulai Adopsi:</span>{" "}
+                  {currentAdoption.tgl_mulai_adopsi || "[tanggal awal]"}
                 </p>
                 <p>
-                  <span className="font-bold">Tanggal Akhir Adopsi:</span> {currentAdoption.tgl_berhenti_adopsi || "[tanggal akhir]"}
+                  <span className="font-bold">Tanggal Akhir Adopsi:</span>{" "}
+                  {currentAdoption.tgl_berhenti_adopsi || "[tanggal akhir]"}
                 </p>
                 <p>
-                  <span className="font-bold">Nominal Kontribusi:</span> {formatCurrency(currentAdoption.kontribusi_finansial) || "[nominal]"}
+                  <span className="font-bold">Nominal Kontribusi:</span>{" "}
+                  {formatCurrency(currentAdoption.kontribusi_finansial) ||
+                    "[nominal]"}
                 </p>
 
                 <div className="mt-4 space-y-4">
@@ -281,7 +307,7 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   {/* Tombol ditempatkan secara berdampingan */}
                   <div className="flex justify-center gap-4 mt-6">
                     <Button
@@ -291,7 +317,7 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
                     >
                       Hentikan Adopsi
                     </Button>
-                    <Button 
+                    <Button
                       variant="default"
                       className="bg-green-500 text-white hover:bg-green-600"
                       onClick={handleSaveStatus}
@@ -302,7 +328,9 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
                 </div>
               </>
             ) : (
-              <p className="text-amber-500 font-medium">Hewan ini sedang tidak diadopsi</p>
+              <p className="text-amber-500 font-medium">
+                Hewan ini sedang tidak diadopsi
+              </p>
             )}
           </div>
         </CardContent>
@@ -312,12 +340,12 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
       <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Apakah Anda yakin ingin menghentikan adopsi ini?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Apakah Anda yakin ingin menghentikan adopsi ini?
+            </AlertDialogTitle>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>
-              Batal
-            </AlertDialogCancel>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-500 text-white hover:bg-red-600"
               onClick={handleStopAdoption}
@@ -330,7 +358,11 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
 
       {/* Toast Notification */}
       {showToast && (
-        <div className={`fixed bottom-4 right-4 ${toastType === "success" ? "bg-green-500" : "bg-red-500"} text-white px-4 py-2 rounded shadow-lg`}>
+        <div
+          className={`fixed bottom-4 right-4 ${
+            toastType === "success" ? "bg-green-500" : "bg-red-500"
+          } text-white px-4 py-2 rounded shadow-lg`}
+        >
           {toastMessage}
         </div>
       )}

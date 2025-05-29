@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/db/db";
 
-  export async function GET(
-    request: NextRequest,
-    { params }: { params: { id: string } }
-  ) {
-    try {
-      const { id } = await params;
-      
-      const query = `
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    const query = `
         SELECT 
           h.id,
           h.nama as name,
@@ -40,20 +40,19 @@ import pool from "@/db/db";
         LEFT JOIN organisasi o ON a.id_adopter = o.id_adopter
         WHERE h.id = $1
       `;
-      
-      const result = await pool.query(query, [id]);
-      
-      if (result.rows.length === 0) {
-        return NextResponse.json(
-          { error: "Data hewan adopsi tidak ditemukan" },
-          { status: 404 }
-        );
-      }
-  
-    
+
+    const result = await pool.query(query, [id]);
+
+    if (result.rows.length === 0) {
+      return NextResponse.json(
+        { error: "Data hewan adopsi tidak ditemukan" },
+        { status: 404 }
+      );
+    }
+
     // Get adopter details
     const adopter = await getAdopterDetails(result.rows[0].ownerid);
-    
+
     // Structure the response dengan memperhatikan case kolom
     const response = {
       animal: {
@@ -67,16 +66,16 @@ import pool from "@/db/db";
         ownerId: result.rows[0].ownerid,
         paymentStatus: result.rows[0].paymentstatus,
         status_kesehatan: result.rows[0].status_kesehatan,
-        kontribusi_finansial: result.rows[0].kontribusi_finansial
+        kontribusi_finansial: result.rows[0].kontribusi_finansial,
       },
-      adopter: adopter
+      adopter: adopter,
     };
-    
+
     return NextResponse.json(response);
   } catch (error) {
     console.error("Error fetching animal adoption details:", error);
     return NextResponse.json(
-      { error: "Terjadi kesalahan saat mengambil detail hewan adopsi"},
+      { error: "Terjadi kesalahan saat mengambil detail hewan adopsi" },
       { status: 500 }
     );
   }
@@ -109,13 +108,13 @@ async function getAdopterDetails(adopterId: string) {
       LEFT JOIN organisasi o ON ad.id_adopter = o.id_adopter
       WHERE ad.id_adopter = $1
     `;
-    
+
     const result = await pool.query(query, [adopterId]);
-    
+
     if (result.rows.length === 0) {
       return null;
     }
-    
+
     return result.rows[0];
   } catch (error) {
     console.error("Error fetching adopter details:", error);
@@ -125,7 +124,7 @@ async function getAdopterDetails(adopterId: string) {
 
 function formatDate(dateString: string | null) {
   if (!dateString) return null;
-  
+
   const date = new Date(dateString);
-  return date.toISOString().split('T')[0]; 
+  return date.toISOString().split("T")[0];
 }

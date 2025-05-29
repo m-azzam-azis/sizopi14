@@ -26,7 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUserData } from "@/hooks/getUserData";
 import { handleDbNotification } from "@/utils/dbNotifications";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 interface Adopter {
   id: string;
@@ -48,10 +48,12 @@ const AdopterRiwayatModule = () => {
   const [toastMessage, setToastMessage] = useState("");
   const [adopters, setAdopters] = useState<Adopter[]>([]);
   const [individualAdopters, setIndividualAdopters] = useState<Adopter[]>([]);
-  const [organizationAdopters, setOrganizationAdopters] = useState<Adopter[]>([]);
+  const [organizationAdopters, setOrganizationAdopters] = useState<Adopter[]>(
+    []
+  );
   const [topAdopters, setTopAdopters] = useState<Adopter[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Get user data and check role
   const { userData, isValid, isLoading: authLoading } = getUserData();
 
@@ -69,30 +71,34 @@ const AdopterRiwayatModule = () => {
       fetchData();
     }
   }, [isValid, authLoading]);
-  
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
       // Fetch all adopters
       const response = await fetch("/api/adopter");
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Error response:", errorText);
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       console.log("Fetched adopter data:", data);
-      
+
       // Handle empty array properly
       if (Array.isArray(data)) {
         setAdopters(data);
-        
+
         // Separate individual and organization adopters
-        const individuals = data.filter(adopter => adopter.type === "individu");
-        const organizations = data.filter(adopter => adopter.type === "organisasi");
-        
+        const individuals = data.filter(
+          (adopter) => adopter.type === "individu"
+        );
+        const organizations = data.filter(
+          (adopter) => adopter.type === "organisasi"
+        );
+
         setIndividualAdopters(individuals);
         setOrganizationAdopters(organizations);
       } else {
@@ -101,18 +107,18 @@ const AdopterRiwayatModule = () => {
         setIndividualAdopters([]);
         setOrganizationAdopters([]);
       }
-      
+
       // Fetch top adopters
       try {
         const topResponse = await fetch("/api/adopter/top");
-        
+
         if (topResponse.ok) {
           const topData = await topResponse.json();
           console.log("Fetched top adopters:", topData);
-          
+
           if (topData.data && Array.isArray(topData.data)) {
             setTopAdopters(topData.data);
-            
+
             // Tampilkan pesan trigger jika ada
             if (topData.triggerMessage) {
               handleDbNotification(topData.triggerMessage);
@@ -162,7 +168,9 @@ const AdopterRiwayatModule = () => {
           if (response.status === 403) {
             toast.error(result.message || "Adopter masih aktif mengadopsi");
           } else {
-            throw new Error(result.error || `HTTP error! Status: ${response.status}`);
+            throw new Error(
+              result.error || `HTTP error! Status: ${response.status}`
+            );
           }
           setShowDeleteAlert(false);
           setAdopterToDelete(null);
@@ -178,15 +186,21 @@ const AdopterRiwayatModule = () => {
           }
         }
 
-        setAdopters(adopters.filter((adopter) => adopter.id !== adopterToDelete));
-        setIndividualAdopters(individualAdopters.filter(
-          (adopter) => adopter.id !== adopterToDelete
-        ));
-        setOrganizationAdopters(organizationAdopters.filter(
-          (adopter) => adopter.id !== adopterToDelete
-        ));
-        setTopAdopters(topAdopters.filter((adopter) => adopter.id !== adopterToDelete));
-        
+        setAdopters(
+          adopters.filter((adopter) => adopter.id !== adopterToDelete)
+        );
+        setIndividualAdopters(
+          individualAdopters.filter((adopter) => adopter.id !== adopterToDelete)
+        );
+        setOrganizationAdopters(
+          organizationAdopters.filter(
+            (adopter) => adopter.id !== adopterToDelete
+          )
+        );
+        setTopAdopters(
+          topAdopters.filter((adopter) => adopter.id !== adopterToDelete)
+        );
+
         toast.success("Adopter berhasil dihapus");
       } catch (error) {
         console.error("Error deleting adopter:", error);
@@ -253,7 +267,8 @@ const AdopterRiwayatModule = () => {
                             alt={adopter.name}
                           />
                           <AvatarFallback>
-                            {adopter.name?.substring(0, 2).toUpperCase() || 'AD'}
+                            {adopter.name?.substring(0, 2).toUpperCase() ||
+                              "AD"}
                           </AvatarFallback>
                         </Avatar>
                         <div>
@@ -304,7 +319,9 @@ const AdopterRiwayatModule = () => {
         <CardContent>
           <div className="space-y-3 max-w-xl mx-auto">
             {topAdopters.length === 0 ? (
-              <p className="text-center text-muted-foreground py-4">Tidak ada data adopter</p>
+              <p className="text-center text-muted-foreground py-4">
+                Tidak ada data adopter
+              </p>
             ) : (
               topAdopters.map((adopter, index) => (
                 <div
@@ -318,7 +335,9 @@ const AdopterRiwayatModule = () => {
                     <span className="font-semibold">{adopter.name}</span>
                   </div>
                   <span className="font-bold text-primary">
-                    {formatCurrency(adopter.yearly_contribution || adopter.total_kontribusi)}
+                    {formatCurrency(
+                      adopter.yearly_contribution || adopter.total_kontribusi
+                    )}
                   </span>
                 </div>
               ))
@@ -330,7 +349,10 @@ const AdopterRiwayatModule = () => {
       <Card>
         <CardContent className="pt-6">
           {renderAdopterTable(individualAdopters, "Daftar Adopter Individu")}
-          {renderAdopterTable(organizationAdopters, "Daftar Adopter Organisasi")}
+          {renderAdopterTable(
+            organizationAdopters,
+            "Daftar Adopter Organisasi"
+          )}
         </CardContent>
       </Card>
 
@@ -340,7 +362,8 @@ const AdopterRiwayatModule = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tindakan ini tidak dapat dibatalkan. Data adopter dan seluruh riwayat adopsinya akan dihapus secara permanen.
+              Tindakan ini tidak dapat dibatalkan. Data adopter dan seluruh
+              riwayat adopsinya akan dihapus secara permanen.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

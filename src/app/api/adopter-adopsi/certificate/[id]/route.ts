@@ -3,7 +3,7 @@ import pool from "@/db/db";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
@@ -32,9 +32,9 @@ export async function GET(
       JOIN adopter ad ON a.id_adopter = ad.id_adopter
       WHERE h.id = $1 AND ad.username_adopter = $2
     `;
-    
+
     const result = await pool.query(query, [id, username]);
-    
+
     if (result.rows.length === 0) {
       return NextResponse.json(
         { error: "Data sertifikat tidak ditemukan" },
@@ -47,25 +47,25 @@ export async function GET(
     // Format tanggal
     const certificate = {
       ...result.rows[0],
-      animalName: result.rows[0].animalname,     
-      animalSpecies: result.rows[0].animalspecies, 
+      animalName: result.rows[0].animalname,
+      animalSpecies: result.rows[0].animalspecies,
       startDate: formatDate(result.rows[0].startdate),
-      endDate: formatDate(result.rows[0].enddate)
+      endDate: formatDate(result.rows[0].enddate),
     };
-    
+
     // Ambil data adopter
     const adopter = await getAdopterDetails(certificate.ownerid);
-    
+
     if (!adopter) {
       return NextResponse.json(
         { error: "Data adopter tidak ditemukan" },
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json({
       certificate,
-      adopter
+      adopter,
     });
   } catch (error) {
     console.error("Error fetching certificate data:", error);
@@ -94,13 +94,13 @@ async function getAdopterDetails(adopterId: string) {
       LEFT JOIN organisasi o ON ad.id_adopter = o.id_adopter
       WHERE ad.id_adopter = $1
     `;
-    
+
     const result = await pool.query(query, [adopterId]);
-    
+
     if (result.rows.length === 0) {
       return null;
     }
-    
+
     return result.rows[0];
   } catch (error) {
     console.error("Error fetching adopter details:", error);
@@ -110,8 +110,8 @@ async function getAdopterDetails(adopterId: string) {
 
 function formatDate(dateString: string | null) {
   if (!dateString) return "-";
-  
+
   const date = new Date(dateString);
-  
-  return date.toISOString().split('T')[0];
+
+  return date.toISOString().split("T")[0];
 }

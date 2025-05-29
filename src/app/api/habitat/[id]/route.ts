@@ -3,13 +3,12 @@ import { Habitat } from "@/db/models/habitat";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const habitat = new Habitat();
-    const habitatData = await habitat.findByName(
-      decodeURIComponent(await params.id)
-    );
+    const habitatData = await habitat.findByName(decodeURIComponent(await id));
 
     if (!habitatData) {
       return NextResponse.json(
@@ -33,7 +32,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json();
@@ -47,8 +46,9 @@ export async function PUT(
     }
 
     const habitat = new Habitat();
+    const { id } = await params;
     const updatedHabitat = await habitat.updateByName(
-      decodeURIComponent(await params.id),
+      decodeURIComponent(await id),
       {
         nama,
         luas_area: parseFloat(luas_area),
@@ -85,13 +85,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const habitat = new Habitat();
-    const deleted = await habitat.deleteByName(
-      decodeURIComponent(await params.id)
-    );
+    const deleted = await habitat.deleteByName(decodeURIComponent(await id));
 
     if (!deleted) {
       return NextResponse.json(
