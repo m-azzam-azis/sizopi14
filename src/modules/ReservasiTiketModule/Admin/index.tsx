@@ -72,21 +72,23 @@ const ReservasiTiketAdmin = () => {
 
       const { data } = await response.json();
 
-      const formattedData = data.map((item: {
-        username_p: string;
-        nama_atraksi: string;
-        tanggal_kunjungan: string;
-        jumlah_tiket: number;
-        lokasi: string;
-        status: string;
-      }) => ({
-        username_P: item.username_p,
-        nama_fasilitas: item.nama_atraksi,
-        tanggal_kunjungan: new Date(item.tanggal_kunjungan),
-        jumlah_tiket: item.jumlah_tiket,
-        lokasi: item.lokasi,
-        status: item.status as ReservationStatus,
-      }));
+      const formattedData = data.map(
+        (item: {
+          username_p: string;
+          nama_atraksi: string;
+          tanggal_kunjungan: string;
+          jumlah_tiket: number;
+          lokasi: string;
+          status: string;
+        }) => ({
+          username_P: item.username_p,
+          nama_fasilitas: item.nama_atraksi,
+          tanggal_kunjungan: new Date(item.tanggal_kunjungan),
+          jumlah_tiket: item.jumlah_tiket,
+          lokasi: item.lokasi,
+          status: item.status as ReservationStatus,
+        })
+      );
 
       setAtraksiReservations(formattedData);
     } catch (error) {
@@ -111,23 +113,25 @@ const ReservasiTiketAdmin = () => {
 
       const { data } = await response.json();
 
-      const formattedData = data.map((item: {
-        username_p: string;
-        nama_wahana: string;
-        tanggal_kunjungan: string;
-        jumlah_tiket: number;
-        peraturan: string | null;
-        status: string;
-      }) => ({
-        username_P: item.username_p,
-        nama_fasilitas: item.nama_wahana,
-        tanggal_kunjungan: new Date(item.tanggal_kunjungan),
-        jumlah_tiket: item.jumlah_tiket,
-        peraturan: item.peraturan
-          ? item.peraturan.split(",").map((p: string) => p.trim())
-          : [],
-        status: item.status as ReservationStatus,
-      }));
+      const formattedData = data.map(
+        (item: {
+          username_p: string;
+          nama_wahana: string;
+          tanggal_kunjungan: string;
+          jumlah_tiket: number;
+          peraturan: string | null;
+          status: string;
+        }) => ({
+          username_P: item.username_p,
+          nama_fasilitas: item.nama_wahana,
+          tanggal_kunjungan: new Date(item.tanggal_kunjungan),
+          jumlah_tiket: item.jumlah_tiket,
+          peraturan: item.peraturan
+            ? item.peraturan.split(",").map((p: string) => p.trim())
+            : [],
+          status: item.status as ReservationStatus,
+        })
+      );
 
       setWahanaReservations(formattedData);
     } catch (error) {
@@ -175,7 +179,9 @@ const ReservasiTiketAdmin = () => {
       const adjustedDate = new Date(data.tanggal_kunjungan);
       adjustedDate.setHours(12, 0, 0, 0);
 
-      const originalDate = new Date(currentAtraksiReservation.tanggal_kunjungan);
+      const originalDate = new Date(
+        currentAtraksiReservation.tanggal_kunjungan
+      );
 
       const response = await fetch("/api/reservasi", {
         method: "PUT",
@@ -185,8 +191,8 @@ const ReservasiTiketAdmin = () => {
         body: JSON.stringify({
           username_P: currentAtraksiReservation.username_P,
           nama_fasilitas: currentAtraksiReservation.nama_fasilitas,
-          tanggal_kunjungan: originalDate.toISOString(), 
-          new_tanggal_kunjungan: adjustedDate.toISOString(), 
+          tanggal_kunjungan: originalDate.toISOString(),
+          new_tanggal_kunjungan: adjustedDate.toISOString(),
           jumlah_tiket: data.jumlah_tiket,
           status: data.status,
           type: "attraction",
@@ -262,6 +268,16 @@ const ReservasiTiketAdmin = () => {
           status: data.status,
           type: "ride",
         }),
+      });
+
+      console.log("body:", {
+        username_P: currentWahanaReservation.username_P,
+        nama_fasilitas: currentWahanaReservation.nama_fasilitas,
+        tanggal_kunjungan: originalDate.toISOString(),
+        new_tanggal_kunjungan: adjustedDate.toISOString(),
+        jumlah_tiket: data.jumlah_tiket,
+        status: data.status,
+        type: "ride",
       });
 
       if (!response.ok) {
@@ -434,7 +450,7 @@ const ReservasiTiketAdmin = () => {
       <Card>
         <CardHeader>
           <CardTitle className="text-h3 font-bold text-foreground">
-            DATA RESERVASI
+            DATA RESERVASII
           </CardTitle>
         </CardHeader>
         <CardContent>
