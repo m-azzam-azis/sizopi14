@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
-    
+
     if (!token) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
       });
     }
 
-    let profileData: any = {
+    const profileData: any = {
       username: user.username,
       email: user.email,
       nama_depan: user.nama_depan,
@@ -67,11 +67,14 @@ export async function GET(request: Request) {
         const dokterHewan = await dokterHewanModel.findByUsername(username);
         if (dokterHewan) {
           profileData.no_str = dokterHewan.no_str;
-          
+
           // Get specializations
           const spesialisasiModel = new Spesialisasi();
-          const specializations = await spesialisasiModel.findAllByUsernameSH(username);
-          profileData.nama_spesialisasi = specializations?.map(spec => spec.nama_spesialisasi) || [];
+          const specializations = await spesialisasiModel.findAllByUsernameSH(
+            username
+          );
+          profileData.nama_spesialisasi =
+            specializations?.map((spec) => spec.nama_spesialisasi) || [];
         }
         break;
 
@@ -117,7 +120,7 @@ export async function PUT(request: Request) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
-    
+
     if (!token) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -137,13 +140,14 @@ export async function PUT(request: Request) {
     }
 
     const data = await request.json();
-    
+
     const penggunaModel = new Pengguna();
-    
+
     // Update base user data
     const baseUserData: any = {};
     if (data.nama_depan) baseUserData.nama_depan = data.nama_depan;
-    if (data.nama_tengah !== undefined) baseUserData.nama_tengah = data.nama_tengah;
+    if (data.nama_tengah !== undefined)
+      baseUserData.nama_tengah = data.nama_tengah;
     if (data.nama_belakang) baseUserData.nama_belakang = data.nama_belakang;
     if (data.no_telepon) baseUserData.no_telepon = data.no_telepon;
     if (data.email) baseUserData.email = data.email;
@@ -160,14 +164,15 @@ export async function PUT(request: Request) {
           const updateData: any = {};
           if (data.alamat) updateData.alamat = data.alamat;
           if (data.tgl_lahir) updateData.tgl_lahir = data.tgl_lahir;
-          
+
           await pengunjungModel.updateByUsername(username, updateData);
         }
-        break;      case "veterinarian":
+        break;
+      case "veterinarian":
         if (data.no_str) {
           const dokterHewanModel = new DokterHewan();
           await dokterHewanModel.updateByUsername(username, {
-            no_str: data.no_str
+            no_str: data.no_str,
           });
         }
         // Note: Specializations updates would be handled separately if needed
@@ -178,34 +183,37 @@ export async function PUT(request: Request) {
         if (data.id_staf) {
           const penjagaHewanModel = new PenjagaHewan();
           await penjagaHewanModel.updateByUsername(username, {
-            id_staf: data.id_staf
+            id_staf: data.id_staf,
           });
         }
         break;
-        
+
       case "trainer":
         if (data.id_staf) {
           const pelatihHewanModel = new PelatihHewan();
           await pelatihHewanModel.updateByUsername(username, {
-            id_staf: data.id_staf
+            id_staf: data.id_staf,
           });
         }
         break;
-        
+
       case "admin":
         if (data.id_staf) {
           const stafAdminModel = new StafAdmin();
           await stafAdminModel.updateByUsername(username, {
-            id_staf: data.id_staf
+            id_staf: data.id_staf,
           });
         }
         break;
     }
 
-    return new Response(JSON.stringify({ message: "Profile updated successfully" }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ message: "Profile updated successfully" }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
     console.error("PUT /api/profile error:", error);
     return new Response(JSON.stringify({ error: "Failed to update profile" }), {

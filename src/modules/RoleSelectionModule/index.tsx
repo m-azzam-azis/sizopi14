@@ -98,7 +98,7 @@ const RoleSelectionModule: React.FC = () => {
               Choose Your Role
             </h2>
             <p className="text-muted-foreground mt-2">
-              Select the role that best describes how you'll use the Sizopi
+              Select the role that best describes how you&apos;ll use the Sizopi
               platform
             </p>
           </motion.div>

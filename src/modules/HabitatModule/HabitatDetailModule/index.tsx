@@ -248,7 +248,7 @@ const HabitatDetailModule = () => {
             Habitat Not Found
           </h1>
           <p className="text-muted-foreground mt-2">
-            The habitat you're looking for doesn't exist.
+            The habitat you&apos;re looking for doesn&apos;t exist.
           </p>
           <Button onClick={() => router.push("/habitat")} className="mt-4">
             Back to Habitat List
