@@ -6,9 +6,6 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const facilityName = searchParams.get("facility");
     const dateStr = searchParams.get("date");
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const _username = searchParams.get("username");
     const currentTickets = searchParams.get("currentTickets");
     const status = searchParams.get("status");
 
@@ -19,10 +16,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const year = dateStr.substring(0, 4);
-    const month = dateStr.substring(5, 7);
-    const day = dateStr.substring(8, 10);
-    const formattedDateStr = `${year}-${month}-${day}`;
+    const formattedDateStr = dateStr.split("T")[0];
 
     console.log("Checking capacity for date:", formattedDateStr);
 
@@ -31,8 +25,8 @@ export async function GET(request: Request) {
     const query = `
       SELECT 
         f.kapasitas_max,
-        COALESCE(SUM(r.jumlah_tiket) FILTER (WHERE r.status = 'Aktif' AND r.tanggal_kunjungan::date = $2::date), 0) AS tiket_terjual,
-        f.kapasitas_max - COALESCE(SUM(r.jumlah_tiket) FILTER (WHERE r.status = 'Aktif' AND r.tanggal_kunjungan::date = $2::date), 0) AS kapasitas_tersedia
+        COALESCE(SUM(r.jumlah_tiket) FILTER (WHERE r.status = 'Aktif' AND DATE(r.tanggal_kunjungan) = DATE($2::date)), 0) AS tiket_terjual,
+        f.kapasitas_max - COALESCE(SUM(r.jumlah_tiket) FILTER (WHERE r.status = 'Aktif' AND DATE(r.tanggal_kunjungan) = DATE($2::date)), 0) AS kapasitas_tersedia
       FROM FASILITAS f
       LEFT JOIN RESERVASI r ON f.nama = r.nama_fasilitas 
       WHERE f.nama = $1

@@ -169,9 +169,14 @@ export class Reservasi extends BaseModel<ReservasiType> {
   async createReservation(data: {
     username_P: string;
     nama_fasilitas: string;
-    tanggal_kunjungan: Date;
+    tanggal_kunjungan: Date | string;
     jumlah_tiket: number;
   }) {
+    const formattedDate =
+      typeof data.tanggal_kunjungan === "string"
+        ? data.tanggal_kunjungan.split("T")[0]
+        : data.tanggal_kunjungan.toISOString().split("T")[0];
+
     const query = `
       INSERT INTO RESERVASI (username_P, nama_fasilitas, tanggal_kunjungan, jumlah_tiket, status)
       VALUES ($1, $2, $3, $4, 'Aktif')
@@ -181,7 +186,7 @@ export class Reservasi extends BaseModel<ReservasiType> {
     const values = [
       data.username_P,
       data.nama_fasilitas,
-      data.tanggal_kunjungan,
+      formattedDate,
       data.jumlah_tiket,
     ];
 
@@ -200,7 +205,11 @@ export class Reservasi extends BaseModel<ReservasiType> {
   }) {
     try {
       const updateFields = [];
-      const values = [data.username_P, data.nama_fasilitas, data.tanggal_kunjungan];
+      const values = [
+        data.username_P,
+        data.nama_fasilitas,
+        data.tanggal_kunjungan,
+      ];
       let paramIndex = 4;
 
       if (data.new_tanggal_kunjungan) {
@@ -249,31 +258,39 @@ export class Reservasi extends BaseModel<ReservasiType> {
   async cancelReservation(
     username_P: string,
     nama_fasilitas: string,
-    tanggal_kunjungan: Date
+    tanggal_kunjungan: Date | string
   ) {
+    const formattedDate =
+      typeof tanggal_kunjungan === "string"
+        ? tanggal_kunjungan.split("T")[0]
+        : tanggal_kunjungan.toISOString().split("T")[0];
+
     const query = `
       UPDATE RESERVASI
       SET status = 'Batal'
       WHERE username_P = $1 
         AND nama_fasilitas = $2 
-        AND tanggal_kunjungan = $3
+        AND DATE(tanggal_kunjungan) = DATE($3::date)
       RETURNING *
     `;
 
     const result = await this.customQuery(query, [
       username_P,
       nama_fasilitas,
-      tanggal_kunjungan,
+      formattedDate,
     ]);
     return result.length > 0 ? result[0] : null;
   }
 
   async checkCapacity(
     nama_fasilitas: string,
-    tanggal_kunjungan: Date,
+    tanggal_kunjungan: Date | string,
     jumlah_tiket: number
   ) {
-    const formattedDate = tanggal_kunjungan.toISOString().split("T")[0];
+    const formattedDate =
+      typeof tanggal_kunjungan === "string"
+        ? tanggal_kunjungan.split("T")[0]
+        : tanggal_kunjungan.toISOString().split("T")[0];
 
     const query = `
       SELECT 
