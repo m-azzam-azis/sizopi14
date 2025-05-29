@@ -127,24 +127,22 @@ export const JadwalPemeriksaanModule: React.FC = () => {
   useEffect(() => {
     fetchJadwal();
   }, []);
-
   // Setup form
   const form = useForm<PemeriksaanFormValues>({
     resolver: zodResolver(pemeriksaanFormSchema),
     defaultValues: {
       id_hewan: "",
       tanggal_pemeriksaan: undefined, // User harus pilih manual
-      frekuensi_pemeriksaan: 1,
+      frekuensi_pemeriksaan: 3, // Default 3 bulan sesuai kebutuhan
     },
   });
-
   // Reset form when dialog is closed
   useEffect(() => {
     if (!isDialogOpen) {
       form.reset({
         id_hewan: "",
         tanggal_pemeriksaan: undefined,
-        frekuensi_pemeriksaan: 1,
+        frekuensi_pemeriksaan: 3, // Set default to 3 months for consistency
       });
       setEditingItem(null);
     }
@@ -169,44 +167,6 @@ export const JadwalPemeriksaanModule: React.FC = () => {
     }
   }, [isDialogOpen, editingItem, search, form]);
 
-  // Handle form submission (Create & Update)
-  const onSubmit = async (data: PemeriksaanFormValues) => {
-    const tgl_pemeriksaan_selanjutnya = data.tanggal_pemeriksaan instanceof Date
-      ? data.tanggal_pemeriksaan.toISOString()
-      : data.tanggal_pemeriksaan;
-    if (editingItem) {
-      // Update
-      await fetch(`/api/jadwal-pemeriksaan?id=${editingItem.id_hewan}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id_hewan: data.id_hewan,
-          tgl_pemeriksaan_selanjutnya,
-          freq_pemeriksaan_rutin: data.frekuensi_pemeriksaan,
-        }),
-      });
-    } else {
-      // Create
-      await fetch("/api/jadwal-pemeriksaan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id_hewan: data.id_hewan,
-          tgl_pemeriksaan_selanjutnya,
-          freq_pemeriksaan_rutin: data.frekuensi_pemeriksaan,
-        }),
-      });
-    }
-    setIsDialogOpen(false);
-    fetchJadwal();
-  };
-
-  // Delete an item
-  const handleDelete = async (id_hewan: string) => {
-    await fetch(`/api/jadwal-pemeriksaan?id=${id_hewan}`, { method: "DELETE" });
-    fetchJadwal();
-  };
-
   // Filter data based on search and filters
   const filteredData = jadwalPemeriksaan.filter((item) => {
     const animal = hewan.find((h) => h.id === item.id_hewan);
@@ -226,6 +186,115 @@ export const JadwalPemeriksaanModule: React.FC = () => {
   const getAnimalName = (id: string) => {
     const animal = hewan.find((h) => h.id === id);
     return animal ? animal.nama : id;
+  };  // Handle form submission (Create & Update)
+  const onSubmit = async (data: PemeriksaanFormValues) => {
+    try {
+      // Validate required fields for composite key
+      if (!data.id_hewan) {
+        console.error("Missing ID Hewan for composite key");
+        alert("Error: ID Hewan harus diisi untuk jadwal pemeriksaan");
+        return;
+      }
+
+      if (!data.tanggal_pemeriksaan) {
+        console.error("Missing examination date for composite key");
+        alert("Error: Tanggal pemeriksaan harus diisi");
+        return;
+      }
+      
+      // Format date as YYYY-MM-DD to match SQL format
+      const tgl_pemeriksaan_selanjutnya = data.tanggal_pemeriksaan instanceof Date
+        ? format(data.tanggal_pemeriksaan, "yyyy-MM-dd")
+        : data.tanggal_pemeriksaan;
+      
+      console.log("Formatted submission date:", tgl_pemeriksaan_selanjutnya);
+      
+      if (editingItem) {
+        // Update, using both id_hewan and old_date as composite key
+        // Format the old date as YYYY-MM-DD to match SQL format
+        const dateObj = new Date(editingItem.tgl_pemeriksaan_selanjutnya);
+        const oldDate = format(dateObj, "yyyy-MM-dd");
+        
+        console.log("Old date for update:", oldDate);
+          
+        const response = await fetch(`/api/jadwal-pemeriksaan?id=${editingItem.id_hewan}&old_date=${encodeURIComponent(oldDate)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id_hewan: data.id_hewan,
+            tgl_pemeriksaan_selanjutnya,
+            freq_pemeriksaan_rutin: data.frekuensi_pemeriksaan,
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to update schedule");
+        }      } else {
+        // Create - properly handle composite key requirements
+        console.log("Creating new jadwal with composite key:", {
+          id_hewan: data.id_hewan,
+          tanggal: tgl_pemeriksaan_selanjutnya
+        });
+        
+        const response = await fetch("/api/jadwal-pemeriksaan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id_hewan: data.id_hewan,
+            tgl_pemeriksaan_selanjutnya,
+            freq_pemeriksaan_rutin: data.frekuensi_pemeriksaan || 3, // Ensure default 3 months
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Create failure response:", errorData);
+          throw new Error(errorData.error || "Failed to create schedule");
+        }
+      }
+      
+      setIsDialogOpen(false);
+      fetchJadwal();
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      // You could add toast notification here for user feedback
+    }
+  };  // Delete an item with composite key (id_hewan AND date)
+  const handleDelete = async (id_hewan: string, date: string) => {
+    try {
+      console.log("Original date value:", date);
+      
+      // Parse the date string to a Date object
+      const dateObj = new Date(date);
+      console.log("Date object:", dateObj);
+      
+      // Format date as YYYY-MM-DD to match the SQL format in your database
+      // This is crucial since the backend query needs to find an exact match in PostgreSQL
+      const formattedDate = format(dateObj, "yyyy-MM-dd");
+      console.log("Formatted date (YYYY-MM-DD):", formattedDate);
+      
+      const url = `/api/jadwal-pemeriksaan?id=${id_hewan}&date=${encodeURIComponent(formattedDate)}`;
+      console.log("DELETE request URL:", url);
+      
+      const response = await fetch(url, { 
+        method: "DELETE" 
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Delete failed:", errorData);
+        alert(`Gagal menghapus jadwal: ${errorData.error || 'Unknown error'}`);
+      } else {
+        const responseData = await response.json();
+        console.log("Delete success:", responseData);
+      }
+      
+      fetchJadwal();
+    } catch (error) {
+      console.error("Error deleting jadwal pemeriksaan:", error);
+      alert(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    }
   };
 
   return (
@@ -316,8 +385,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-4"
               >
-                {/* id_hewan di-set otomatis via effect, tidak perlu input hidden */}
-                <FormField
+                {/* id_hewan di-set otomatis via effect, tidak perlu input hidden */}                <FormField
                   control={form.control}
                   name="tanggal_pemeriksaan"
                   render={({ field }) => (
@@ -331,6 +399,25 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                             const date = e.target.value ? new Date(e.target.value) : undefined;
                             field.onChange(date);
                           }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="frekuensi_pemeriksaan"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Frekuensi Pemeriksaan (Bulan)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="12"
+                          value={field.value}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
@@ -357,15 +444,18 @@ export const JadwalPemeriksaanModule: React.FC = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Tanggal Pemeriksaan Selanjutnya</TableHead>
+                <TableHead>Frekuensi (Bulan)</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
-            </TableHeader>
-            <TableBody>
+            </TableHeader>            <TableBody>
               {filteredData.length > 0 ? (
                 filteredData.map((item) => (
-                  <TableRow key={item.id_hewan}>
+                  <TableRow key={`${item.id_hewan}-${new Date(item.tgl_pemeriksaan_selanjutnya).getTime()}`}>
                     <TableCell>
                       {format(new Date(item.tgl_pemeriksaan_selanjutnya), "dd/MM/yyyy")}
+                    </TableCell>
+                    <TableCell>
+                      {item.freq_pemeriksaan_rutin}
                     </TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button
@@ -396,9 +486,8 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Batal</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(item.id_hewan)}
+                            <AlertDialogCancel>Batal</AlertDialogCancel>                            <AlertDialogAction
+                              onClick={() => handleDelete(item.id_hewan, item.tgl_pemeriksaan_selanjutnya)}
                               className="bg-red-500 text-white hover:bg-red-600"
                             >
                               Hapus
@@ -411,7 +500,7 @@ export const JadwalPemeriksaanModule: React.FC = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={2} className="text-center py-4">
+                  <TableCell colSpan={3} className="text-center py-4">
                     Tidak ada jadwal pemeriksaan yang ditemukan
                   </TableCell>
                 </TableRow>

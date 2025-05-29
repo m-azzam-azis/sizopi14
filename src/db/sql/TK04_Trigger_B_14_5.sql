@@ -34,6 +34,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS tr_tambah_jadwal_rutin ON jadwal_pemeriksaan_kesehatan;
 CREATE TRIGGER tr_tambah_jadwal_rutin
 AFTER INSERT ON jadwal_pemeriksaan_kesehatan
 FOR EACH ROW
