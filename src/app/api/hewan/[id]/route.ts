@@ -1,52 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Hewan } from "@/db/models/hewan";
-import { getUserData } from "@/hooks/getUserData";
-
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const hewan = new Hewan();
-    const animalData = await hewan.getById(params.id);
-
-    if (!animalData) {
-      return NextResponse.json(
-        { success: false, error: "Animal not found" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: animalData,
-    });
-  } catch (error) {
-    console.error("Error fetching animal:", error);
-    return NextResponse.json(
-      { success: false, error: "Failed to fetch animal" },
-      { status: 500 }
-    );
-  }
-}
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userData, isValid } = getUserData();
-
-    if (
-      !isValid ||
-      !["dokter_hewan", "penjaga_hewan", "staf_admin"].includes(userData.role)
-    ) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const {
       nama,
@@ -58,18 +17,31 @@ export async function PUT(
       url_foto,
     } = body;
 
+    if (
+      !spesies ||
+      !asal_hewan ||
+      !status_kesehatan ||
+      !nama_habitat ||
+      !url_foto
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
     const hewan = new Hewan();
-    const updatedAnimal = await hewan.updateById(params.id, {
+    const updatedHewan = await hewan.updateById(await params.id, {
       nama,
       spesies,
       asal_hewan,
-      tanggal_lahir,
+      tanggal_lahir: tanggal_lahir || null,
       status_kesehatan,
       nama_habitat,
       url_foto,
     });
 
-    if (!updatedAnimal) {
+    if (!updatedHewan) {
       return NextResponse.json(
         { success: false, error: "Animal not found" },
         { status: 404 }
@@ -78,12 +50,18 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      data: updatedAnimal,
+      data: updatedHewan,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating animal:", error);
+
+    let errorMessage = "Failed to update animal";
+    if (error.message) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json(
-      { success: false, error: "Failed to update animal" },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
@@ -94,20 +72,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userData, isValid } = getUserData();
-
-    if (
-      !isValid ||
-      !["dokter_hewan", "penjaga_hewan", "staf_admin"].includes(userData.role)
-    ) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
     const hewan = new Hewan();
-    const deleted = await hewan.deleteById(params.id);
+    const deleted = await hewan.deleteById(await params.id);
 
     if (!deleted) {
       return NextResponse.json(
@@ -120,10 +86,16 @@ export async function DELETE(
       success: true,
       message: "Animal deleted successfully",
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error deleting animal:", error);
+
+    let errorMessage = "Failed to delete animal";
+    if (error.message) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json(
-      { success: false, error: "Failed to delete animal" },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

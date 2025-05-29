@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Hewan } from "@/db/models/hewan";
-import { getUserData } from "@/hooks/getUserData";
+import { v4 as uuidv4 } from "uuid";
 
 export async function GET() {
   try {
@@ -22,18 +22,6 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userData, isValid } = getUserData();
-
-    if (
-      !isValid ||
-      !["dokter_hewan", "penjaga_hewan", "staf_admin"].includes(userData.role)
-    ) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const {
       nama,
@@ -59,12 +47,14 @@ export async function POST(request: NextRequest) {
     }
 
     const hewan = new Hewan();
-    const newAnimal = await hewan.create({
-      id: "",
+    const newHewan = await hewan.create({
+      id: uuidv4(), // Generate a new UUID
       nama: nama || null,
       spesies,
       asal_hewan,
-      tanggal_lahir: tanggal_lahir || null,
+      tanggal_lahir: tanggal_lahir
+        ? new Date(tanggal_lahir).toISOString()
+        : null,
       status_kesehatan,
       nama_habitat,
       url_foto,
@@ -72,12 +62,19 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: newAnimal,
+      data: newHewan,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating animal:", error);
+
+    // Pass the detailed error message
+    let errorMessage = "Failed to create animal";
+    if (error.message) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json(
-      { success: false, error: "Failed to create animal" },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

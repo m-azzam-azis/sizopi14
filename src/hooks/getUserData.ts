@@ -48,6 +48,7 @@ type sessionType = {
 };
 
 const nonAuthenticatedRoutes = ["/login", "/register", "/api/auth"];
+
 const adminOnlyRoutes = [
   "/kelola-pengunjung",
   "/kelola-pengunjung/atraksi",
@@ -58,6 +59,12 @@ const adminOnlyRoutes = [
   "/api/wahana",
   "/api/atraksi",
 ];
+
+// Routes that admin and staff (caretaker) can access
+const adminStaffRoutes = ["/api/habitat", "/habitat", "/habitat/"];
+
+// Routes that admin, staff (caretaker), and veterinarian can access
+const animalManagementRoutes = ["/hewan", "/hewan/", "/api/hewan", "/satwa"];
 
 const visitorRoutes = ["/reservasi"];
 
@@ -74,9 +81,8 @@ const veterinarianRoutes = [
   "/rekam-medis",
   "/jadwal-pemeriksaan",
   "/api/rekam-medis",
-  //"/api/hewan",
   "/api/dokter",
-  "/api/jadwal-pemeriksaan"
+  "/api/jadwal-pemeriksaan",
 ];
 
 const trainerRoutes = [
@@ -89,12 +95,8 @@ const caretakerRoutes = [
   "/pakan",
   "/pakan/",
   "/pakan/riwayat",
-  "/habitat",
-  "/habitat/",
-  "/satwa",
   "/api/pakan",
-  "/api/feeding-history"
-  //"/api/hewan",
+  "/api/feeding-history",
 ];
 
 export const getUserData: () => ReturnType = () => {
@@ -107,29 +109,29 @@ export const getUserData: () => ReturnType = () => {
   const pathname = usePathname();
   const router = useRouter();
 
-  async function fetchCookie() {
-    try {
-      setAuthState("loading");
-      const res = await fetch("/api/auth/cookies");
-      const data: { message: string; token: string } = await res.json();
-      if (data.token) {
-        setToken(data.token);
-      } else {
+  useEffect(() => {
+    const fetchCookie = async () => {
+      try {
+        setAuthState("loading");
+        const res = await fetch("/api/auth/cookies");
+        const data: { message: string; token: string } = await res.json();
+        if (data.token) {
+          setToken(data.token);
+        } else {
+          setToken(null);
+          setAuthState("unauthenticated");
+        }
+      } catch (error) {
+        console.error("Error fetching cookie:", error);
         setToken(null);
         setAuthState("unauthenticated");
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching cookie:", error);
-      setToken(null);
-      setAuthState("unauthenticated");
-    } finally {
-      setIsLoading(false);
-    }
-  }
+    };
 
-  useEffect(() => {
     fetchCookie();
-  }, [pathname]);
+  }, []);
 
   useEffect(() => {
     if (token) {
@@ -153,6 +155,48 @@ export const getUserData: () => ReturnType = () => {
 
   useEffect(() => {
     if (authState === "initializing" || authState === "loading") {
+      return;
+    }
+
+    // Check for animal management routes (admin, caretaker, veterinarian)
+    const isAnimalManagementRoute = animalManagementRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+    if (isAnimalManagementRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
+      }
+
+      if (
+        authState === "authenticated" &&
+        !["veterinarian", "caretaker", "admin"].includes(
+          decodedToken?.data.role || ""
+        )
+      ) {
+        router.push("/");
+        return;
+      }
+      return;
+    }
+
+    // Check for habitat routes (admin and caretaker only)
+    const isAdminStaffRoute = adminStaffRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+    if (isAdminStaffRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
+      }
+
+      if (
+        authState === "authenticated" &&
+        !["caretaker", "admin"].includes(decodedToken?.data.role || "")
+      ) {
+        router.push("/");
+        return;
+      }
       return;
     }
 
@@ -217,27 +261,27 @@ export const getUserData: () => ReturnType = () => {
       if (authState === "unauthenticated") {
         router.push("/");
         return;
-      }   
+      }
 
       if (
-          authState === "authenticated" &&
-          decodedToken?.data.role !== "veterinarian"
-        ) {
-          router.push("/");
-          return;
-        }
+        authState === "authenticated" &&
+        decodedToken?.data.role !== "veterinarian"
+      ) {
+        router.push("/");
+        return;
+      }
     }
 
     const isCaretakerRoute = caretakerRoutes.some((route) =>
       pathname.startsWith(route)
-    );  
+    );
     if (isCaretakerRoute) {
       if (authState === "unauthenticated") {
         router.push("/");
         return;
       }
 
-    if (
+      if (
         authState === "authenticated" &&
         decodedToken?.data.role !== "caretaker"
       ) {

@@ -28,6 +28,12 @@ export default function AdminAdopsiModule() {
   const [statusFilter, setStatusFilter] = useState("all");
   // Dapatkan data user dan cek role
   const { userData, isValid, isLoading: authLoading } = getUserData();
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure component is mounted on client side
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     // Cek apakah user adalah admin
@@ -39,15 +45,15 @@ export default function AdminAdopsiModule() {
 
   useEffect(() => {
     // Hanya ambil data jika user valid dan loading auth selesai
-    if (isValid && !authLoading) {
+    if (mounted && isValid && !authLoading) {
       // Parse query params untuk memeriksa apakah perlu refresh
       const url = new URL(window.location.href);
-      const hasRefreshParam = url.searchParams.has('t');
-      
+      const hasRefreshParam = url.searchParams.has("t");
+
       if (hasRefreshParam) {
-        router.replace('/admin-adopsi');
+        router.replace("/admin-adopsi");
       }
-      
+
       fetchAnimals();
     }
   }, [statusFilter, isValid, authLoading, router]);
@@ -56,21 +62,22 @@ export default function AdminAdopsiModule() {
     setIsLoading(true);
     try {
       // Tambahkan parameter timestamp untuk mencegah caching
-      const response = await fetch(`/api/adopsi?status=${statusFilter}&t=${Date.now()}`);
-      
+      const response = await fetch(
+        `/api/adopsi?status=${statusFilter}&t=${Date.now()}`
+      );
+
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       console.log("Fetched animals data:", data);
-      
+
       setAnimals(data);
-      
+
       // Calculate stats but don't store in state since it's not used in the UI
       // const adoptedCount = data.filter((animal: AnimalDisplay) => animal.isAdopted).length;
       // const unadoptedCount = data.filter((animal: AnimalDisplay) => !animal.isAdopted).length;
-      
     } catch (error) {
       console.error("Error fetching animals:", error);
     } finally {
@@ -99,16 +106,18 @@ export default function AdminAdopsiModule() {
 
   // Kode lainnya tetap sama
   const handleViewDetail = (animalId: string) => {
-    router.push(`/admin-adopsi/detail/${animalId}`); 
+    router.push(`/admin-adopsi/detail/${animalId}`);
   };
 
   const handleRegisterAdmin = (animalId: string) => {
     const animalData = animals.find((animal) => animal.id_hewan === animalId);
     if (animalData) {
-      router.push(`/admin-adopsi/register/${animalId}?name=${animalData.nama_hewan}&species=${animalData.spesies}`);
+      router.push(
+        `/admin-adopsi/register/${animalId}?name=${animalData.nama_hewan}&species=${animalData.spesies}`
+      );
     }
   };
-  
+
   const getConditionBadgeStyle = (condition: string) => {
     switch (condition) {
       case "Sehat":
@@ -130,8 +139,8 @@ export default function AdminAdopsiModule() {
   };
 
   // Optional: Stats Display if you want to use them
-  const adoptedCount = animals.filter(animal => animal.isAdopted).length;
-  const unadoptedCount = animals.filter(animal => !animal.isAdopted).length;
+  const adoptedCount = animals.filter((animal) => animal.isAdopted).length;
+  const unadoptedCount = animals.filter((animal) => !animal.isAdopted).length;
 
   return (
     <div className="container mx-auto py-10 px-4 font-outfit">
@@ -153,19 +162,19 @@ export default function AdminAdopsiModule() {
       {/* Header with filtering */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-semibold font-outfit text-foreground">Pantau Status Adopsi Hewan</h2>
+          <h2 className="text-2xl font-semibold font-outfit text-foreground">
+            Pantau Status Adopsi Hewan
+          </h2>
           {/* Optional: Display stats in UI */}
           <div className="text-sm text-muted-foreground mt-1">
-            <span className="font-medium">{adoptedCount}</span> diadopsi &bull; <span className="font-medium">{unadoptedCount}</span> belum diadopsi
+            <span className="font-medium">{adoptedCount}</span> diadopsi &bull;{" "}
+            <span className="font-medium">{unadoptedCount}</span> belum diadopsi
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
-          <Select 
-            value={statusFilter} 
-            onValueChange={setStatusFilter}
-          >
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter Status" />
             </SelectTrigger>
@@ -175,11 +184,11 @@ export default function AdminAdopsiModule() {
               <SelectItem value="unadopted">Tidak Diadopsi</SelectItem>
             </SelectContent>
           </Select>
-          
+
           {/* Optional: Add a refresh button */}
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={refreshData}
             className="ml-2"
           >
@@ -195,36 +204,50 @@ export default function AdminAdopsiModule() {
       ) : animals.length === 0 ? (
         <Card>
           <CardContent className="p-6 text-center">
-            <p className="text-muted-foreground">Tidak ada hewan yang ditemukan dengan filter ini.</p>
+            <p className="text-muted-foreground">
+              Tidak ada hewan yang ditemukan dengan filter ini.
+            </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4">
           {animals.map((animal) => (
-            <Card key={animal.id_hewan} className="overflow-hidden border-border shadow-sm relative">
+            <Card
+              key={animal.id_hewan}
+              className="overflow-hidden border-border shadow-sm relative"
+            >
               <CardContent className="p-6">
                 <div className="flex flex-col md:flex-row gap-4">
                   {/* Avatar Image */}
                   <Avatar className="h-32 w-32 rounded-md">
-                    <AvatarImage src={animal.url_foto} alt={animal.nama_hewan} />
+                    <AvatarImage
+                      src={animal.url_foto}
+                      alt={animal.nama_hewan}
+                    />
                     <AvatarFallback className="rounded-md">
                       {animal.nama_hewan?.substring(0, 2).toUpperCase() || "AN"}
                     </AvatarFallback>
                   </Avatar>
-            
+
                   {/* Animal Details */}
                   <div className="flex flex-col justify-center">
-                    <p className="font-medium text-xl font-outfit">{animal.nama_hewan || "[Tanpa nama]"}</p>
-                    <p className="text-base text-muted-foreground">{animal.spesies}</p>
+                    <p className="font-medium text-xl font-outfit">
+                      {animal.nama_hewan || "[Tanpa nama]"}
+                    </p>
+                    <p className="text-base text-muted-foreground">
+                      {animal.spesies}
+                    </p>
                     <Badge
-                      className={`mt-2 px-3 py-1 text-sm rounded-full ${getConditionBadgeStyle(animal.status_kesehatan)}`}
+                      className={`mt-2 px-3 py-1 text-sm rounded-full ${getConditionBadgeStyle(
+                        animal.status_kesehatan
+                      )}`}
                     >
                       {getConditionIcon(animal.status_kesehatan)}
                       {animal.status_kesehatan}
                     </Badge>
                   </div>
                 </div>
-            
+
                 {/* Badge and Buttons */}
                 <div className="absolute top-12 right-6 flex flex-col items-end gap-4">
                   {/* Badge */}

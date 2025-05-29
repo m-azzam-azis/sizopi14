@@ -28,21 +28,28 @@ import { toast } from "sonner";
 import { HewanWithHabitat } from "./interface";
 import { getUserData } from "@/hooks/getUserData";
 import Image from "next/image";
+import HewanFormModal from "./components/modals/HewanFormModal";
+import { HewanFormValues } from "./components/forms/HewanForm";
 
 const HewanModule = () => {
   const router = useRouter();
-  const { userData, isValid } = getUserData();
+  const { userData, isValid, isLoading } = getUserData();
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [hewanToDelete, setHewanToDelete] = useState<string | null>(null);
   const [hewanList, setHewanList] = useState<HewanWithHabitat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedHewan, setSelectedHewan] = useState<HewanWithHabitat | null>(
+    null
+  );
 
   // Check if user has permission to manage animals
   const canManageAnimals =
     isValid &&
-    (userData.role === "veterinarian" ||
-      userData.role === "caretaker" ||
-      userData.role === "admin");
+    (userData?.role === "veterinarian" ||
+      userData?.role === "caretaker" ||
+      userData?.role === "admin");
 
   // Fetch animals from API
   const fetchHewan = async () => {
@@ -50,6 +57,7 @@ const HewanModule = () => {
       setLoading(true);
       const response = await fetch("/api/hewan");
       const result = await response.json();
+      console.log("Fetched animals:", result);
 
       if (result.success) {
         setHewanList(result.data);
@@ -73,13 +81,23 @@ const HewanModule = () => {
     router.push(`/hewan/${id}`);
   };
 
+  // Function to handle add click
+  const handleAddClick = () => {
+    if (!canManageAnimals) {
+      toast.error("You don't have permission to add animals");
+      return;
+    }
+    setIsAddModalOpen(true);
+  };
+
   // Function to handle edit click
-  const handleEditClick = (id: string) => {
+  const handleEditClick = (hewan: HewanWithHabitat) => {
     if (!canManageAnimals) {
       toast.error("You don't have permission to edit animals");
       return;
     }
-    router.push(`/hewan/${id}/edit`);
+    setSelectedHewan(hewan);
+    setIsEditModalOpen(true);
   };
 
   // Function to show delete confirmation
@@ -90,6 +108,85 @@ const HewanModule = () => {
     }
     setHewanToDelete(id);
     setShowDeleteAlert(true);
+  };
+
+  // Function to handle add submit
+  const handleAddSubmit = async (data: HewanFormValues) => {
+    try {
+      const response = await fetch("/api/hewan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nama: data.nama,
+          spesies: data.spesies,
+          asal_hewan: data.asal_hewan,
+          tanggal_lahir: data.tanggal_lahir?.toISOString(),
+          status_kesehatan: data.status_kesehatan,
+          nama_habitat: data.nama_habitat,
+          url_foto: data.url_foto,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Animal added successfully");
+        await fetchHewan();
+        setIsAddModalOpen(false);
+      } else {
+        toast.error("Error adding animal", {
+          description: result.error || "Failed to add animal",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding animal:", error);
+      toast.error("Network Error", {
+        description: "Unable to add animal",
+      });
+    }
+  };
+
+  // Function to handle edit submit
+  const handleEditSubmit = async (data: HewanFormValues) => {
+    if (!selectedHewan) return;
+
+    try {
+      const response = await fetch(`/api/hewan/${selectedHewan.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nama: data.nama,
+          spesies: data.spesies,
+          asal_hewan: data.asal_hewan,
+          tanggal_lahir: data.tanggal_lahir?.toISOString(),
+          status_kesehatan: data.status_kesehatan,
+          nama_habitat: data.nama_habitat,
+          url_foto: data.url_foto,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success(result.message || "Animal updated successfully");
+        await fetchHewan();
+        setIsEditModalOpen(false);
+        setSelectedHewan(null);
+      } else {
+        toast.error("Error updating animal", {
+          description: result.error || "Failed to update animal",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating animal:", error);
+      toast.error("Network Error", {
+        description: "Unable to update animal",
+      });
+    }
   };
 
   // Function to handle actual delete action
@@ -105,13 +202,17 @@ const HewanModule = () => {
 
       if (result.success) {
         toast.success("Animal deleted successfully");
-        await fetchHewan(); // Refresh the list
+        await fetchHewan();
       } else {
-        toast.error(result.error || "Failed to delete animal");
+        toast.error("Error deleting animal", {
+          description: result.error || "Failed to delete animal",
+        });
       }
     } catch (error) {
       console.error("Error deleting animal:", error);
-      toast.error("Error deleting animal");
+      toast.error("Network Error", {
+        description: "Unable to delete animal",
+      });
     } finally {
       setShowDeleteAlert(false);
       setHewanToDelete(null);
@@ -150,13 +251,29 @@ const HewanModule = () => {
     return new Date(dateString).toLocaleDateString("id-ID");
   };
 
-  if (!isValid) {
+  // Show loading state first
+  if (isLoading) {
+    return (
+      <div className="container mx-auto pb-20 px-4">
+        <div className="text-center py-20">
+          <h1 className="text-2xl font-bold">Loading...</h1>
+          <p className="text-muted-foreground mt-2">
+            Please wait while we load your data.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Then check if user is valid and has permission
+  if (!isValid || !canManageAnimals) {
     return (
       <div className="container mx-auto pb-20 px-4">
         <div className="text-center py-20">
           <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
           <p className="text-muted-foreground mt-2">
-            You need to be logged in to view this page.
+            You need to be a veterinarian, caretaker, or admin to view this
+            page.
           </p>
         </div>
       </div>
@@ -165,16 +282,16 @@ const HewanModule = () => {
 
   return (
     <div className="container mx-auto pb-20 px-4">
-      <h1 className="mb-10 text-4xl font-bold">Kelola Hewan</h1>
+      <h1 className="mb-10 text-4xl font-bold">Kelola Satwa</h1>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-2xl font-bold text-foreground">
-            Daftar Hewan
+            Daftar Satwa
           </CardTitle>
           {canManageAnimals && (
             <Button
               className="bg-primary text-primary-foreground hover:bg-primary/90"
-              onClick={() => router.push("/hewan/add")}
+              onClick={handleAddClick}
             >
               <PlusCircle className="mr-2 h-4 w-4" /> Tambah Hewan
             </Button>
@@ -202,7 +319,7 @@ const HewanModule = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {hewanList.length === 0 ? (
+                  {hewanList?.length === 0 ? (
                     <TableRow>
                       <TableCell
                         colSpan={8}
@@ -236,20 +353,12 @@ const HewanModule = () => {
                         <TableCell>{hewan.nama_habitat}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleViewDetails(hewan.id)}
-                              className="h-8 w-8"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
                             {canManageAnimals && (
                               <>
                                 <Button
                                   variant="outline"
                                   size="icon"
-                                  onClick={() => handleEditClick(hewan.id)}
+                                  onClick={() => handleEditClick(hewan)}
                                   className="h-8 w-8"
                                 >
                                   <Pencil className="h-4 w-4" />
@@ -275,6 +384,39 @@ const HewanModule = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add Modal */}
+      <HewanFormModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSubmit={handleAddSubmit}
+        isEditing={false}
+      />
+
+      {/* Edit Modal */}
+      <HewanFormModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedHewan(null);
+        }}
+        onSubmit={handleEditSubmit}
+        //@ts-ignore
+        initialData={
+          selectedHewan
+            ? {
+                nama: selectedHewan.nama,
+                spesies: selectedHewan.spesies,
+                asal_hewan: selectedHewan.asal_hewan,
+                tanggal_lahir: selectedHewan.tanggal_lahir,
+                status_kesehatan: selectedHewan.status_kesehatan,
+                nama_habitat: selectedHewan.nama_habitat,
+                url_foto: selectedHewan.url_foto,
+              }
+            : undefined
+        }
+        isEditing={true}
+      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Habitat } from "@/db/models/habitat";
-import { getUserData } from "@/hooks/getUserData";
 
 export async function GET() {
   try {
@@ -22,15 +21,6 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userData, isValid } = getUserData();
-
-    if (!isValid || !["penjaga_hewan", "staf_admin"].includes(userData.role)) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const { nama, luas_area, kapasitas, status } = body;
 

@@ -53,7 +53,7 @@ BEGIN
             WHEN i.nama IS NOT NULL THEN i.nama
             WHEN o.nama_organisasi IS NOT NULL THEN o.nama_organisasi
         END as nama,
-        SUM(a.kontribusi_finansial) as total_kontribusi
+        SUM(ad.kontribusi_finansial) as total_kontribusi
     INTO top_adopter
     FROM adopsi ad
     JOIN adopter ap ON ad.id_adopter = ap.id_adopter

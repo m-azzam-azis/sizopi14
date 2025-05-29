@@ -149,7 +149,7 @@ const HewanForm: React.FC<HewanFormProps> = ({
           name="tanggal_lahir"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Tanggal Lahir (Opsional)</FormLabel>
+              <FormLabel>Tanggal Lahir</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -247,7 +247,7 @@ const HewanForm: React.FC<HewanFormProps> = ({
           name="url_foto"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>URL Foto (Opsional)</FormLabel>
+              <FormLabel>URL Foto </FormLabel>
               <FormControl>
                 <Input placeholder="https://example.com/photo.jpg" {...field} />
               </FormControl>

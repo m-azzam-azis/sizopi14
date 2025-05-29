@@ -6,111 +6,67 @@ export class Hewan extends BaseModel<HewanType> {
     super("HEWAN");
   }
 
-  async getById(id: string): Promise<HewanType | null> {
-    const result = await this.findBy("id", id);
-    return Array.isArray(result) ? result[0] : result;
+  // find all animals - use built-in findAll()
+  async findAll(): Promise<HewanType[]> {
+    return super.findAll();
   }
 
-  // Get all animals with their habitat information
+  // Get by ID - use built-in findBy()
+  async getById(id: string): Promise<HewanType | null> {
+    return this.findBy("id", id);
+  }
+
+  // Get all animals with their habitat information - use customQuery() for JOIN
   async findAllWithHabitat(): Promise<
-    (HewanType & { habitat_status?: string })[]
+    (HewanType & { habitat_nama?: string; habitat_status?: string })[]
   > {
     try {
       const query = `
-        SELECT 
-          h.*,
-          hab.status as habitat_status
-        FROM HEWAN h
-        LEFT JOIN HABITAT hab ON h.nama_habitat = hab.nama
+        SELECT h.*, hab.nama as habitat_nama, hab.status as habitat_status
+        FROM hewan h
+        LEFT JOIN habitat hab ON h.nama_habitat = hab.nama
         ORDER BY h.nama
       `;
 
-      const result = await this.query(query);
-      return result.rows;
+      return await this.customQuery(query);
     } catch (error) {
       console.error("Error fetching animals with habitat:", error);
       return [];
     }
   }
 
-  // Find animals by habitat
+  // Find animals by habitat - use built-in findMany()
   async findByHabitat(namaHabitat: string): Promise<HewanType[]> {
-    try {
-      const result = await this.findBy("nama_habitat", namaHabitat);
-      return Array.isArray(result) ? result : result ? [result] : [];
-    } catch (error) {
-      console.error("Error finding animals by habitat:", error);
-      return [];
-    }
+    return this.findMany("nama_habitat", namaHabitat);
   }
 
-  // Find animals by species
+  // Find animals by species - use built-in findMany()
   async findBySpecies(spesies: string): Promise<HewanType[]> {
-    try {
-      const result = await this.findBy("spesies", spesies);
-      return Array.isArray(result) ? result : result ? [result] : [];
-    } catch (error) {
-      console.error("Error finding animals by species:", error);
-      return [];
-    }
+    return this.findMany("spesies", spesies);
   }
 
-  // Update animal by ID
+  // Update animal by ID - use built-in update()
   async updateById(
     id: string,
     data: Partial<HewanType>
   ): Promise<HewanType | null> {
-    try {
-      const query = `
-        UPDATE ${this.tableName} 
-        SET ${Object.keys(data)
-          .map((key, index) => `${key} = $${index + 2}`)
-          .join(", ")}
-        WHERE id = $1
-        RETURNING *
-      `;
-
-      const values = [id, ...Object.values(data)];
-      const result = await this.query(query, values);
-
-      return result.rows[0] || null;
-    } catch (error) {
-      console.error("Error updating animal by ID:", error);
-      return null;
-    }
+    return this.update("id", id, data);
   }
 
-  // Delete animal by ID
+  // Delete animal by ID - use built-in delete()
   async deleteById(id: string): Promise<boolean> {
-    try {
-      const query = `DELETE FROM ${this.tableName} WHERE id = $1`;
-      const result = await this.query(query, [id]);
-      return result.rowCount > 0;
-    } catch (error) {
-      console.error("Error deleting animal by ID:", error);
-      return false;
-    }
+    const result = await this.delete("id", id);
+    return result !== null;
   }
 
-  // Get animals by health status
+  // Get animals by health status - use built-in findMany()
   async findByHealthStatus(status: string): Promise<HewanType[]> {
-    try {
-      const result = await this.findBy("status_kesehatan", status);
-      return Array.isArray(result) ? result : result ? [result] : [];
-    } catch (error) {
-      console.error("Error finding animals by health status:", error);
-      return [];
-    }
+    return this.findMany("status_kesehatan", status);
   }
 
   // Check if animal exists
   async exists(id: string): Promise<boolean> {
-    try {
-      const result = await this.getById(id);
-      return result !== null;
-    } catch (error) {
-      console.error("Error checking animal existence:", error);
-      return false;
-    }
+    const result = await this.getById(id);
+    return result !== null;
   }
 }

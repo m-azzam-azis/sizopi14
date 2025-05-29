@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Habitat } from "@/db/models/habitat";
-import { getUserData } from "@/hooks/getUserData";
 
 export async function GET(
   request: NextRequest,
@@ -8,7 +7,9 @@ export async function GET(
 ) {
   try {
     const habitat = new Habitat();
-    const habitatData = await habitat.findByName(decodeURIComponent(params.id));
+    const habitatData = await habitat.findByName(
+      decodeURIComponent(await params.id)
+    );
 
     if (!habitatData) {
       return NextResponse.json(
@@ -35,26 +36,24 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userData, isValid } = getUserData();
-
-    if (!isValid || !["penjaga_hewan", "staf_admin"].includes(userData.role)) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const { nama, luas_area, kapasitas, status } = body;
 
+    if (!nama || !luas_area || !kapasitas) {
+      return NextResponse.json(
+        { success: false, error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
     const habitat = new Habitat();
     const updatedHabitat = await habitat.updateByName(
-      decodeURIComponent(params.id),
+      decodeURIComponent(await params.id),
       {
         nama,
         luas_area: parseFloat(luas_area),
         kapasitas: parseInt(kapasitas),
-        status,
+        status: status || "Aktif",
       }
     );
 
@@ -69,10 +68,16 @@ export async function PUT(
       success: true,
       data: updatedHabitat,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating habitat:", error);
+
+    let errorMessage = "Failed to update habitat";
+    if (error.message) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json(
-      { success: false, error: "Failed to update habitat" },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
@@ -83,17 +88,10 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userData, isValid } = getUserData();
-
-    if (!isValid || !["penjaga_hewan", "staf_admin"].includes(userData.role)) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
     const habitat = new Habitat();
-    const deleted = await habitat.deleteByName(decodeURIComponent(params.id));
+    const deleted = await habitat.deleteByName(
+      decodeURIComponent(await params.id)
+    );
 
     if (!deleted) {
       return NextResponse.json(
@@ -106,10 +104,16 @@ export async function DELETE(
       success: true,
       message: "Habitat deleted successfully",
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error deleting habitat:", error);
+
+    let errorMessage = "Failed to delete habitat";
+    if (error.message) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json(
-      { success: false, error: "Failed to delete habitat" },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
