@@ -57,7 +57,7 @@ interface AtraksiData {
   id: string;
   nama_atraksi: string;
   lokasi: string;
-  kapasitas: number;
+  kapasitas_max: number;
   jadwal: string | Date;
   hewan_terlibat: Hewan[];
   pelatih: PelatihHewan | null;
@@ -94,7 +94,13 @@ const AtraksiModule = () => {
       const response = await fetch("/api/atraksi");
       if (!response.ok) throw new Error("Failed to fetch data");
       const data = await response.json();
-      setAtraksiData(data.data);
+
+      const mappedData = data.data.map((atraksi: any) => ({
+        ...atraksi,
+        id: atraksi.nama_atraksi,
+      }));
+
+      setAtraksiData(mappedData);
     } catch (error) {
       console.error("Error fetching atraksi data:", error);
       toast.error("Gagal memuat data atraksi");
@@ -154,12 +160,9 @@ const AtraksiModule = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteClick = (id: string) => {
-    const attraction = atraksiData.find((a) => a.id === id);
-    if (attraction) {
-      setAtraksiToDelete(attraction.nama_atraksi);
-      setShowDeleteAlert(true);
-    }
+  const handleDeleteClick = (nama: string) => {
+    setAtraksiToDelete(nama);
+    setShowDeleteAlert(true);
   };
 
   const handleDelete = async () => {
@@ -389,7 +392,7 @@ const AtraksiModule = () => {
                         {atraksi.nama_atraksi}
                       </TableCell>
                       <TableCell>{atraksi.lokasi}</TableCell>
-                      <TableCell>{atraksi.kapasitas} orang</TableCell>
+                      <TableCell>{atraksi.kapasitas_max} orang</TableCell>
                       <TableCell>{formatDateTime(atraksi.jadwal)}</TableCell>
                       <TableCell>
                         {atraksi.hewan_terlibat.length > 0
@@ -416,7 +419,9 @@ const AtraksiModule = () => {
                           <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => handleDeleteClick(atraksi.id)}
+                            onClick={() =>
+                              handleDeleteClick(atraksi.nama_atraksi)
+                            }
                             className="h-8 w-8 text-destructive hover:bg-destructive/10"
                           >
                             <Trash className="h-4 w-4" />
@@ -451,7 +456,7 @@ const AtraksiModule = () => {
           onSubmit={handleEditAtraksi}
           initialData={{
             jadwal: currentAtraksi.jadwal,
-            kapasitas: currentAtraksi.kapasitas,
+            kapasitas: currentAtraksi.kapasitas_max,
           }}
           isEditing={true}
           nama_atraksi={currentAtraksi.nama_atraksi}

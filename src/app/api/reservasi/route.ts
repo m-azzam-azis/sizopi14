@@ -40,10 +40,12 @@ export async function PUT(request: Request) {
       username_P,
       nama_fasilitas,
       tanggal_kunjungan,
+      new_tanggal_kunjungan,
       jumlah_tiket,
       status,
       type,
     } = body;
+
 
     if (!username_P || !nama_fasilitas || !tanggal_kunjungan) {
       return NextResponse.json(
@@ -54,13 +56,19 @@ export async function PUT(request: Request) {
 
     const reservasiModel = new Reservasi();
 
+    function formatDateString(dateStr: string): string {
+      return dateStr.split("T")[0];
+    }
+
+    const dateString = formatDateString(tanggal_kunjungan);
+
     if (status === "Dibatalkan") {
       const dbStatus = "Batal";
 
       await reservasiModel.updateReservation({
         username_P,
         nama_fasilitas,
-        tanggal_kunjungan: new Date(tanggal_kunjungan),
+        tanggal_kunjungan: dateString,
         jumlah_tiket,
         new_status: dbStatus,
       });
@@ -75,14 +83,23 @@ export async function PUT(request: Request) {
     const query = `
       SELECT jumlah_tiket, tanggal_kunjungan 
       FROM RESERVASI
-      WHERE username_P = $1 AND nama_fasilitas = $2 AND tanggal_kunjungan = $3
+      WHERE username_P = $1 
+      AND nama_fasilitas = $2 
+      AND DATE(tanggal_kunjungan) = DATE($3::date)
     `;
 
     const currentReservation = await reservasiModel.customQuery(query, [
       username_P,
       nama_fasilitas,
-      format(new Date(tanggal_kunjungan), "yyyy-MM-dd"),
+      dateString,
     ]);
+
+    console.log("Search parameters:", {
+      username_P,
+      nama_fasilitas,
+      dateString,
+    });
+    console.log("Found reservation:", currentReservation);
 
     if (currentReservation.length === 0) {
       return NextResponse.json(
@@ -92,13 +109,16 @@ export async function PUT(request: Request) {
     }
 
     const currentTickets = parseInt(currentReservation[0].jumlah_tiket);
+    const newDateStr = new_tanggal_kunjungan
+      ? formatDateString(new_tanggal_kunjungan)
+      : dateString;
 
     if (jumlah_tiket > currentTickets) {
       const additionalTickets = jumlah_tiket - currentTickets;
 
       const capacityCheck = await reservasiModel.checkCapacity(
         nama_fasilitas,
-        new Date(tanggal_kunjungan),
+        newDateStr,
         additionalTickets
       );
 
@@ -115,10 +135,11 @@ export async function PUT(request: Request) {
     await reservasiModel.updateReservation({
       username_P,
       nama_fasilitas,
-      tanggal_kunjungan: new Date(tanggal_kunjungan),
-      jumlah_tiket: currentTickets,
+      tanggal_kunjungan: dateString,
+      jumlah_tiket,
       new_status: dbStatus,
       new_jumlah_tiket: jumlah_tiket,
+      new_tanggal_kunjungan: newDateStr,
     });
 
     return NextResponse.json({

@@ -79,6 +79,18 @@ const ReservasiTiketVisitorModule = () => {
 
   const username = userData?.username || "";
 
+  const formatDateForAPI = (date: Date | string): string => {
+    if (typeof date === "string") {
+      return date.split("T")[0];
+    }
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
+
   const [userReservations, setUserReservations] = useState<Reservation[]>([]);
   const [isReservationsLoading, setIsReservationsLoading] = useState(true);
 
@@ -149,7 +161,7 @@ const ReservasiTiketVisitorModule = () => {
     async (date: Date = selectedDate) => {
       setIsAvailableLoading(true);
       try {
-        const dateParam = format(date, "yyyy-MM-dd");
+        const dateParam = formatDateForAPI(date);
         const response = await fetch(
           `/api/reservasi-visitor?type=available&date=${dateParam}`
         );
@@ -232,6 +244,8 @@ const ReservasiTiketVisitorModule = () => {
     jumlah_tiket: number;
   }) => {
     try {
+      const formattedDate = formatDateForAPI(data.tanggal_kunjungan);
+
       const response = await fetch("/api/reservasi-visitor", {
         method: "POST",
         headers: {
@@ -240,7 +254,7 @@ const ReservasiTiketVisitorModule = () => {
         body: JSON.stringify({
           username_P: username,
           nama_fasilitas: data.nama_fasilitas,
-          tanggal_kunjungan: data.tanggal_kunjungan,
+          tanggal_kunjungan: formattedDate,
           jumlah_tiket: data.jumlah_tiket,
         }),
       });
@@ -289,6 +303,8 @@ const ReservasiTiketVisitorModule = () => {
     jumlah_tiket: number;
   }) => {
     try {
+      const formattedDate = formatDateForAPI(data.tanggal_kunjungan);
+
       const response = await fetch("/api/reservasi-visitor", {
         method: "POST",
         headers: {
@@ -297,7 +313,7 @@ const ReservasiTiketVisitorModule = () => {
         body: JSON.stringify({
           username_P: username,
           nama_fasilitas: data.nama_fasilitas,
-          tanggal_kunjungan: data.tanggal_kunjungan,
+          tanggal_kunjungan: formattedDate,
           jumlah_tiket: data.jumlah_tiket,
         }),
       });
@@ -347,7 +363,14 @@ const ReservasiTiketVisitorModule = () => {
     if (!currentReservation) return;
 
     try {
-      const response = await fetch("/api/reservasi-visitor", {
+      const formattedNewDate = formatDateForAPI(data.tanggal_kunjungan);
+
+      const originalDate =
+        typeof currentReservation.tanggal_kunjungan === "string"
+          ? formatDateForAPI(currentReservation.tanggal_kunjungan)
+          : formatDateForAPI(currentReservation.tanggal_kunjungan);
+
+      const response = await fetch("/api/reservasi", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -355,9 +378,14 @@ const ReservasiTiketVisitorModule = () => {
         body: JSON.stringify({
           username_P: username,
           nama_fasilitas: currentReservation.nama_fasilitas,
-          tanggal_kunjungan: currentReservation.tanggal_kunjungan,
-          new_tanggal_kunjungan: data.tanggal_kunjungan,
-          new_jumlah_tiket: data.jumlah_tiket,
+          tanggal_kunjungan: originalDate,
+          new_tanggal_kunjungan: formattedNewDate,
+          jumlah_tiket: data.jumlah_tiket,
+          status: "Terjadwal",
+          type:
+            currentReservation.jenis_reservasi === "Atraksi"
+              ? "attraction"
+              : "ride",
         }),
       });
 
@@ -406,13 +434,13 @@ const ReservasiTiketVisitorModule = () => {
     if (!currentReservation) return;
 
     try {
+      const dateString =
+        typeof currentReservation.tanggal_kunjungan === "string"
+          ? formatDateForAPI(currentReservation.tanggal_kunjungan)
+          : formatDateForAPI(currentReservation.tanggal_kunjungan);
+
       const response = await fetch(
-        `/api/reservasi-visitor?username=${username}&facility=${
-          currentReservation.nama_fasilitas
-        }&date=${format(
-          currentReservation.tanggal_kunjungan,
-          "yyyy-MM-dd HH:mm:ss"
-        )}`,
+        `/api/reservasi-visitor?username=${username}&facility=${currentReservation.nama_fasilitas}&date=${dateString}`,
         {
           method: "DELETE",
         }
@@ -455,7 +483,7 @@ const ReservasiTiketVisitorModule = () => {
 
   const handleShowEditForm = async (reservation: Reservation) => {
     try {
-      const dateParam = format(reservation.tanggal_kunjungan, "yyyy-MM-dd");
+      const dateParam = formatDateForAPI(reservation.tanggal_kunjungan);
       const facilityType =
         reservation.jenis_reservasi === "Atraksi" ? "attraction" : "ride";
       const facilityName = encodeURIComponent(reservation.nama_fasilitas);
