@@ -74,6 +74,12 @@ const veterinarianRoutes = [
   "/api/jadwal-pemeriksaan"
 ];
 
+const trainerRoutes = [
+  "/jadwal-pertunjukan",
+  "/api/trainer-animals",
+  "/api/jadwal-penugasan",
+];
+
 const caretakerRoutes = [
   "/pakan",
   "/pakan/",
@@ -219,6 +225,23 @@ export const getUserData: () => ReturnType = () => {
     if (
         authState === "authenticated" &&
         decodedToken?.data.role !== "caretaker"
+      ) {
+        router.push("/");
+        return;
+      }
+    }
+
+    const isTrainerRoute = trainerRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+    if (isTrainerRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
+      }
+      if (
+        authState === "authenticated" &&
+        decodedToken?.data.role !== "trainer"
       ) {
         router.push("/");
         return;
