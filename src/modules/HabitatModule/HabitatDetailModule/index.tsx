@@ -124,12 +124,18 @@ const HabitatDetailModule = () => {
       } else {
         toast.error("Error updating habitat", {
           description: result.error || "Failed to update habitat",
+          style: {
+            color: "black",
+          },
         });
       }
     } catch (error) {
       console.error("Error updating habitat:", error);
       toast.error("Network Error", {
         description: "Unable to update habitat",
+        style: {
+          color: "black",
+        },
       });
     }
   };
@@ -148,12 +154,18 @@ const HabitatDetailModule = () => {
       } else {
         toast.error("Error deleting habitat", {
           description: result.error || "Failed to delete habitat",
+          style: {
+            color: "black",
+          },
         });
       }
     } catch (error) {
       console.error("Error deleting habitat:", error);
       toast.error("Network Error", {
         description: "Unable to delete habitat",
+        style: {
+          color: "black",
+        },
       });
     }
   };

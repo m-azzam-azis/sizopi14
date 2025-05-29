@@ -138,12 +138,14 @@ const HewanModule = () => {
       } else {
         toast.error("Error adding animal", {
           description: result.error || "Failed to add animal",
+          style: { color: "black" },
         });
       }
     } catch (error) {
       console.error("Error adding animal:", error);
       toast.error("Network Error", {
         description: "Unable to add animal",
+        style: { color: "black" },
       });
     }
   };
@@ -179,12 +181,14 @@ const HewanModule = () => {
       } else {
         toast.error("Error updating animal", {
           description: result.error || "Failed to update animal",
+          style: { color: "black" },
         });
       }
     } catch (error) {
       console.error("Error updating animal:", error);
       toast.error("Network Error", {
         description: "Unable to update animal",
+        style: { color: "black" },
       });
     }
   };
@@ -206,12 +210,14 @@ const HewanModule = () => {
       } else {
         toast.error("Error deleting animal", {
           description: result.error || "Failed to delete animal",
+          style: { color: "black" },
         });
       }
     } catch (error) {
       console.error("Error deleting animal:", error);
       toast.error("Network Error", {
         description: "Unable to delete animal",
+        style: { color: "black" },
       });
     } finally {
       setShowDeleteAlert(false);

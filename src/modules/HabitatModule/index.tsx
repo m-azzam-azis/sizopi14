@@ -113,7 +113,10 @@ const HabitatModule = () => {
         toast.success("Habitat deleted successfully");
         await fetchHabitats(); // Refresh the list
       } else {
-        toast.error(result.error || "Failed to delete habitat");
+        toast.error("Failed to deleting habitat", {
+          description: result.error || "Please try again later",
+          style: { color: "black" },
+        });
       }
     } catch (error) {
       console.error("Error deleting habitat:", error);
@@ -147,7 +150,10 @@ const HabitatModule = () => {
         setIsAddModalOpen(false);
         await fetchHabitats(); // Refresh the list
       } else {
-        toast.error(result.error || "Failed to add habitat");
+        toast.error("Failed to add habitat", {
+          description: result.error || "Please try again later",
+          style: { color: "black" },
+        });
       }
     } catch (error) {
       console.error("Error adding habitat:", error);
@@ -184,7 +190,10 @@ const HabitatModule = () => {
         setCurrentHabitat(null);
         await fetchHabitats(); // Refresh the list
       } else {
-        toast.error(result.error || "Failed to update habitat");
+        toast.error("Failed to Update habitat", {
+          description: result.error || "Please try again later",
+          style: { color: "black" },
+        });
       }
     } catch (error) {
       console.error("Error updating habitat:", error);
