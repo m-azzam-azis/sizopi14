@@ -205,11 +205,13 @@ export class Reservasi extends BaseModel<ReservasiType> {
   }) {
     try {
       const updateFields = [];
+
       const values = [
         data.username_P,
         data.nama_fasilitas,
         data.tanggal_kunjungan,
       ];
+
       let paramIndex = 4;
 
       if (data.new_tanggal_kunjungan) {

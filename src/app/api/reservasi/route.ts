@@ -46,7 +46,6 @@ export async function PUT(request: Request) {
       type,
     } = body;
 
-    console.log("Received PUT request with body:", body);
 
     if (!username_P || !nama_fasilitas || !tanggal_kunjungan) {
       return NextResponse.json(
