@@ -450,7 +450,7 @@ const ReservasiTiketAdmin = () => {
       <Card>
         <CardHeader>
           <CardTitle className="text-h3 font-bold text-foreground">
-            DATA RESERVASI
+            DATA RESERVASII
           </CardTitle>
         </CardHeader>
         <CardContent>
