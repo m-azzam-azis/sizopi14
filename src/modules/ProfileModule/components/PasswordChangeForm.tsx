@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 const passwordSchema = z
   .object({
@@ -33,6 +33,7 @@ const PasswordChangeForm: React.FC = () => {
   const [showCurrentPassword, setShowCurrentPassword] = React.useState(false);
   const [showNewPassword, setShowNewPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
@@ -42,17 +43,46 @@ const PasswordChangeForm: React.FC = () => {
       confirmPassword: "",
     },
   });
+  const onSubmit = async (data: PasswordFormValues) => {
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch("/api/profile/change-password", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword,
+        }),
+      });
 
-  const onSubmit = (data: PasswordFormValues) => {
-    console.log("Password change:", data);
+      const result = await response.json();
 
-    // Simulate API call
-    toast({
-      title: "Password updated",
-      description: "Your password has been changed successfully.",
-    });
-
-    form.reset();
+      if (response.ok) {
+        toast({
+          title: "Password updated",
+          description: "Your password has been changed successfully.",
+          variant: "success", // custom variant for green
+          style: { backgroundColor: "#d1fae5", color: "#065f46" }, // Tailwind green-100 and green-800
+        });
+        form.reset();
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to change password",
+        });
+      }
+    } catch (error) {
+      console.error("Error changing password:", error);
+      toast({
+        title: "Error",
+        description: "Failed to change password. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -72,9 +102,8 @@ const PasswordChangeForm: React.FC = () => {
                     placeholder="••••••••"
                     {...field}
                   />
-                </FormControl>
-                <Button
-                  // variant={"default"}
+                </FormControl>                <Button
+                  type="button"
                   variant="ghost"
                   size="icon"
                   className="absolute top-0 right-0 h-full px-3"
@@ -106,9 +135,8 @@ const PasswordChangeForm: React.FC = () => {
                     placeholder="••••••••"
                     {...field}
                   />
-                </FormControl>
-                <Button
-                  // variant={"default"}
+                </FormControl>                <Button
+                  type="button"
                   variant="ghost"
                   size="icon"
                   className="absolute top-0 right-0 h-full px-3"
@@ -140,9 +168,8 @@ const PasswordChangeForm: React.FC = () => {
                     placeholder="••••••••"
                     {...field}
                   />
-                </FormControl>
-                <Button
-                  // variant={"default"}
+                </FormControl>                <Button
+                  type="button"
                   variant="ghost"
                   size="icon"
                   className="absolute top-0 right-0 h-full px-3"
@@ -158,9 +185,16 @@ const PasswordChangeForm: React.FC = () => {
               <FormMessage />
             </FormItem>
           )}
-        />
-
-        <Button variant={"default"}>Change Password</Button>
+        />        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Changing Password...
+            </>
+          ) : (
+            "Change Password"
+          )}
+        </Button>
       </form>
     </Form>
   );

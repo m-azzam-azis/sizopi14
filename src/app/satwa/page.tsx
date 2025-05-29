@@ -1,8 +1,8 @@
 import React from "react";
-import SatwaModule from "@/modules/SatwaModule";
+import HewanModule from "@/modules/HewanModule";
 
 const SatwaPage = () => {
-  return <SatwaModule />;
+  return <HewanModule />;
 };
 
 export default SatwaPage;

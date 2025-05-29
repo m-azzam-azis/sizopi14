@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
@@ -9,25 +9,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
-import {
-  FormControl,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { z } from "zod";
+import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { getUserData } from "@/hooks/getUserData";
 
 import {
   AdminData,
@@ -40,219 +24,141 @@ import {
 } from "@/types/user";
 
 import ProfileForm from "./components/ProfileForm";
+import ProfileRoleSpecificForm from "./components/ProfileRoleSpecificForm";
 import PasswordChangeForm from "./components/PasswordChangeForm";
 
-// Specializations options
-const specializations = [
-  { id: "large-mammals", label: "Large Mammals" },
-  { id: "reptiles", label: "Reptiles" },
-  { id: "exotic-birds", label: "Exotic Birds" },
-  { id: "primates", label: "Primates" },
-  { id: "other", label: "Other" },
-];
-
-// Mock user data
-const userData = {
-  id: "user-123",
-  username: "johndoe",
-  email: "john.doe@example.com",
-  firstName: "John",
-  middleName: "",
-  lastName: "Doe",
-  phoneNumber: "+62123456789",
-  role: "admin" as UserRole, // Change this to test different role forms
-
-  // Role-specific fields
-  // For visitor
-  address: "123 Main Street, City",
-  birthDate: "1990-01-01",
-
-  // For veterinarian
-  certificationNumber: "VET-12345",
-  specializations: ["Large Mammals", "Reptiles"],
-
-  // For staff (admin, caretaker, trainer)
-  staffId: "STAFF-54321",
-};
+interface ProfileData {
+  username: string;
+  email: string;
+  nama_depan: string;
+  nama_tengah: string;
+  nama_belakang: string;
+  no_telepon: string;
+  role: string;
+  alamat?: string;
+  tgl_lahir?: string;
+  no_str?: string;
+  nama_spesialisasi?: string[];
+  id_staf?: string;
+}
 
 const ProfileModule: React.FC = () => {
-  const [user, setUser] = useState(userData);
+  const { userData, isValid, isLoading } = getUserData();
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [activeTab, setActiveTab] = useState("general");
+  const { toast } = useToast();
 
-  // Role-specific schemas
-  const visitorSchema = z.object({
-    address: z.string().min(1, "Address is required"),
-    birthDate: z.date({
-      required_error: "Birth date is required",
-    }),
-  });
+  // Fetch profile data from API
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!isValid || !userData.username) return;
+      
+      try {
+        const response = await fetch("/api/profile");
+        if (response.ok) {
+          const data = await response.json();
+          setProfileData(data);
+        } else {
+          console.error("Failed to fetch profile data");
+          toast({
+            title: "Error",
+            description: "Failed to load profile data",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        toast({
+          title: "Error", 
+          description: "Failed to load profile data",
 
-  const veterinarianSchema = z.object({
-    certificationNumber: z.string().min(1, "Certification number is required"),
-    specializations: z
-      .array(z.string())
-      .min(1, "Select at least one specialization"),
-  });
-
-  const staffSchema = z.object({
-    staffId: z.string().min(1, "Staff ID is required"),
-  });
+        });
+      } finally {
+        setLoadingProfile(false);
+      }
+    };    fetchProfileData();
+  }, [isValid, userData.username, toast]);
 
   // Handle form submission
-  const handleProfileUpdate = (data: any) => {
-    console.log("Updated profile:", data);
-    // In a real app, this would send the data to an API
-    setUser({ ...user, ...data });
-  };
+  const handleProfileUpdate = async (data: any) => {
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nama_depan: data.firstName,
+          nama_tengah: data.middleName,
+          nama_belakang: data.lastName,
+          email: data.email,
+          no_telepon: data.phoneNumber,
+          // Role-specific fields
+          ...(data.address && { alamat: data.address }),
+          ...(data.birthDate && { tgl_lahir: data.birthDate }),
+        }),
+      });
 
-  // Get role-specific form fields
-  const getRoleSpecificFields = () => {
-    switch (user.role) {
-      case "visitor":
-        return (
-          <>
-            <FormItem>
-              <FormLabel>Address</FormLabel>
-              <FormControl>
-                <Input
-                  name="address"
-                  defaultValue={(user as VisitorData).address}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+      if (response.ok) {
+        // Update local state
+        if (profileData) {
+          const updatedProfile = {
+            ...profileData,
+            nama_depan: data.firstName,
+            nama_tengah: data.middleName,
+            nama_belakang: data.lastName,
+            email: data.email,
+            no_telepon: data.phoneNumber,
+            ...(data.address && { alamat: data.address }),
+            ...(data.birthDate && { tgl_lahir: data.birthDate }),
+          };
+          setProfileData(updatedProfile);
+        }
+          toast({
+          title: "Profile updated",
+          description: "Your profile information has been updated successfully.",
+        });
 
-            <FormItem className="flex flex-col">
-              <FormLabel>Date of Birth</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !user.birthDate && "text-muted-foreground"
-                      )}
-                    >
-                      {user.birthDate ? (
-                        format(new Date(user.birthDate), "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={
-                      user.birthDate ? new Date(user.birthDate) : undefined
-                    }
-                    onSelect={(date) => {
-                      if (date) {
-                        setUser({
-                          ...user,
-                          birthDate: date.toISOString().split("T")[0],
-                        });
-                      }
-                    }}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          </>
-        );
+        // Dispatch custom event to notify navbar about profile update
+        window.dispatchEvent(new CustomEvent('profileUpdated'));
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.error || "Failed to update profile",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+      });
+    }  };
 
-      case "veterinarian":
-        return (
-          <>
-            <FormItem>
-              <FormLabel>Certification Number (Read Only)</FormLabel>
-              <FormControl>
-                <Input
-                  name="certificationNumber"
-                  defaultValue={(user as VeterinarianData).certificationNumber}
-                  disabled
-                />
-              </FormControl>
-            </FormItem>
+  // Show loading state
+  if (isLoading || loadingProfile || !profileData) {
+    return (
+      <div className="container max-w-4xl mx-auto py-8 px-4">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading profile...</span>
+        </div>
+      </div>
+    );
+  }
 
-            <FormItem>
-              <FormLabel>Specializations</FormLabel>
-              <div className="space-y-2">
-                {specializations.map((spec) => (
-                  <div key={spec.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={spec.id}
-                      checked={(
-                        user as VeterinarianData
-                      ).specializations.includes(spec.label)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          const newSpecs = [
-                            ...(user as VeterinarianData).specializations,
-                            spec.label,
-                          ];
-                          setUser({ ...user, specializations: newSpecs });
-                        } else {
-                          const newSpecs = (
-                            user as VeterinarianData
-                          ).specializations.filter((s) => s !== spec.label);
-                          setUser({ ...user, specializations: newSpecs });
-                        }
-                      }}
-                    />
-                    <label
-                      htmlFor={spec.id}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {spec.label}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </FormItem>
-          </>
-        );
-
-      case "admin":
-      case "caretaker":
-      case "trainer":
-        return (
-          <FormItem>
-            <FormLabel>Staff ID (Read Only)</FormLabel>
-            <FormControl>
-              <Input name="staffId" defaultValue={user.staffId} disabled />
-            </FormControl>
-          </FormItem>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  // Get role-specific schema
-  const getRoleSpecificSchema = () => {
-    switch (user.role) {
-      case "visitor":
-        return visitorSchema;
-      case "veterinarian":
-        return veterinarianSchema;
-      case "admin":
-      case "caretaker":
-      case "trainer":
-        return staffSchema;
-      default:
-        return null;
-    }
-  };
+  // Show error if user is not valid
+  if (!isValid) {
+    return (
+      <div className="container max-w-4xl mx-auto py-8 px-4">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600">Access Denied</h2>
+          <p className="text-gray-600 mt-2">Please log in to view your profile.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
@@ -271,14 +177,38 @@ const ProfileModule: React.FC = () => {
               <CardDescription>
                 Update your personal information and account settings.
               </CardDescription>
-            </CardHeader>
-            <CardContent>
+            </CardHeader>            <CardContent className="space-y-6">
+              {/* Basic Profile Information */}
               <ProfileForm
-                user={user}
+                user={{
+                  username: profileData.username,
+                  firstName: profileData.nama_depan,
+                  middleName: profileData.nama_tengah || "",
+                  lastName: profileData.nama_belakang,
+                  email: profileData.email,
+                  phoneNumber: profileData.no_telepon,
+                }}
                 onSubmit={handleProfileUpdate}
-                extraFields={getRoleSpecificFields()}
-                extraSchema={getRoleSpecificSchema()}
               />
+              
+              {/* Role-specific Information */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold mb-4">Role-specific Information</h3>
+                <ProfileRoleSpecificForm
+                  user={{
+                    id: profileData.username,
+                    role: profileData.role as any,
+                    // For visitor
+                    address: profileData.alamat,
+                    birthDate: profileData.tgl_lahir,
+                    // For veterinarian
+                    certificationNumber: profileData.no_str,
+                    specializations: profileData.nama_spesialisasi,
+                    // For staff
+                    staffId: profileData.id_staf,
+                  }}
+                />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

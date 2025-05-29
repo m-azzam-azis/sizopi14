@@ -1,10 +1,8 @@
-import React from 'react'
-import HabitatModule from '@/modules/HabitatModule'
+import React from "react";
+import HabitatModule from "@/modules/HabitatModule";
 
 const HabitatPage = () => {
-  return (
-    <HabitatModule/>
-  )
-}
+  return <HabitatModule />;
+};
 
-export default HabitatPage
+export default HabitatPage;

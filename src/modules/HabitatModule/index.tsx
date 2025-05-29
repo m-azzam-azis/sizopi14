@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Eye, Pencil, Trash } from "lucide-react";
+import { PlusCircle, Eye, Pencil, Trash, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,190 +24,340 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
 import HabitatFormModal from "@/modules/HabitatModule/components/modals/HabitatFormModal";
 import { HabitatFormValues } from "@/modules/HabitatModule/components/forms/HabitatForm";
-import { habitats_dummy } from "./constants";
-import { Habitat } from "./interface";
+import { HabitatWithAnimals } from "./interface";
+import { getUserData } from "@/hooks/getUserData";
 
 const HabitatModule = () => {
   const router = useRouter();
+  const { userData, isValid } = getUserData();
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [habitatToDelete, setHabitatToDelete] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [currentHabitat, setCurrentHabitat] = useState<Habitat | null>(null);
+  const [currentHabitat, setCurrentHabitat] =
+    useState<HabitatWithAnimals | null>(null);
+  const [habitats, setHabitats] = useState<HabitatWithAnimals[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Dummy data for habitats
-  const [habitats, setHabitats] = useState<Habitat[]>(habitats_dummy);
+  // Check if user has permission to manage habitats
+  const canManageHabitats =
+    isValid && (userData.role === "caretaker" || userData.role === "admin");
+
+  // Fetch habitats from API
+  const fetchHabitats = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/habitat");
+      const result = await response.json();
+
+      if (result.success) {
+        setHabitats(result.data);
+      } else {
+        toast.error("Failed to fetch habitats");
+      }
+    } catch (error) {
+      console.error("Error fetching habitats:", error);
+      toast.error("Error fetching habitats");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHabitats();
+  }, []);
 
   // Function to handle view details
-  const handleViewDetails = (id: string) => {
-    router.push(`/habitat/${id}`);
+  const handleViewDetails = (nama: string) => {
+    router.push(`/habitat/${encodeURIComponent(nama)}`);
   };
 
   // Function to handle edit click
-  const handleEditClick = (habitat: Habitat) => {
+  const handleEditClick = (habitat: HabitatWithAnimals) => {
+    if (!canManageHabitats) {
+      toast.error("You don't have permission to edit habitats");
+      return;
+    }
     setCurrentHabitat(habitat);
     setIsEditModalOpen(true);
   };
 
   // Function to show delete confirmation
-  const handleDeleteClick = (id: string) => {
-    setHabitatToDelete(id);
+  const handleDeleteClick = (nama: string) => {
+    if (!canManageHabitats) {
+      toast.error("You don't have permission to delete habitats");
+      return;
+    }
+    setHabitatToDelete(nama);
     setShowDeleteAlert(true);
   };
 
   // Function to handle actual delete action
-  const handleDelete = () => {
-    if (habitatToDelete) {
-      setHabitats(habitats.filter((habitat) => habitat.id !== habitatToDelete));
-      console.log(`Delete habitat with ID: ${habitatToDelete}`);
+  const handleDelete = async () => {
+    if (!habitatToDelete) return;
+
+    try {
+      const response = await fetch(
+        `/api/habitat/${encodeURIComponent(habitatToDelete)}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Habitat deleted successfully");
+        await fetchHabitats(); // Refresh the list
+      } else {
+        toast.error("Failed to deleting habitat", {
+          description: result.error || "Please try again later",
+          style: { color: "black" },
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting habitat:", error);
+      toast.error("Error deleting habitat");
+    } finally {
+      setShowDeleteAlert(false);
+      setHabitatToDelete(null);
     }
-    setShowDeleteAlert(false);
-    setHabitatToDelete(null);
   };
 
   // Function to handle adding a new habitat
-  const handleAddHabitat = (data: HabitatFormValues) => {
-    const newHabitat: Habitat = {
-      id: `hab-${Math.floor(Math.random() * 1000)}`,
-      name: data.name,
-      area: parseInt(data.area),
-      capacity: parseInt(data.capacity),
-      status: "Available",
-    };
+  const handleAddHabitat = async (data: HabitatFormValues) => {
+    try {
+      const response = await fetch("/api/habitat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nama: data.name,
+          luas_area: data.area,
+          kapasitas: data.capacity,
+          status: data.environmentStatus,
+        }),
+      });
 
-    setHabitats([...habitats, newHabitat]);
-    console.log("Added new habitat:", newHabitat);
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Habitat added successfully");
+        setIsAddModalOpen(false);
+        await fetchHabitats(); // Refresh the list
+      } else {
+        toast.error("Failed to add habitat", {
+          description: result.error || "Please try again later",
+          style: { color: "black" },
+        });
+      }
+    } catch (error) {
+      console.error("Error adding habitat:", error);
+      toast.error("Error adding habitat");
+    }
   };
 
   // Function to handle editing a habitat
-  const handleEditHabitat = (data: HabitatFormValues) => {
-    if (currentHabitat) {
-      const updatedHabitats = habitats.map((habitat) => {
-        if (habitat.id === currentHabitat.id) {
-          return {
-            ...habitat,
-            name: data.name,
-            area: parseInt(data.area),
-            capacity: parseInt(data.capacity),
-            environmentStatus: data.environmentStatus,
-          };
-        }
-        return habitat;
-      });
+  const handleEditHabitat = async (data: HabitatFormValues) => {
+    if (!currentHabitat) return;
 
-      setHabitats(updatedHabitats);
-      console.log("Updated habitat:", currentHabitat.id);
+    try {
+      const response = await fetch(
+        `/api/habitat/${encodeURIComponent(currentHabitat.nama)}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            nama: data.name,
+            luas_area: data.area,
+            kapasitas: data.capacity,
+            status: data.environmentStatus,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Habitat updated successfully");
+        setIsEditModalOpen(false);
+        setCurrentHabitat(null);
+        await fetchHabitats(); // Refresh the list
+      } else {
+        toast.error("Failed to Update habitat", {
+          description: result.error || "Please try again later",
+          style: { color: "black" },
+        });
+      }
+    } catch (error) {
+      console.error("Error updating habitat:", error);
+      toast.error("Error updating habitat");
     }
   };
 
   // Function to get status badge color
-  const getStatusBadge = (status: Habitat["status"]) => {
+  const getStatusBadge = (status: HabitatWithAnimals["status"]) => {
     switch (status) {
-      case "Available":
+      case "Aktif":
         return (
-          <Badge className="bg-success text-success-foreground">
-            Available
+          <Badge className="bg-green-100 text-green-800 border-green-200">
+            Aktif
           </Badge>
         );
-      case "Full":
+      case "Penuh":
         return (
-          <Badge className="bg-warning text-warning-foreground">Full</Badge>
+          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+            Penuh
+          </Badge>
         );
-      case "Maintenance":
-        return <Badge variant="destructive">Maintenance</Badge>;
+      case "Renovasi":
+        return (
+          <Badge className="bg-red-100 text-red-800 border-red-200">
+            Renovasi
+          </Badge>
+        );
       default:
-        return <Badge>{status}</Badge>;
+        return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
+  if (!isValid) {
+    return (
+      <div className="container mx-auto pb-20 px-4">
+        <div className="text-center py-20">
+          <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
+          <p className="text-muted-foreground mt-2">
+            You need to be logged in to view this page.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto pb-20 px-4">
-      <h1 className="mb-10 text-4xl font-bold"> Manajemen Habitat</h1>
+      <h1 className="mb-10 text-4xl font-bold">Manajemen Habitat</h1>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-h3 font-bold text-foreground">
+          <CardTitle className="text-2xl font-bold text-foreground">
             Daftar Habitat
           </CardTitle>
-          <Button
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-            onClick={() => setIsAddModalOpen(true)}
-          >
-            <PlusCircle className="mr-2 h-4 w-4" /> Tambah Habitat
-          </Button>
+          {canManageHabitats && (
+            <Button
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={() => setIsAddModalOpen(true)}
+            >
+              <PlusCircle className="mr-2 h-4 w-4" /> Tambah Habitat
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <div className="rounded-md border border-border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[150px]">Nama</TableHead>
-                  <TableHead className="text-right">Luas (m²)</TableHead>
-                  <TableHead className="text-right">Kapasitas</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {habitats.map((habitat) => (
-                  <TableRow key={habitat.id}>
-                    <TableCell className="font-medium">
-                      {habitat.name}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {habitat.area.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {habitat.capacity}
-                    </TableCell>
-                    <TableCell>{habitat.status}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleViewDetails(habitat.id)}
-                          className="h-8 w-8"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleEditClick(habitat)}
-                          className="h-8 w-8"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleDeleteClick(habitat.id)}
-                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <span className="ml-2">Loading habitats...</span>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[200px]">Nama</TableHead>
+                    <TableHead className="text-right">Luas Area (m²)</TableHead>
+                    <TableHead className="text-right">Kapasitas</TableHead>
+                    <TableHead className="text-right">Jumlah Hewan</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {habitats.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={6}
+                        className="text-center py-8 text-muted-foreground"
+                      >
+                        Tidak ada habitat yang ditemukan
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    habitats.map((habitat) => (
+                      <TableRow key={habitat.nama}>
+                        <TableCell className="font-medium">
+                          {habitat.nama}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {habitat.luas_area.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {habitat.kapasitas}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {habitat.jumlah_hewan || 0}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(habitat.status)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleViewDetails(habitat.nama)}
+                              className="h-8 w-8"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {canManageHabitats && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => handleEditClick(habitat)}
+                                  className="h-8 w-8"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() =>
+                                    handleDeleteClick(habitat.nama)
+                                  }
+                                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                >
+                                  <Trash className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </div>
         </CardContent>
       </Card>
 
       {/* Add Habitat Modal */}
-      <HabitatFormModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSubmit={handleAddHabitat}
-        isEditing={false}
-      />
+      {canManageHabitats && (
+        <HabitatFormModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onSubmit={handleAddHabitat}
+          isEditing={false}
+        />
+      )}
 
       {/* Edit Habitat Modal */}
-      {currentHabitat && (
+      {currentHabitat && canManageHabitats && (
         <HabitatFormModal
           isOpen={isEditModalOpen}
           onClose={() => {
@@ -216,9 +366,9 @@ const HabitatModule = () => {
           }}
           onSubmit={handleEditHabitat}
           initialData={{
-            name: currentHabitat.name,
-            area: currentHabitat.area,
-            capacity: currentHabitat.capacity,
+            name: currentHabitat.nama,
+            area: currentHabitat.luas_area,
+            capacity: currentHabitat.kapasitas,
             environmentStatus: currentHabitat.status,
           }}
           isEditing={true}

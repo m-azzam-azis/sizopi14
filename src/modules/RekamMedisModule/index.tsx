@@ -6,6 +6,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
+import { showToast } from "@/components/ui/custom-toast";
+import { SuccessModal } from "@/components/ui/success-modal";
 import {
   Eye,
   EyeOff,
@@ -105,13 +107,16 @@ export const RekamMedisModule = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentRecord, setCurrentRecord] = useState<any>(null);
   const [dokterList, setDokterList] = useState<any[]>([]);
+  const [hewanList, setHewanList] = useState<any[]>([]);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [noticeMessage, setNoticeMessage] = useState("");
 
   // Form for adding new rekam medis
   const addForm = useForm<RekamMedisFormValues>({
     resolver: zodResolver(rekamMedisSchema),
     defaultValues: {
       id_hewan: "",
-      username_dh: "",
+      username_dh: "", // set dokter otomatis dari user login
       tanggal_pemeriksaan: new Date().toISOString().split("T")[0],
       diagnosis: "",
       pengobatan: "",
@@ -148,6 +153,27 @@ export const RekamMedisModule = () => {
       });
     }
   }, [currentRecord, isEditDialogOpen]);
+
+  const { userData, isValid, isLoading } = getUserData();
+
+  // Set username_dh setiap kali dialog tambah dibuka
+  useEffect(() => {
+    if (isAddDialogOpen && userData?.username) {
+      addForm.setValue("username_dh", userData.username);
+    }
+    // Optional: reset form jika dialog ditutup
+    if (!isAddDialogOpen) {
+      addForm.reset({
+        id_hewan: "",
+        username_dh: "",
+        tanggal_pemeriksaan: new Date().toISOString().split("T")[0],
+        diagnosis: "",
+        pengobatan: "",
+        status_kesehatan: "Sembuh",
+        catatan_tindak_lanjut: "",
+      });
+    }
+  }, [isAddDialogOpen, userData?.username]);
 
   // Filter rekam medis based on search query
   const filteredRekamMedis = rekamMedisList.filter(
@@ -192,12 +218,23 @@ export const RekamMedisModule = () => {
     }
   };
 
+  // Fetch hewan list for select
+  const fetchHewanList = async () => {
+    try {
+      const res = await fetch("/api/hewan");
+      if (!res.ok) throw new Error("Gagal mengambil data hewan");
+      const data = await res.json();
+      setHewanList(data);
+    } catch (err) {
+      setHewanList([]);
+    }
+  };
+
   useEffect(() => {
     fetchRekamMedis();
     fetchDokterList();
+    fetchHewanList();
   }, []);
-
-  const { userData, isValid, isLoading } = getUserData();
 
   // Ganti dokterList dengan array satu elemen dari userData jika role veterinarian
   const filteredDokterList = userData.role === "veterinarian"
@@ -207,7 +244,6 @@ export const RekamMedisModule = () => {
         nama_belakang: userData.nama_belakang,
       }]
     : dokterList;
-
   // Handle add new rekam medis (POST)
   const handleAddRekamMedis = async (values: RekamMedisFormValues) => {
     if (userData.role !== "veterinarian") return;
@@ -215,17 +251,48 @@ export const RekamMedisModule = () => {
       const res = await fetch("/api/rekam-medis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, username_dh: userData.username }), // paksa username_dh dari user login
       });
+      
       if (!res.ok) throw new Error("Gagal menambah data");
+      
+      // Parse response and check for PostgreSQL notices
+      const responseData = await res.json();
+      console.log("API response data:", responseData);
+      
+      if (responseData.message) {
+        // Show the RAISE NOTICE message from PostgreSQL trigger both as toast and modal
+        showToast({
+          title: "Sukses",
+          description: responseData.message,
+          variant: "success"
+        });
+        
+        // Also show in a more prominent modal
+        setNoticeMessage(responseData.message);
+        setSuccessModalOpen(true);
+      } else {
+        // Regular success message
+        showToast({
+          title: "Berhasil",
+          description: "Data rekam medis berhasil ditambahkan",
+          variant: "success"
+        });
+      }
+      
       setIsAddDialogOpen(false);
       addForm.reset();
       fetchRekamMedis();
     } catch (err) {
-      // Optional: tampilkan toast error
+      // Display error toast
+      showToast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Gagal menambah data rekam medis",
+        variant: "destructive"
+      });
+      console.error("Error adding rekam medis:", err);
     }
   };
-
   // Handle edit rekam medis (PUT)
   const handleEditRekamMedis = async (values: RekamMedisFormValues) => {
     if (userData.role !== "veterinarian") return;
@@ -236,12 +303,43 @@ export const RekamMedisModule = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...currentRecord, ...values }),
       });
+      
       if (!res.ok) throw new Error("Gagal mengupdate data");
+      
+      // Parse response and check for PostgreSQL notices
+      const responseData = await res.json();
+      console.log("API response data (update):", responseData);
+      
+      if (responseData.message) {
+        // Show the RAISE NOTICE message from PostgreSQL trigger both as toast and modal
+        showToast({
+          title: "Sukses",
+          description: responseData.message,
+          variant: "success"
+        });
+        
+        // Also show in a more prominent modal
+        setNoticeMessage(responseData.message);
+        setSuccessModalOpen(true);
+      } else {
+        showToast({
+          title: "Berhasil",
+          description: "Data rekam medis berhasil diperbarui",
+          variant: "success"
+        });
+      }
+      
       setIsEditDialogOpen(false);
       setCurrentRecord(null);
       fetchRekamMedis();
     } catch (err) {
-      // Optional: tampilkan toast error
+      // Show error toast
+      showToast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Gagal mengupdate data rekam medis",
+        variant: "destructive"
+      });
+      console.error("Error updating rekam medis:", err);
     }
   };
 
@@ -281,6 +379,13 @@ export const RekamMedisModule = () => {
 
   return (
     <div className="container mx-auto py-10 px-4 mt-7">
+      {/* Success Modal for PostgreSQL NOTICES */}
+      <SuccessModal 
+        isOpen={successModalOpen}
+        onClose={() => setSuccessModalOpen(false)}
+        message={noticeMessage}
+      />
+
       <Card className="border-0 shadow-md">
         <CardHeader className="bg-primary/5">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -315,30 +420,17 @@ export const RekamMedisModule = () => {
                         name="id_hewan"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>ID Hewan</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Masukkan ID Hewan" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={addForm.control}
-                        name="username_dh"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Dokter Hewan</FormLabel>
+                            <FormLabel>Hewan</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Pilih dokter" />
+                                  <SelectValue placeholder="Pilih hewan" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {filteredDokterList.map((dokter) => (
-                                  <SelectItem key={dokter.username} value={dokter.username}>
-                                    {dokter.nama_depan} {dokter.nama_belakang} ({dokter.username})
+                                {hewanList.map((hewan) => (
+                                  <SelectItem key={hewan.id} value={hewan.id}>
+                                    {hewan.nama} ({hewan.spesies})
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -347,6 +439,15 @@ export const RekamMedisModule = () => {
                           </FormItem>
                         )}
                       />
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Dokter Hewan</label>
+                        <Input
+                          value={userData.username}
+                          readOnly
+                          disabled
+                          className="bg-gray-100 cursor-not-allowed"
+                        />
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -473,7 +574,7 @@ export const RekamMedisModule = () => {
             <Table>
               <TableHeader className="bg-muted/50">
                 <TableRow>
-                  <TableHead>ID Hewan</TableHead>
+                  
                   <TableHead>Dokter</TableHead>
                   <TableHead>Tanggal Pemeriksaan</TableHead>
                   <TableHead>Status</TableHead>
@@ -487,9 +588,12 @@ export const RekamMedisModule = () => {
                 {currentItems.length > 0 ? (
                   currentItems.map((record) => (
                     <TableRow key={record.id_hewan}>
-                      <TableCell>{record.id_hewan}</TableCell>
                       <TableCell>{record.username_dh}</TableCell>
-                      <TableCell>{record.tanggal_pemeriksaan}</TableCell>
+                      <TableCell>{ 
+                        record.tanggal_pemeriksaan
+                          ? new Date(record.tanggal_pemeriksaan).toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" })
+                          : "-"
+                      }</TableCell>
                       <TableCell>
                         <Badge
                           className={

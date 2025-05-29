@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,88 +19,89 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Atraksi, ReservasiFormData } from "@/types/schema";
 
 const reservasiFormSchema = z.object({
-  nama_fasilitas: z.string().min(1, "Pilih atraksi"),
-  tanggal_kunjungan: z.date({
-    required_error: "Tanggal harus diisi",
+  nama_fasilitas: z.string({
+    required_error: "Pilih atraksi",
   }),
   jumlah_tiket: z
     .number({
       required_error: "Jumlah tiket harus diisi",
     })
     .min(1, "Minimal pembelian 1 tiket")
-    .max(20, "Maksimal pembelian 20 tiket per transaksi")
     .int("Jumlah tiket harus berupa bilangan bulat"),
+  tanggal_kunjungan: z.date({
+    required_error: "Pilih tanggal kunjungan",
+  }),
 });
 
 type ReservasiFormValues = z.infer<typeof reservasiFormSchema>;
 
-interface ReservasiTiketFormProps {
-  onSubmit: (data: ReservasiFormData) => void;
-  atraksiList: Atraksi[];
-  isEditing: boolean;
-  initialData?: ReservasiFormData;
+interface ReservasiFormData {
+  nama_fasilitas: string;
+  nama_atraksi?: string;
+  lokasi?: string;
+  jadwal?: string;
+  tanggal_kunjungan: Date;
+  jumlah_tiket: number;
 }
 
-export const ReservasiTiketForm = ({
+interface ReservasiTiketFormProps {
+  onSubmit: (data: ReservasiFormData) => void;
+  attraction: {
+    nama_atraksi: string;
+    lokasi: string;
+    fasilitas: {
+      jadwal: Date | string;
+      kapasitas_tersedia: number;
+      kapasitas_max: number;
+    };
+  };
+  isEditing?: boolean;
+  initialData?: {
+    tanggal_kunjungan: Date;
+    jumlah_tiket: number;
+  };
+  selectedDate: Date;
+}
+
+const getFormattedTime = (jadwal: Date | string): string => {
+  if (typeof jadwal === "string") {
+    return jadwal;
+  }
+  return format(jadwal, "HH:mm");
+};
+
+export const ReservasiTiketForm: React.FC<ReservasiTiketFormProps> = ({
   onSubmit,
-  atraksiList,
-  isEditing,
+  attraction,
+  isEditing = false,
   initialData,
-}: ReservasiTiketFormProps) => {
-  const [selectedAtraksiNama, setSelectedAtraksiNama] = useState<string>(
-    initialData?.nama_fasilitas || ""
-  );
-  const [selectedAtraksi, setSelectedAtraksi] = useState<Atraksi | null>(null);
-
-  const availableAtraksi = atraksiList.filter(
-    (atraksi) =>
-      atraksi.fasilitas.kapasitas_tersedia > 0 ||
-      (isEditing && initialData?.nama_fasilitas === atraksi.nama_atraksi)
-  );
-
+  selectedDate,
+}) => {
   const form = useForm<ReservasiFormValues>({
     resolver: zodResolver(reservasiFormSchema),
     defaultValues: {
-      nama_fasilitas: initialData?.nama_fasilitas || "",
-      tanggal_kunjungan: initialData?.tanggal_kunjungan || new Date(),
+      nama_fasilitas: attraction.nama_atraksi,
       jumlah_tiket: initialData?.jumlah_tiket || 1,
+      tanggal_kunjungan: initialData?.tanggal_kunjungan || selectedDate,
     },
   });
 
-  useEffect(() => {
-    if (selectedAtraksiNama) {
-      const atraksi = atraksiList.find(
-        (a) => a.nama_atraksi === selectedAtraksiNama
-      );
-      setSelectedAtraksi(atraksi || null);
-    } else {
-      setSelectedAtraksi(null);
-    }
-  }, [selectedAtraksiNama, atraksiList]);
-
   const handleFormSubmit = (values: ReservasiFormValues) => {
-    if (!selectedAtraksi) return;
-
-    const formattedJadwal = format(selectedAtraksi.fasilitas.jadwal, "HH:mm");
+    const formattedJadwal =
+      typeof attraction.fasilitas.jadwal === "string"
+        ? attraction.fasilitas.jadwal
+        : format(attraction.fasilitas.jadwal, "HH:mm");
 
     onSubmit({
       nama_fasilitas: values.nama_fasilitas,
-      nama_atraksi: selectedAtraksi.nama_atraksi,
-      lokasi: selectedAtraksi.lokasi,
+      nama_atraksi: attraction.nama_atraksi,
+      lokasi: attraction.lokasi,
       jadwal: formattedJadwal,
-      tanggal_kunjungan: values.tanggal_kunjungan,
+      tanggal_kunjungan: isEditing ? values.tanggal_kunjungan : selectedDate,
       jumlah_tiket: values.jumlah_tiket,
     });
   };
@@ -114,144 +115,142 @@ export const ReservasiTiketForm = ({
         <FormField
           control={form.control}
           name="nama_fasilitas"
+          render={
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            ({ field: _ }) => (
+              <FormItem>
+                <FormLabel>Nama Atraksi</FormLabel>
+                <Input
+                  value={attraction.nama_atraksi}
+                  disabled
+                  className="bg-muted"
+                />
+              </FormItem>
+            )
+          }
+        />
+
+        <div className="grid grid-cols-1 gap-4">
+          <FormItem>
+            <FormLabel>Lokasi</FormLabel>
+            <Input value={attraction.lokasi} disabled className="bg-muted" />
+          </FormItem>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4">
+          <FormItem>
+            <FormLabel>Jam</FormLabel>
+            <Input
+              value={getFormattedTime(attraction.fasilitas.jadwal)}
+              disabled
+              className="bg-muted"
+            />
+          </FormItem>
+        </div>
+
+        {isEditing ? (
+          <FormField
+            control={form.control}
+            name="tanggal_kunjungan"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Tanggal</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "dd MMMM yyyy")
+                        ) : (
+                          <span>Pilih tanggal</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        date.setHours(0, 0, 0, 0);
+
+                        return (
+                          date < today ||
+                          date >
+                            new Date(
+                              new Date().setMonth(new Date().getMonth() + 9)
+                            )
+                        );
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : (
+          /* Show selected date as info when creating new reservation */
+          <FormItem>
+            <FormLabel>Tanggal Kunjungan</FormLabel>
+            <Input
+              value={format(selectedDate, "dd MMMM yyyy")}
+              disabled
+              className="bg-muted"
+            />
+            <p className="text-xs text-muted-foreground">
+              Tanggal dipilih dari kalender di atas
+            </p>
+          </FormItem>
+        )}
+
+        <FormField
+          control={form.control}
+          name="jumlah_tiket"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nama Atraksi</FormLabel>
-              <Select
-                onValueChange={(value) => {
-                  field.onChange(value);
-                  setSelectedAtraksiNama(value);
-                }}
-                defaultValue={field.value}
-                disabled={isEditing}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih atraksi" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {availableAtraksi.map((atraksi) => (
-                    <SelectItem
-                      key={atraksi.nama_atraksi}
-                      value={atraksi.nama_atraksi}
-                      disabled={
-                        atraksi.fasilitas.kapasitas_tersedia === 0 && !isEditing
-                      }
-                    >
-                      {atraksi.nama_atraksi} (
-                      {atraksi.fasilitas.kapasitas_tersedia} tersedia)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormLabel>Jumlah tiket yang ingin dibeli</FormLabel>
+              <FormControl>
+                <div className="flex items-center">
+                  <Input
+                    type="number"
+                    min={1}
+                    // max={
+                    //   isEditing
+                    //     ? attraction.fasilitas.kapasitas_tersedia +
+                    //       (initialData?.jumlah_tiket || 0)
+                    //     : attraction.fasilitas.kapasitas_tersedia
+                    // }
+                    placeholder="Contoh: 2"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
+                  <span className="ml-2">tiket</span>
+                </div>
+              </FormControl>
+              <p className="text-xs text-muted-foreground">
+                Tersedia:{" "}
+                {isEditing
+                  ? attraction.fasilitas.kapasitas_tersedia +
+                    (initialData?.jumlah_tiket || 0)
+                  : attraction.fasilitas.kapasitas_tersedia}{" "}
+                tiket
+              </p>
               <FormMessage />
             </FormItem>
           )}
         />
-
-        {selectedAtraksi && (
-          <>
-            <div className="grid grid-cols-2 gap-4">
-              <FormItem>
-                <FormLabel>Lokasi</FormLabel>
-                <Input
-                  value={selectedAtraksi.lokasi}
-                  disabled
-                  className="bg-muted"
-                />
-              </FormItem>
-              <FormItem>
-                <FormLabel>Jam</FormLabel>
-                <Input
-                  value={format(selectedAtraksi.fasilitas.jadwal, "HH:mm")}
-                  disabled
-                  className="bg-muted"
-                />
-              </FormItem>
-            </div>
-
-            <FormField
-              control={form.control}
-              name="tanggal_kunjungan"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Tanggal</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pilih tanggal</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date < new Date() ||
-                          date >
-                            new Date(
-                              new Date().setMonth(new Date().getMonth() + 3)
-                            )
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="jumlah_tiket"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Jumlah Tiket</FormLabel>
-                  <FormControl>
-                    <div className="flex items-center">
-                      <Input
-                        type="number"
-                        min={1}
-                        max={
-                          isEditing
-                            ? 20
-                            : selectedAtraksi.fasilitas.kapasitas_tersedia
-                        }
-                        placeholder="Contoh: 2"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                      <span className="ml-2">tiket</span>
-                    </div>
-                  </FormControl>
-                  {!isEditing && (
-                    <p className="text-xs text-muted-foreground">
-                      Tersedia: {selectedAtraksi.fasilitas.kapasitas_tersedia}{" "}
-                      tiket
-                    </p>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </>
-        )}
 
         <div className="flex justify-end space-x-2 pt-4">
           <Button type="button" variant="outline" onClick={() => form.reset()}>

@@ -5,90 +5,124 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, PlusCircle, AlertTriangle } from "lucide-react";
+import { Eye, PlusCircle, AlertTriangle, Filter } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AnimalDisplayType } from "@/db/types";
+import { getUserData } from "@/hooks/getUserData";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-interface Animal {
-  id: string;
-  name: string;
-  species: string;
-  condition: string;
-  imageUrl: string;
+interface AnimalDisplay extends AnimalDisplayType {
   isAdopted: boolean;
 }
 
 export default function AdminAdopsiModule() {
   const router = useRouter();
-  const [animals, setAnimals] = useState<Animal[]>([]);
+  const [animals, setAnimals] = useState<AnimalDisplay[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState("all");
+  // Dapatkan data user dan cek role
+  const { userData, isValid, isLoading: authLoading } = getUserData();
+  const [mounted, setMounted] = useState(false);
 
+  // Ensure component is mounted on client side
   useEffect(() => {
-    const fetchAnimals = async () => {
-      setIsLoading(true);
-      try {
-        const data = [
-          {
-            id: "ani-101",
-            name: "Simba",
-            species: "African Lion",
-            condition: "Sehat",
-            imageUrl: "https://images.unsplash.com/photo-1545006398-2cf48043d3f3?q=80&w=400",
-            isAdopted: true,
-          },
-          {
-            id: "ani-104",
-            name: "Nala",
-            species: "African Lion",
-            condition: "Sakit",
-            imageUrl: "https://images.unsplash.com/photo-1534628526458-a8de087b1123?q=80&w=400",
-            isAdopted: false,
-          },
-          {
-            id: "ani-102",
-            name: "Zara",
-            species: "Plains Zebra",
-            condition: "Sehat",
-            imageUrl: "https://images.unsplash.com/photo-1549975248-52273875de73?q=80&w=400",
-            isAdopted: true,
-          },
-          {
-            id: "ani-103",
-            name: "Rafiki",
-            species: "Giraffe",
-            condition: "Dalam pemantauan",
-            imageUrl: "https://images.unsplash.com/photo-1534567059665-cbcfe2e19af4?q=80&w=400",
-            isAdopted: true,
-          },
-        ];
-        
-        setTimeout(() => {
-          setAnimals(data);
-          setIsLoading(false);
-        }, 500);
-      } catch (error) {
-        console.error("Error fetching animals:", error);
-        setIsLoading(false);
-      }
-    };
-
-    fetchAnimals();
+    setMounted(true);
   }, []);
 
+  useEffect(() => {
+    // Cek apakah user adalah admin
+    if (!authLoading && isValid && userData.role !== "admin") {
+      // Jika bukan admin, redirect ke halaman utama
+      router.push("/");
+    }
+  }, [userData, isValid, authLoading, router]);
+
+  useEffect(() => {
+    // Hanya ambil data jika user valid dan loading auth selesai
+    if (mounted && isValid && !authLoading) {
+      // Parse query params untuk memeriksa apakah perlu refresh
+      const url = new URL(window.location.href);
+      const hasRefreshParam = url.searchParams.has("t");
+
+      if (hasRefreshParam) {
+        router.replace("/admin-adopsi");
+      }
+
+      fetchAnimals();
+    }
+  }, [statusFilter, isValid, authLoading, router]);
+
+  const fetchAnimals = async () => {
+    setIsLoading(true);
+    try {
+      // Tambahkan parameter timestamp untuk mencegah caching
+      const response = await fetch(
+        `/api/adopsi?status=${statusFilter}&t=${Date.now()}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Fetched animals data:", data);
+
+      setAnimals(data);
+
+      // Calculate stats but don't store in state since it's not used in the UI
+      // const adoptedCount = data.filter((animal: AnimalDisplay) => animal.isAdopted).length;
+      // const unadoptedCount = data.filter((animal: AnimalDisplay) => !animal.isAdopted).length;
+    } catch (error) {
+      console.error("Error fetching animals:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Refresh function if needed elsewhere in the component
+  const refreshData = () => {
+    fetchAnimals();
+  };
+
+  // Jika masih loading autentikasi, tampilkan loading
+  if (authLoading) {
+    return (
+      <div className="container mx-auto py-10 px-4 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Jika user bukan admin, jangan render konten (redirect akan dihandle useEffect)
+  if (!isValid || userData.role !== "admin") {
+    return null;
+  }
+
+  // Kode lainnya tetap sama
   const handleViewDetail = (animalId: string) => {
-    router.push(`/admin-adopsi/detail/${animalId}`); 
+    router.push(`/admin-adopsi/detail/${animalId}`);
   };
 
   const handleRegisterAdmin = (animalId: string) => {
-    const animalData = animals.find((animal) => animal.id === animalId);
+    const animalData = animals.find((animal) => animal.id_hewan === animalId);
     if (animalData) {
-      router.push(`/admin-adopsi/register/${animalId}?name=${animalData.name}&species=${animalData.species}`);
+      router.push(
+        `/admin-adopsi/register/${animalId}?name=${animalData.nama_hewan}&species=${animalData.spesies}`
+      );
     }
   };
+
   const getConditionBadgeStyle = (condition: string) => {
     switch (condition) {
       case "Sehat":
         return "bg-green-500 hover:bg-green-600 text-white";
-      case "Sakit":
+      case "Sedang Sakit":
         return "bg-red-500 hover:bg-red-600 text-white";
       case "Dalam pemantauan":
         return "bg-amber-500 hover:bg-amber-600 text-white";
@@ -97,13 +131,16 @@ export default function AdminAdopsiModule() {
     }
   };
 
-  // Function to get icon based on condition
   const getConditionIcon = (condition: string) => {
     if (condition === "Dalam pemantauan") {
       return <AlertTriangle className="mr-1 h-3 w-3" />;
     }
     return null;
   };
+
+  // Optional: Stats Display if you want to use them
+  const adoptedCount = animals.filter((animal) => animal.isAdopted).length;
+  const unadoptedCount = animals.filter((animal) => !animal.isAdopted).length;
 
   return (
     <div className="container mx-auto py-10 px-4 font-outfit">
@@ -122,69 +159,126 @@ export default function AdminAdopsiModule() {
         </CardHeader>
       </div>
 
-      <h2 className="text-2xl font-semibold mb-4 font-outfit text-foreground">Pantau Status Adopsi Hewan</h2>
+      {/* Header with filtering */}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-semibold font-outfit text-foreground">
+            Pantau Status Adopsi Hewan
+          </h2>
+          {/* Optional: Display stats in UI */}
+          <div className="text-sm text-muted-foreground mt-1">
+            <span className="font-medium">{adoptedCount}</span> diadopsi &bull;{" "}
+            <span className="font-medium">{unadoptedCount}</span> belum diadopsi
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Hewan</SelectItem>
+              <SelectItem value="adopted">Diadopsi</SelectItem>
+              <SelectItem value="unadopted">Tidak Diadopsi</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Optional: Add a refresh button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refreshData}
+            className="ml-2"
+          >
+            Refresh
+          </Button>
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="flex justify-center items-center h-40">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
+      ) : animals.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground">
+              Tidak ada hewan yang ditemukan dengan filter ini.
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-4">
           {animals.map((animal) => (
-            <Card key={animal.id} className="overflow-hidden border-border shadow-sm relative">
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                {/* Avatar Image */}
-                <Avatar className="h-32 w-32 rounded-md">
-                  <AvatarImage src={animal.imageUrl} alt={animal.name} />
-                  <AvatarFallback className="rounded-md">
-                    {animal.name.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-          
-                {/* Animal Details */}
-                <div className="flex flex-col justify-center">
-                  <p className="font-medium text-xl font-outfit">{animal.name || "[Tanpa nama]"}</p>
-                  <p className="text-base text-muted-foreground">{animal.species}</p>
-                  <Badge
-                    className={`mt-2 px-3 py-1 text-sm rounded-full ${getConditionBadgeStyle(animal.condition)}`}
-                  >
-                    {animal.condition}
-                  </Badge>
-                </div>
-              </div>
-          
-              {/* Badge and Buttons */}
-              <div className="absolute top-12 right-6 flex flex-col items-end gap-4">
-                {/* Badge */}
-                <Badge
-                  variant={animal.isAdopted ? "default" : "outline"}
-                  className="text-sm px-3 py-1"
-                >
-                  {animal.isAdopted ? "Diadopsi" : "Tidak Diadopsi"}
-                </Badge>
+            <Card
+              key={animal.id_hewan}
+              className="overflow-hidden border-border shadow-sm relative"
+            >
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row gap-4">
+                  {/* Avatar Image */}
+                  <Avatar className="h-32 w-32 rounded-md">
+                    <AvatarImage
+                      src={animal.url_foto}
+                      alt={animal.nama_hewan}
+                    />
+                    <AvatarFallback className="rounded-md">
+                      {animal.nama_hewan?.substring(0, 2).toUpperCase() || "AN"}
+                    </AvatarFallback>
+                  </Avatar>
 
-                {/* Buttons */}
-                {animal.isAdopted ? (
-                  <Button
-                    variant="outline"
-                    className="text-primary border-primary hover:bg-primary/10 text-base font-medium"
-                    onClick={() => handleViewDetail(animal.id)}
+                  {/* Animal Details */}
+                  <div className="flex flex-col justify-center">
+                    <p className="font-medium text-xl font-outfit">
+                      {animal.nama_hewan || "[Tanpa nama]"}
+                    </p>
+                    <p className="text-base text-muted-foreground">
+                      {animal.spesies}
+                    </p>
+                    <Badge
+                      className={`mt-2 px-3 py-1 text-sm rounded-full ${getConditionBadgeStyle(
+                        animal.status_kesehatan
+                      )}`}
+                    >
+                      {getConditionIcon(animal.status_kesehatan)}
+                      {animal.status_kesehatan}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Badge and Buttons */}
+                <div className="absolute top-12 right-6 flex flex-col items-end gap-4">
+                  {/* Badge */}
+                  <Badge
+                    variant={animal.isAdopted ? "default" : "outline"}
+                    className="text-sm px-3 py-1"
                   >
-                    <Eye className="mr-2 h-5 w-5" /> Lihat Detail
-                  </Button>
-                ) : (
-                  <Button
-                    variant="default"
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 text-base font-medium"
-                    onClick={() => handleRegisterAdmin(animal.id)}
-                  >
-                    <PlusCircle className="mr-2 h-5 w-5" /> Daftarkan Adopter
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                    {animal.isAdopted ? "Diadopsi" : "Tidak Diadopsi"}
+                  </Badge>
+
+                  {/* Buttons */}
+                  {animal.isAdopted ? (
+                    <Button
+                      variant="outline"
+                      className="text-primary border-primary hover:bg-primary/10 text-base font-medium"
+                      onClick={() => handleViewDetail(animal.id_hewan)}
+                    >
+                      <Eye className="mr-2 h-5 w-5" /> Lihat Detail
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="default"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 text-base font-medium"
+                      onClick={() => handleRegisterAdmin(animal.id_hewan)}
+                    >
+                      <PlusCircle className="mr-2 h-5 w-5" /> Daftarkan Adopter
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import {
   Popover,
   PopoverContent,
@@ -23,28 +22,188 @@ import { getUserData } from "@/hooks/getUserData";
 import { toast } from "sonner";
 
 export const Navbar = () => {
-  const pathname = usePathname();
-  const router = useRouter();
-  const { userData, isValid, isLoading } = getUserData();
+  const { userData, isValid, refreshUserData } = getUserData();
+  const [isAdopter, setIsAdopter] = useState(false);
 
   const mapRoleToUIRole = (role: string): string => {
     switch (role) {
       case "visitor":
         return "pengunjung";
       case "veterinarian":
+      case "dokter_hewan":
         return "dokter";
       case "caretaker":
+      case "penjaga_hewan":
         return "penjaga";
       case "trainer":
+      case "pelatih_hewan":
         return "pelatih";
       case "admin":
+      case "staf_admin":
         return "admin";
       default:
         return "";
     }
   };
 
-  const uiRole = mapRoleToUIRole(userData.role);
+  const uiRole = mapRoleToUIRole(userData?.role || "");
+
+  type Role = "dokter" | "penjaga" | "admin" | "pelatih" | "pengunjung";
+
+  type NavigationItem = {
+    label: string;
+    href: string;
+    className: string;
+  };
+
+  type RoleNavigation = {
+    [key in Role]: NavigationItem[];
+  };
+
+  // Simple role-based navigation mapping
+  const roleNavigation = {
+    dokter: [
+      {
+        label: "Rekam Medis",
+        href: "/rekam-medis",
+        className: "text-lg text-primary font-outfit font-medium",
+      },
+      {
+        label: "Jadwal Pemeriksaan",
+        href: "/jadwal-pemeriksaan",
+        className: "text-lg text-primary font-outfit font-medium",
+      },
+      {
+        label: "Manajemen Satwa",
+        href: "/satwa",
+        className: "text-lg text-primary font-outfit font-medium",
+      },
+    ],
+    penjaga: [
+      {
+        label: "Pemberian Pakan Hewan",
+        href: "/pakan",
+        className: "text-base text-primary font-outfit font-medium",
+      },
+      {
+        label: "Manajemen Habitat",
+        href: "/habitat",
+        className: "text-base text-primary font-outfit font-medium",
+      },
+      {
+        label: "Manajemen Satwa",
+        href: "/satwa",
+        className: "text-base text-primary font-outfit font-medium",
+      },
+    ],
+    admin: [
+      {
+        label: "Kelola Pengunjung",
+        href: "/kelola-pengunjung",
+        className: "text-base text-primary font-outfit font-medium",
+      },
+      {
+        label: "Kelola Adopsi",
+        href: "/admin-adopsi",
+        className: "text-base text-primary font-outfit font-medium",
+      },
+      {
+        label: "Kelola Adopter",
+        href: "/adopter",
+        className: "text-base text-primary font-outfit font-medium",
+      },
+      {
+        label: "Manajemen Habitat",
+        href: "/habitat",
+        className: "text-base text-primary font-outfit font-medium",
+      },
+      {
+        label: "Manajemen Satwa",
+        href: "/satwa",
+        className: "text-base text-primary font-outfit font-medium",
+      },
+    ],
+    pelatih: [
+      {
+        label: "Jadwal Pertunjukan",
+        href: "/jadwal-pertunjukan",
+        className: "text-base text-primary font-outfit font-medium",
+      },
+    ],
+    pengunjung: [
+      {
+        label: "Reservasi Tiket",
+        href: "/reservasi",
+        className: "text-base text-primary font-outfit font-medium",
+      },
+    ],
+  };
+
+  // Get navigation items for current user role
+  const getNavItems = () => {
+    const baseItems: NavigationItem[] = roleNavigation[uiRole as Role] || [];
+    // Add adopter link if user is adopter
+    if (uiRole === "pengunjung" && isAdopter) {
+      return [
+        ...baseItems,
+        {
+          label: "Hewan Adopsi",
+          href: "/adopter-adopsi",
+          className: "text-base text-primary font-outfit font-medium",
+        },
+      ];
+    }
+
+    return baseItems;
+  };
+
+  // Check adopter status
+  useEffect(() => {
+    const checkIfAdopter = async () => {
+      if (isValid && userData.username) {
+        try {
+          const response = await fetch(
+            `/api/adopter-adopsi/check-type?username=${userData.username}`
+          );
+
+          if (response.ok) {
+            setIsAdopter(true);
+            if (typeof window !== "undefined") {
+              localStorage.setItem("isAdopter", "true");
+            }
+          } else {
+            setIsAdopter(false);
+            if (typeof window !== "undefined") {
+              localStorage.removeItem("isAdopter");
+            }
+          }
+        } catch (error) {
+          console.error("Error checking adopter status:", error);
+          if (typeof window !== "undefined") {
+            const cachedStatus = localStorage.getItem("isAdopter");
+            setIsAdopter(cachedStatus === "true");
+          }
+        }
+      } else {
+        setIsAdopter(false);
+      }
+    };
+
+    checkIfAdopter();
+  }, [isValid, userData.username]);
+
+  // Listen for profile update events to refresh user data
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      refreshUserData();
+    };
+
+    window.addEventListener("profileUpdated", handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
+    };
+  }, [refreshUserData]);
 
   const logout = async () => {
     try {
@@ -76,6 +235,8 @@ export const Navbar = () => {
       ? `${userData.nama_depan} ${userData.nama_belakang}`
       : "User";
 
+  const navItems = getNavItems();
+
   return (
     <nav className="fixed top-0 p-5 px-5 sm:px-16 md:px-14 lg:px-20 w-full bg-accent/70 backdrop-blur-md z-50">
       <div className="flex gap-2 justify-between items-center">
@@ -96,75 +257,19 @@ export const Navbar = () => {
             Sizopi
           </div>
         </Link>
+
         {isValid ? (
           <div className="flex gap-4 md:gap-8 lg:gap-11 items-center">
-            {/* Role-specific navigation links */}
-            {uiRole === "dokter" ? (
-              <>
-                <Link
-                  href="/rekam-medis"
-                  className="max-md:hidden text-lg text-primary font-outfit font-medium"
-                >
-                  Rekam Medis
-                </Link>
-                <Link
-                  href="/jadwal-pemeriksaan"
-                  className="max-md:hidden text-lg text-primary font-outfit font-medium"
-                >
-                  Jadwal Pemeriksaan
-                </Link>
-              </>
-            ) : uiRole === "penjaga" ? (
-              <>
-                <Link
-                  href="/catatan-perawatan-hewan"
-                  className="max-md:hidden text-base text-primary font-outfit font-medium"
-                >
-                  Catatan Perawatan
-                </Link>
-                <Link
-                  href="/pakan"
-                  className="max-md:hidden text-base text-primary font-outfit font-medium"
-                >
-                  Pemberian Pakan Hewan
-                </Link>
-              </>
-            ) : uiRole === "admin" ? (
-              <>
-                <Link
-                  href="/dashboard/admin/reservasi"
-                  className="max-md:hidden text-base text-primary font-outfit font-medium"
-                >
-                  Kelola Pengunjung
-                </Link>
-                <Link
-                  href="/admin-adopsi"
-                  className="max-md:hidden text-base text-primary font-outfit font-medium"
-                >
-                  Kelola Adopsi
-                </Link>
-                <Link
-                  href="/adopter"
-                  className="max-md:hidden text-base text-primary font-outfit font-medium"
-                >
-                  Kelola Adopter
-                </Link>
-              </>
-            ) : uiRole === "pelatih" ? (
+            {/* Desktop Navigation */}
+            {navItems.map((item: NavigationItem, index: number) => (
               <Link
-                href="/atraksi"
-                className="max-md:hidden text-base text-primary font-outfit font-medium"
+                key={index}
+                href={item.href}
+                className={`max-md:hidden ${item.className}`}
               >
-                Jadwal Pertunjukan
+                {item.label}
               </Link>
-            ) : uiRole === "pengunjung" ? (
-              <Link
-                href="/reservasi/dashboard"
-                className="max-md:hidden text-base text-primary font-outfit font-medium"
-              >
-                Reservasi Tiket
-              </Link>
-            ) : null}
+            ))}
 
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
               <PopoverTrigger asChild className="max-md:hidden">
@@ -220,73 +325,16 @@ export const Navbar = () => {
                     Home
                   </Link>
 
-                  {/* Role-specific mobile menu items */}
-                  {uiRole === "dokter" ? (
-                    <>
-                      <Link
-                        href="/rekam-medis"
-                        className="text-lg text-primary font-outfit"
-                      >
-                        Rekam Medis
-                      </Link>
-                      <Link
-                        href="/jadwal-pemeriksaan"
-                        className="text-lg text-primary font-outfit"
-                      >
-                        Jadwal Pemeriksaan
-                      </Link>
-                    </>
-                  ) : uiRole === "penjaga" ? (
-                    <>
-                      <Link
-                        href="/catatan-perawatan-hewan"
-                        className="text-base text-primary font-outfit"
-                      >
-                        Catatan Perawatan
-                      </Link>
-                      <Link
-                        href="/pakan"
-                        className="text-base text-primary font-outfit"
-                      >
-                        Pemberian Pakan Hewan
-                      </Link>
-                    </>
-                  ) : uiRole === "admin" ? (
-                    <>
-                      <Link
-                        href="/dashboard/admin/reservasi"
-                        className="text-base text-primary font-outfit"
-                      >
-                        Kelola Pengunjung
-                      </Link>
-                      <Link
-                        href="/admin-adopsi"
-                        className="text-base text-primary font-outfit"
-                      >
-                        Kelola Adopsi
-                      </Link>
-                      <Link
-                        href="/adopter"
-                        className="text-base text-primary font-outfit"
-                      >
-                        Kelola Adopter
-                      </Link>
-                    </>
-                  ) : uiRole === "pelatih" ? (
+                  {/* Mobile Navigation Items */}
+                  {navItems.map((item: NavigationItem, index: number) => (
                     <Link
-                      href="/atraksi"
-                      className="text-base text-primary font-outfit"
+                      key={index}
+                      href={item.href}
+                      className="text-lg text-primary font-outfit"
                     >
-                      Jadwal Pertunjukan
+                      {item.label}
                     </Link>
-                  ) : uiRole === "pengunjung" ? (
-                    <Link
-                      href="/reservasi/dashboard"
-                      className="text-base text-primary font-outfit"
-                    >
-                      Reservasi Tiket
-                    </Link>
-                  ) : null}
+                  ))}
 
                   <Popover open={popoverOpen2} onOpenChange={setPopoverOpen2}>
                     <PopoverTrigger asChild>
@@ -294,7 +342,7 @@ export const Navbar = () => {
                         <p className="text-lg text-primary">{fullName}</p>
                         <Chevron
                           className={`${
-                            popoverOpen ? "-rotate-180" : ""
+                            popoverOpen2 ? "-rotate-180" : ""
                           } duration-300`}
                           size="w-6 h-6 max-md:w-5 max-md:h-5"
                           fill="fill-primary"

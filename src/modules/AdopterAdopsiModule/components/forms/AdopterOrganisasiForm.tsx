@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
 
 export default function AdopterOrganisasiForm({
   adopter,
@@ -65,10 +64,13 @@ export default function AdopterOrganisasiForm({
 
   return (
     <>
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
         <h2 className="text-center text-xl font-bold text-primary">FORM PERPANJANG PERIODE ADOPSI SATWA</h2>
         <p className="text-sm text-muted-foreground">Pihak di bawah ini, selaku organisasi/perusahaan</p>
-        <p className="text-sm font-bold text-muted-foreground">Nama: {adopter.organizationName}</p>
+        {/* Pastikan organizationName ditampilkan dengan benar */}
+        <p className="text-sm font-bold text-muted-foreground">
+          Nama: {adopter.organizationName || "Nama organisasi tidak tersedia"}
+        </p>
         <p className="text-sm font-bold text-muted-foreground">NPP: {adopter.npp}</p>
         <p className="text-sm font-bold text-muted-foreground">Alamat: {adopter.address}</p>
         <p className="text-sm font-bold text-muted-foreground">Kontak: {adopter.noTelp}</p>

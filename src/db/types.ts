@@ -1,10 +1,13 @@
 export interface AdopsiType {
+  id_adopsi: string; // Tambahkan id_adopsi sebagai primary key
   id_adopter: string;
   id_hewan: string;
   status_pembayaran: string;
   tgl_mulai_adopsi: Date;
   tgl_berhenti_adopsi: Date;
   kontribusi_finansial: number;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 export interface AdopterType {
@@ -40,7 +43,7 @@ export interface DokterHewanType {
 
 export interface FasilitasType {
   nama: string;
-  jadwal: Date;
+  jadwal: string; // Changed from Date to string
   kapasitas_max: number;
 }
 
@@ -56,7 +59,7 @@ export interface HewanType {
   nama: string;
   spesies: string;
   asal_hewan: string;
-  tanggal_lahir: Date;
+  tanggal_lahir: string | null;
   status_kesehatan: string;
   nama_habitat: string;
   url_foto: string;
@@ -128,8 +131,8 @@ export interface PenjagaHewanType {
 
 export interface ReservasiType {
   username_P: string;
-  nama_atraksi: string;
-  tanggal_kunjungan: Date;
+  nama_fasilitas: string;
+  tanggal_kunjungan: string;
   jumlah_tiket: number;
   status: string;
 }
@@ -147,4 +150,18 @@ export interface StafAdminType {
 export interface WahanaType {
   nama_wahana: string;
   peraturan: string;
+}
+
+export interface AnimalDisplayType {
+  id_hewan: string;
+  nama_hewan: string;
+  spesies: string;
+  status_kesehatan: string;
+  url_foto: string;
+  id_adopsi?: string;
+  nama_adopter?: string;
+  kontribusi_finansial?: number;
+  status_pembayaran?: string;
+  tgl_mulai_adopsi?: Date;
+  tgl_berhenti_adopsi?: Date;
 }

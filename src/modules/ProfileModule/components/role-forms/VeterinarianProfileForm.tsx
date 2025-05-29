@@ -63,11 +63,30 @@ const VeterinarianProfileForm: React.FC<VeterinarianProfileFormProps> = ({
       otherSpecialization: otherSpecValue || "",
     },
   });
-
-  const onSubmit = (data: VeterinarianFormValues) => {
-    // In a real app, this would make an API call to update the user profile
-    console.log("Updated veterinarian information:", data);
-    toast.success("Veterinarian profile updated successfully!");
+  const onSubmit = async (data: VeterinarianFormValues) => {
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          no_str: data.certificationNumber,
+          // Note: specializations updates would be handled separately if needed
+        }),
+      });      if (response.ok) {
+        toast.success("Veterinarian profile updated successfully!");
+        
+        // Dispatch custom event to notify navbar about profile update
+        window.dispatchEvent(new CustomEvent('profileUpdated'));
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Failed to update profile");
+      }
+    } catch (error) {
+      console.error("Error updating veterinarian profile:", error);
+      toast.error("Failed to update profile. Please try again.");
+    }
   };
 
   const watchedSpecializations = form.watch("specializations");

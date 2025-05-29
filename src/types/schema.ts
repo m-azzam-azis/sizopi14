@@ -35,6 +35,25 @@ export interface Wahana {
   fasilitas: Fasilitas;
 }
 
+export interface ReservasiTiketBase {
+  username_P: string;
+  nama_fasilitas: string;
+  tanggal_kunjungan: Date;
+  jumlah_tiket: number;
+  status: ReservationStatus;
+  jadwal: string;
+}
+
+export interface ReservasiTiketAtraksi extends ReservasiTiketBase {
+  lokasi: string;
+  jenis_reservasi: "Atraksi";
+}
+
+export interface ReservasiTiketWahana extends ReservasiTiketBase {
+  peraturan: string[];
+  jenis_reservasi: "Wahana";
+}
+
 export interface ReservasiTiket {
   username_P: string;
   nama_fasilitas: string;
@@ -45,6 +64,7 @@ export interface ReservasiTiket {
   lokasi: string;
   jadwal: string;
   pengunjung?: Pengunjung;
+  jenis_reservasi?: "Atraksi" | "Wahana";
 }
 
 export interface ReservasiFormData {

@@ -77,7 +77,7 @@ export const SatwaForm: React.FC<SatwaFormProps> = ({
               <FormLabel>Nama Individu</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Nama satwa (opsional)"
+                  placeholder="Nama satwa"
                   {...field}
                   value={field.value || ""}
                 />
