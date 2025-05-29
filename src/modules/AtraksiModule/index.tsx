@@ -57,7 +57,7 @@ interface AtraksiData {
   id: string;
   nama_atraksi: string;
   lokasi: string;
-  kapasitas: number;
+  kapasitas_max: number;
   jadwal: string | Date;
   hewan_terlibat: Hewan[];
   pelatih: PelatihHewan | null;
@@ -389,7 +389,7 @@ const AtraksiModule = () => {
                         {atraksi.nama_atraksi}
                       </TableCell>
                       <TableCell>{atraksi.lokasi}</TableCell>
-                      <TableCell>{atraksi.kapasitas} orang</TableCell>
+                      <TableCell>{atraksi.kapasitas_max} orang</TableCell>
                       <TableCell>{formatDateTime(atraksi.jadwal)}</TableCell>
                       <TableCell>
                         {atraksi.hewan_terlibat.length > 0
@@ -451,7 +451,7 @@ const AtraksiModule = () => {
           onSubmit={handleEditAtraksi}
           initialData={{
             jadwal: currentAtraksi.jadwal,
-            kapasitas: currentAtraksi.kapasitas,
+            kapasitas: currentAtraksi.kapasitas_max,
           }}
           isEditing={true}
           nama_atraksi={currentAtraksi.nama_atraksi}
