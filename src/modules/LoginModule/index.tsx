@@ -60,7 +60,8 @@ export const LoginModule: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Login failed");
+        toast.error(result.error);
+        return;
       }
 
       toast.success("Login successful!");
@@ -70,27 +71,31 @@ export const LoginModule: React.FC = () => {
       setTimeout(() => {
         switch (role) {
           case "visitor":
-            router.push("/reservasi/dashboard");
+            router.push("/");
             break;
           case "admin":
-            router.push("/dashboard");
+            router.push("/");
             break;
           case "veterinarian":
-            router.push("/rekam-medis");
+            router.push("/");
             break;
           case "caretaker":
-            router.push("/pakan");
+            router.push("/");
             break;
           case "trainer":
-            router.push("/atraksi");
+            router.push("/");
             break;
           default:
-            router.push("/dashboard");
+            router.push("/");
         }
       }, 1000);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
       console.error("Login error:", error);
-      toast.error(error.message || "Invalid credentials");
     } finally {
       setIsLoading(false);
     }

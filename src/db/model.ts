@@ -88,15 +88,13 @@ export abstract class BaseModel<T extends QueryParams> {
     const result = await pool.query(query, values);
     return result.rows[0] ? (result.rows[0] as T) : null;
   }
-
   async delete(column: keyof T, value: any): Promise<T | null> {
     const query = `DELETE FROM ${this.tableName} WHERE ${String(
       column
     )} = $1 RETURNING *`;
     const result = await pool.query(query, [value]);
-    return result.rows[0] ? (result.rows[0] as T) : null;``
+    return result.rows[0] ? (result.rows[0] as T) : null;
   }
-
   async customQuery(query: string, values?: any[]): Promise<any[]> {
     try {
       const result = await pool.query(query, values);
@@ -104,6 +102,19 @@ export abstract class BaseModel<T extends QueryParams> {
     } catch (error) {
       throw new Error(
         "Failed to execute custom query: " + (error as Error).message
+      );
+    }
+  }
+
+  // Method to execute a single row query
+  async query(query: string, values?: any[]): Promise<any> {
+    try {
+      const result = await pool.query(query, values);
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error("Query error:", error);
+      throw new Error(
+        "Failed to execute query: " + (error as Error).message
       );
     }
   }

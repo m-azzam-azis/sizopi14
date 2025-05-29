@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import {
   Popover,
   PopoverContent,
@@ -23,9 +22,8 @@ import { getUserData } from "@/hooks/getUserData";
 import { toast } from "sonner";
 
 export const Navbar = () => {
-  const pathname = usePathname();
-  const router = useRouter();
-  const { userData, isValid, isLoading } = getUserData();
+  const { userData, isValid } = getUserData();
+  const [isAdopter, setIsAdopter] = useState(false);
 
   const mapRoleToUIRole = (role: string): string => {
     switch (role) {
@@ -45,6 +43,47 @@ export const Navbar = () => {
   };
 
   const uiRole = mapRoleToUIRole(userData.role);
+
+  useEffect(() => {
+    const checkIfAdopter = async () => {
+      if (isValid && userData.username) {
+        try {
+          console.log("Checking adopter status for:", userData.username);
+
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+          const response = await fetch(
+            `/api/adopter-adopsi/check-type?username=${userData.username}`,
+            { signal: controller.signal }
+          );
+          clearTimeout(timeoutId);
+
+          console.log("Adopter check response status:", response.status);
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log("User is an adopter:", data);
+            setIsAdopter(true);
+            localStorage.setItem("isAdopter", "true");
+          } else {
+            console.log("User is not an adopter");
+            setIsAdopter(false);
+            localStorage.removeItem("isAdopter");
+          }
+        } catch (error) {
+          console.error("Error checking adopter status:", error);
+
+          const cachedStatus = localStorage.getItem("isAdopter");
+          setIsAdopter(cachedStatus === "true");
+        }
+      } else {
+        setIsAdopter(false);
+      }
+    };
+
+    checkIfAdopter();
+  }, [isValid, userData.username]);
 
   const logout = async () => {
     try {
@@ -117,12 +156,6 @@ export const Navbar = () => {
             ) : uiRole === "penjaga" ? (
               <>
                 <Link
-                  href="/catatan-perawatan-hewan"
-                  className="max-md:hidden text-base text-primary font-outfit font-medium"
-                >
-                  Catatan Perawatan
-                </Link>
-                <Link
                   href="/pakan"
                   className="max-md:hidden text-base text-primary font-outfit font-medium"
                 >
@@ -132,7 +165,7 @@ export const Navbar = () => {
             ) : uiRole === "admin" ? (
               <>
                 <Link
-                  href="/dashboard/admin/reservasi"
+                  href="/kelola-pengunjung"
                   className="max-md:hidden text-base text-primary font-outfit font-medium"
                 >
                   Kelola Pengunjung
@@ -152,18 +185,29 @@ export const Navbar = () => {
               </>
             ) : uiRole === "pelatih" ? (
               <Link
-                href="/atraksi"
+                href="/jadwal-pertunjukan"
                 className="max-md:hidden text-base text-primary font-outfit font-medium"
               >
                 Jadwal Pertunjukan
               </Link>
             ) : uiRole === "pengunjung" ? (
-              <Link
-                href="/reservasi/dashboard"
-                className="max-md:hidden text-base text-primary font-outfit font-medium"
-              >
-                Reservasi Tiket
-              </Link>
+              <>
+                {isAdopter && (
+                  <Link
+                    href="/adopter-adopsi"
+                    className="max-md:hidden text-base text-primary font-outfit font-medium"
+                  >
+                    Hewan Adopsi
+                  </Link>
+                )}
+
+                <Link
+                  href="/reservasi"
+                  className="max-md:hidden text-base text-primary font-outfit font-medium"
+                >
+                  Reservasi Tiket
+                </Link>
+              </>
             ) : null}
 
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
@@ -239,12 +283,6 @@ export const Navbar = () => {
                   ) : uiRole === "penjaga" ? (
                     <>
                       <Link
-                        href="/catatan-perawatan-hewan"
-                        className="text-base text-primary font-outfit"
-                      >
-                        Catatan Perawatan
-                      </Link>
-                      <Link
                         href="/pakan"
                         className="text-base text-primary font-outfit"
                       >
@@ -254,7 +292,7 @@ export const Navbar = () => {
                   ) : uiRole === "admin" ? (
                     <>
                       <Link
-                        href="/dashboard/admin/reservasi"
+                        href="/kelola-pengunjung"
                         className="text-base text-primary font-outfit"
                       >
                         Kelola Pengunjung
@@ -274,18 +312,29 @@ export const Navbar = () => {
                     </>
                   ) : uiRole === "pelatih" ? (
                     <Link
-                      href="/atraksi"
+                      href="/jadwal-pertunjukan"
                       className="text-base text-primary font-outfit"
                     >
                       Jadwal Pertunjukan
                     </Link>
                   ) : uiRole === "pengunjung" ? (
-                    <Link
-                      href="/reservasi/dashboard"
-                      className="text-base text-primary font-outfit"
-                    >
-                      Reservasi Tiket
-                    </Link>
+                    <>
+                      {isAdopter && (
+                        <Link
+                          href="/adopter-adopsi"
+                          className="text-base text-primary font-outfit"
+                        >
+                          Hewan Adopsi
+                        </Link>
+                      )}
+
+                      <Link
+                        href="/reservasi"
+                        className="text-base text-primary font-outfit"
+                      >
+                        Reservasi Tiket
+                      </Link>
+                    </>
                   ) : null}
 
                   <Popover open={popoverOpen2} onOpenChange={setPopoverOpen2}>

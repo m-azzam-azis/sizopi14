@@ -21,6 +21,7 @@ DROP TABLE IF EXISTS individu CASCADE;
 DROP TABLE IF EXISTS organisasi CASCADE;
 DROP TABLE IF EXISTS adopsi CASCADE;
 DROP TABLE IF EXISTS reservasi CASCADE;
+DROP TABLE IF EXISTS login_attempts CASCADE;
 
 CREATE TABLE PENGGUNA (
   username VARCHAR(50) PRIMARY KEY,
@@ -128,7 +129,7 @@ CREATE TABLE MEMBERI (
 
 CREATE TABLE FASILITAS (
 	nama VARCHAR(50) PRIMARY KEY,
-	jadwal TIMESTAMP NOT NULL,
+	jadwal TIME NOT NULL,
 	kapasitas_max INT NOT NULL
 );
 
@@ -230,6 +231,14 @@ CREATE TABLE RESERVASI (
    PRIMARY KEY (username_P, nama_fasilitas, tanggal_kunjungan),
    FOREIGN KEY (username_P) REFERENCES PENGUNJUNG(username_P) ON UPDATE CASCADE ON DELETE CASCADE,
    FOREIGN KEY (nama_fasilitas) REFERENCES FASILITAS(nama) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS LOGIN_ATTEMPTS (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    password VARCHAR(50) NOT NULL,
+    attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    success BOOLEAN DEFAULT FALSE
 );
 
 INSERT INTO pengguna VALUES ('rajatacalista', 'ywaskita@example.com', 'P5hX6Syg*A', 'Prasetya', 'NULL', 'Andriani', '089635460305');
@@ -430,16 +439,16 @@ INSERT INTO pelatih_hewan VALUES ('oni40', '1cb101a3-ed8f-4334-b4f7-70a28e75fc05
 INSERT INTO pelatih_hewan VALUES ('padmarahayu', '608b1e9a-6923-4c0f-b425-225f9abb5c93');
 INSERT INTO pelatih_hewan VALUES ('kayun17', 'be1319d1-81ac-4775-8358-47534d97d9b0');
 
-INSERT INTO staf_admin VALUES ('liman61', '1a2b3c4d-0001-0000-0000-000000000001');
-INSERT INTO staf_admin VALUES ('hpuspita', '1a2b3c4d-0002-0000-0000-000000000002');
-INSERT INTO staf_admin VALUES ('pratamapadmi', '1a2b3c4d-0003-0000-0000-000000000003');
-INSERT INTO staf_admin VALUES ('margana08', '1a2b3c4d-0004-0000-0000-000000000004');
-INSERT INTO staf_admin VALUES ('pertiwicemeti', '1a2b3c4d-0005-0000-0000-000000000005');
-INSERT INTO staf_admin VALUES ('dwinarno', '1a2b3c4d-0006-0000-0000-000000000006');
-INSERT INTO staf_admin VALUES ('rikasinaga', '1a2b3c4d-0007-0000-0000-000000000007');
-INSERT INTO staf_admin VALUES ('wijayatirtayasa', '1a2b3c4d-0008-0000-0000-000000000008');
-INSERT INTO staf_admin VALUES ('ghutasoit', '1a2b3c4d-0009-0000-0000-000000000009');
-INSERT INTO staf_admin VALUES ('dartono24', '1a2b3c4d-0010-0000-0000-000000000010');
+INSERT INTO staf_admin VALUES ('cici81', '1a2b3c4d-0001-0000-0000-000000000001');
+INSERT INTO staf_admin VALUES ('iwaskita', '1a2b3c4d-0002-0000-0000-000000000002');
+INSERT INTO staf_admin VALUES ('dartonositorus', '1a2b3c4d-0003-0000-0000-000000000003');
+INSERT INTO staf_admin VALUES ('ega12', '1a2b3c4d-0004-0000-0000-000000000004');
+INSERT INTO staf_admin VALUES ('prayogakartika', '1a2b3c4d-0005-0000-0000-000000000005');
+INSERT INTO staf_admin VALUES ('bakiantokuswandari', '1a2b3c4d-0006-0000-0000-000000000006');
+INSERT INTO staf_admin VALUES ('jaya34', '1a2b3c4d-0007-0000-0000-000000000007');
+INSERT INTO staf_admin VALUES ('namagaamelia', '1a2b3c4d-0008-0000-0000-000000000008');
+INSERT INTO staf_admin VALUES ('kasiransusanti', '1a2b3c4d-0009-0000-0000-000000000009');
+INSERT INTO staf_admin VALUES ('cemplunk96', '1a2b3c4d-0010-0000-0000-000000000010');
 
 INSERT INTO habitat VALUES ('Padang Pasir', 5000.00, 10, 'Aktif');
 INSERT INTO habitat VALUES ('Sabana Afrika', 7500.50, 15, 'Aktif');
@@ -524,19 +533,19 @@ INSERT INTO memberi VALUES ('98b765a7-6a04-4b3d-b118-c8f26d72e433', '2023-08-30 
 INSERT INTO memberi VALUES ('b8c4d74f-239f-4e16-a109-f24b263eb4e5', '2023-09-05 09:00:00', 'omaryadi');
 INSERT INTO memberi VALUES ('cfbd3c9b-4733-4a9f-8a37-d85a1ea38d2b', '2023-07-20 08:45:00', 'knababan');
 
-INSERT INTO fasilitas VALUES ('Kolam Renang', '2024-05-01 10:00:00', 50);
-INSERT INTO fasilitas VALUES ('Teater Satwa', '2024-05-01 13:30:00', 100);
-INSERT INTO fasilitas VALUES ('Zona Edukasi', '2024-05-02 09:00:00', 30);
-INSERT INTO fasilitas VALUES ('Panggung Musik', '2024-05-02 16:00:00', 150);
-INSERT INTO fasilitas VALUES ('Kebun Mini', '2024-05-03 08:00:00', 20);
-INSERT INTO fasilitas VALUES ('Galeri Satwa', '2024-05-03 11:00:00', 40);
-INSERT INTO fasilitas VALUES ('Taman Reptil', '2024-05-04 14:00:00', 35);
-INSERT INTO fasilitas VALUES ('Pojok Burung', '2024-05-04 10:30:00', 25);
-INSERT INTO fasilitas VALUES ('Zona Air', '2024-05-05 12:00:00', 60);
-INSERT INTO fasilitas VALUES ('Zona Tengah', '2024-05-05 15:00:00', 80);
-INSERT INTO fasilitas VALUES ('Zona Hutan', '2024-05-06 09:30:00', 70);
-INSERT INTO fasilitas VALUES ('Zona Tropis', '2024-05-06 13:00:00', 40);
-INSERT INTO fasilitas VALUES ('Zona Hiburan', '2024-05-07 11:30:00', 90);
+INSERT INTO fasilitas VALUES ('Kolam Renang', '10:00:00', 50);
+INSERT INTO fasilitas VALUES ('Teater Satwa', '13:30:00', 100);
+INSERT INTO fasilitas VALUES ('Zona Edukasi', '09:00:00', 30);
+INSERT INTO fasilitas VALUES ('Panggung Musik', '16:00:00', 150);
+INSERT INTO fasilitas VALUES ('Kebun Mini', '08:00:00', 20);
+INSERT INTO fasilitas VALUES ('Galeri Satwa', '11:00:00', 40);
+INSERT INTO fasilitas VALUES ('Taman Reptil', '14:00:00', 35);
+INSERT INTO fasilitas VALUES ('Pojok Burung', '10:30:00', 25);
+INSERT INTO fasilitas VALUES ('Zona Air', '12:00:00', 60);
+INSERT INTO fasilitas VALUES ('Zona Tengah', '15:00:00', 80);
+INSERT INTO fasilitas VALUES ('Zona Hutan', '09:30:00', 70);
+INSERT INTO fasilitas VALUES ('Zona Tropis', '13:00:00', 40);
+INSERT INTO fasilitas VALUES ('Zona Hiburan', '11:30:00', 90);
 
 INSERT INTO atraksi VALUES ('Kolam Renang', 'Zona Air');
 INSERT INTO atraksi VALUES ('Teater Satwa', 'Zona Edukasi');
@@ -558,21 +567,21 @@ INSERT INTO berpartisipasi VALUES ('Kebun Mini', '003417f2-cf99-4dff-b42b-4167e5
 INSERT INTO berpartisipasi VALUES ('Kolam Renang', 'd3f0c021-bb7f-44e9-a31f-2304ef6b34a0');
 INSERT INTO berpartisipasi VALUES ('Zona Edukasi', '54dbb957-d7b1-4094-8084-9a2a33a4f7be');
 
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('d84d43b2-441d-450d-b58e-12fbbf49c88c', '2024-06-01', 30);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('b2a95b99-5821-45b7-b493-17b79d914ef5', '2024-06-05', 60);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('98b765a7-6a04-4b3d-b118-c8f26d72e433', '2024-06-10', 45);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('b8c4d74f-239f-4e16-a109-f24b263eb4e5', '2024-06-12', 90);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('cfbd3c9b-4733-4a9f-8a37-d85a1ea38d2b', '2024-06-15', 30);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('1787f195-1111-4e53-8a7d-dfded104abef', '2024-06-17', 60);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('054e0e4d-9b2b-45ae-88d7-3cf983849953', '2024-06-19', 90);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('003417f2-cf99-4dff-b42b-4167e5a09a31', '2024-06-21', 45);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('d3f0c021-bb7f-44e9-a31f-2304ef6b34a0', '2024-06-23', 30);
-INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('54dbb957-d7b1-4094-8084-9a2a33a4f7be', '2024-06-25', 60);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('d84d43b2-441d-450d-b58e-12fbbf49c88c', '2024-06-01', 3);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('b2a95b99-5821-45b7-b493-17b79d914ef5', '2024-06-05', 6);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('98b765a7-6a04-4b3d-b118-c8f26d72e433', '2024-06-10', 4);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('b8c4d74f-239f-4e16-a109-f24b263eb4e5', '2024-06-12', 9);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('cfbd3c9b-4733-4a9f-8a37-d85a1ea38d2b', '2024-06-15', 3);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('1787f195-1111-4e53-8a7d-dfded104abef', '2024-06-17', 6);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('054e0e4d-9b2b-45ae-88d7-3cf983849953', '2024-06-19', 9);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('003417f2-cf99-4dff-b42b-4167e5a09a31', '2024-06-21', 4);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('d3f0c021-bb7f-44e9-a31f-2304ef6b34a0', '2024-06-23', 3);
+INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('54dbb957-d7b1-4094-8084-9a2a33a4f7be', '2024-06-25', 6);
 
-INSERT INTO jadwal_penugasan VALUES ('hutapeamaimunah', '2024-05-01 08:00:00', 'Kolam Renang');
-INSERT INTO jadwal_penugasan VALUES ('randriani', '2024-05-01 09:00:00', 'Teater Satwa');
-INSERT INTO jadwal_penugasan VALUES ('betaniasuryono', '2024-05-02 10:00:00', 'Zona Edukasi');
-INSERT INTO jadwal_penugasan VALUES ('jumarinovitasari', '2024-05-02 13:00:00', 'Panggung Musik');
+INSERT INTO jadwal_penugasan VALUES ('hutapeamaimunah', '2025-05-30 08:00:00', 'Kolam Renang');
+INSERT INTO jadwal_penugasan VALUES ('randriani', '2025-06-01 09:00:00', 'Teater Satwa');
+INSERT INTO jadwal_penugasan VALUES ('betaniasuryono', '2025-06-02 10:00:00', 'Zona Edukasi');
+INSERT INTO jadwal_penugasan VALUES ('jumarinovitasari', '2025-06-02 13:00:00', 'Panggung Musik');
 INSERT INTO jadwal_penugasan VALUES ('urajata', '2024-05-03 08:30:00', 'Kebun Mini');
 INSERT INTO jadwal_penugasan VALUES ('citra42', '2024-05-03 11:00:00', 'Galeri Satwa');
 INSERT INTO jadwal_penugasan VALUES ('dian28', '2024-05-04 09:30:00', 'Taman Reptil');
@@ -660,9 +669,9 @@ INSERT INTO adopsi VALUES ('e743ed82-42a5-43a4-9e35-328cd7ff0e09', '398638ba-97d
 INSERT INTO adopsi VALUES ('aab11cc7-317d-42e8-bb91-8fc64517efab', 'c84949f2-643a-4441-b982-c9dae4915925', 'Lunas', '2025-05-01', '2025-12-31', 650000);
 INSERT INTO adopsi VALUES ('d111b1c5-8e1a-4c0f-bbcd-7f8ccfe7b3e3', '9b8720a0-2f01-44ab-b1dc-77ecdd5f8cf4', 'Belum', '2025-06-01', '2025-12-31', 600000);
 
-INSERT INTO reservasi VALUES ('rajatacalista', 'Kolam Renang', '2024-05-15', 2, 'Aktif');
-INSERT INTO reservasi VALUES ('nsihotang', 'Teater Satwa', '2024-05-16', 4, 'Aktif');
-INSERT INTO reservasi VALUES ('margana08', 'Kolam Renang', '2024-04-25', 2, 'Batal');
-INSERT INTO reservasi VALUES ('dartono24', 'Zona Tropis', '2024-04-10', 3, 'Selesai');
-INSERT INTO reservasi VALUES ('mandalagada', 'Panggung Musik', '2024-04-12', 4, 'Selesai');
-INSERT INTO reservasi VALUES ('rikasinaga', 'Zona Edukasi', '2024-06-05', 2, 'Aktif');
+INSERT INTO reservasi VALUES ('rajatacalista', 'Kolam Renang', '2025-11-01', 2, 'Aktif');
+INSERT INTO reservasi VALUES ('nsihotang', 'Kolam Renang', '2025-11-01', 2, 'Aktif');
+INSERT INTO reservasi VALUES ('rajatacalista', 'Zona Hutan', '2025-11-06', 2, 'Batal');
+INSERT INTO reservasi VALUES ('rajatacalista', 'Zona Tropis', '2025-11-06', 3, 'Aktif');
+INSERT INTO reservasi VALUES ('rajatacalista', 'Panggung Musik', '2025-11-02', 4, 'Batal');
+INSERT INTO reservasi VALUES ('rajatacalista', 'Zona Edukasi', '2025-11-02', 2, 'Aktif');

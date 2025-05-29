@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { UserRole } from "@/types/user";
 
 interface DashboardShellProps {
   user: {
@@ -15,7 +14,7 @@ interface DashboardShellProps {
     username: string;
     email: string;
     phoneNumber: string;
-    role: UserRole;
+    role: "admin" | "veterinarian" | "visitor" | "trainer" | "caretaker" | "";
     alamat?: string;
     tanggalLahir?: string;
     staffId?: string;

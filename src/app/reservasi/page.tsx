@@ -1,6 +1,6 @@
 import React from "react";
-import ReservasiTiketModule from "@/modules/ReservasiTiketModule/Pengunjung";
+import ReservasiTiketVisitorModule from "@/modules/ReservasiTiketModule/Visitor";
 
 export default function ReservasiPage() {
-  return <ReservasiTiketModule />;
+  return <ReservasiTiketVisitorModule />;
 }

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -12,130 +12,139 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TrainerData } from "@/types/user";
+import { Loader2 } from "lucide-react";
 
 interface TrainerDashboardProps {
   userData: TrainerData;
 }
 
-// Dummy data based on the schema provided
-const assignmentSchedules = [
-  {
-    username_lh: "johndoe",
-    tgl_penugasan: new Date("2025-05-15T10:00:00"),
-    nama_atraksi: "Dolphin Show",
-    lokasi: "Aquatic Center",
-    status: "Scheduled",
-  },
-  {
-    username_lh: "johndoe",
-    tgl_penugasan: new Date("2025-05-15T14:30:00"),
-    nama_atraksi: "Safari Adventure",
-    lokasi: "Savanna Area",
-    status: "Scheduled",
-  },
-  {
-    username_lh: "johndoe",
-    tgl_penugasan: new Date("2025-05-16T11:00:00"),
-    nama_atraksi: "Lion Feeding Show",
-    lokasi: "Predator Zone",
-    status: "Scheduled",
-  },
-];
-
-// Animals participating in the trainer's attractions (based on BERPARTISIPASI and HEWAN)
-const trainedAnimals = [
-  {
-    id: "550e8400-e29b-41d4-a716-446655440000",
-    nama: "Flipper",
-    spesies: "Bottlenose Dolphin",
-    status_kesehatan: "Healthy",
-    nama_atraksi: "Dolphin Show",
-    last_trained: new Date("2025-05-14T09:30:00"),
-    training_level: "Expert",
-    url_foto: "/animals/dolphin.jpg",
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440001",
-    nama: "Simba",
-    spesies: "African Lion",
-    status_kesehatan: "Healthy",
-    nama_atraksi: "Safari Adventure",
-    last_trained: new Date("2025-05-14T13:45:00"),
-    training_level: "Advanced",
-    url_foto: "/animals/lion.jpg",
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440002",
-    nama: "Raja",
-    spesies: "Bengal Tiger",
-    status_kesehatan: "Minor Injury",
-    nama_atraksi: "Safari Adventure",
-    last_trained: new Date("2025-05-13T11:15:00"),
-    training_level: "Intermediate",
-    url_foto: "/animals/tiger.jpg",
-  },
-];
-
-// Training status records (this would be a custom view or join of multiple tables)
-const trainingStatuses = [
-  {
-    id: "tr-001",
-    id_hewan: "550e8400-e29b-41d4-a716-446655440001",
-    animal_name: "Simba",
-    date: new Date("2025-05-14T13:45:00"),
-    status: "Completed",
-    notes: "Successfully performed jumping routine",
-  },
-  {
-    id: "tr-002",
-    id_hewan: "550e8400-e29b-41d4-a716-446655440000",
-    animal_name: "Flipper",
-    date: new Date("2025-05-14T09:30:00"),
-    status: "Completed",
-    notes: "New flipping technique introduced",
-  },
-  {
-    id: "tr-003",
-    id_hewan: "550e8400-e29b-41d4-a716-446655440002",
-    animal_name: "Raja",
-    date: new Date("2025-05-13T11:15:00"),
-    status: "In Progress",
-    notes: "Working on new balancing act",
-  },
-];
+interface DashboardData {
+  trainer: {
+    id_staf: string;
+    nama_depan: string;
+    nama_belakang: string;
+  } | null;
+  assignmentSchedules: {
+    username_lh: string;
+    tgl_penugasan: string;
+    nama_atraksi: string;
+    lokasi: string;
+  }[];
+  trainedAnimals: {
+    id: string;
+    nama: string;
+    spesies: string;
+    status_kesehatan: string;
+    nama_atraksi: string;
+    url_foto: string;
+  }[];
+  trainingStatuses: {
+    id: string;
+    id_hewan: string;
+    animal_name: string;
+    date: string;
+    status: string;
+    notes: string;
+  }[];
+}
 
 const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ userData }) => {
-  const formatTime = (date: Date) => {
-    return format(date, "HH:mm");
-  };
-
-  const formatDate = (date: Date) => {
-    return format(date, "dd MMM yyyy");
-  };
-
-  const formatDateTime = (date: Date) => {
-    return format(date, "dd MMM yyyy, HH:mm");
-  };
-
-  // Filter today's shows
-  const today = new Date();
-  const todayShows = assignmentSchedules.filter(
-    (show) => show.tgl_penugasan.toDateString() === today.toDateString()
+  const [loading, setLoading] = useState<boolean>(true);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
   );
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `/api/dashboard/trainer?username=${userData.username}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setDashboardData(data);
+      } catch (err) {
+        console.error("Error fetching dashboard data:", err);
+        setError("Gagal memuat data dashboard");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (userData.username) {
+      fetchDashboardData();
+    }
+  }, [userData.username]);
+
+  const formatTime = (dateString: string) => {
+    return format(new Date(dateString), "HH:mm");
+  };
+
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), "dd MMM yyyy");
+  };
+
+  const formatDateTime = (dateString: string) => {
+    return format(new Date(dateString), "dd MMM yyyy, HH:mm");
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500 py-4">{error}</div>;
+  }
+
+  if (!dashboardData) {
+    return <div>No data available</div>;
+  }
+
+  const { trainer, assignmentSchedules, trainedAnimals, trainingStatuses } =
+    dashboardData;
+  const todayShows = assignmentSchedules || [];
 
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Today's Shows</CardTitle>
+            <CardTitle className="text-sm font-medium">ID Staf</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {trainer?.id_staf || "N/A"}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {trainer ? `${trainer.nama_depan} ${trainer.nama_belakang}` : ""}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              Jadwal Hari Ini
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{todayShows.length}</div>
             <p className="text-xs text-muted-foreground">
               {todayShows.length > 0
-                ? `Next show at ${formatTime(todayShows[0].tgl_penugasan)}`
-                : "No shows scheduled today"}
+                ? `Pertunjukan berikutnya: ${formatTime(
+                    todayShows[0].tgl_penugasan
+                  )}`
+                : "Tidak ada jadwal hari ini"}
             </p>
           </CardContent>
         </Card>
@@ -143,33 +152,15 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ userData }) => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
-              Animals Trained
+              Hewan Yang Dilatih
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{trainedAnimals.length}</div>
             <p className="text-xs text-muted-foreground">
-              Multiple species under training
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Completed Trainings
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {
-                trainingStatuses.filter(
-                  (status) => status.status === "Completed"
-                ).length
-              }
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Out of {trainingStatuses.length} training sessions
+              {trainedAnimals.length > 0
+                ? `${trainedAnimals.length} hewan dari berbagai spesies`
+                : "Belum ada hewan yang dilatih"}
             </p>
           </CardContent>
         </Card>
@@ -178,16 +169,16 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ userData }) => {
       <div className="grid gap-4 md:grid-cols-2 mb-4">
         <Card className="col-span-1">
           <CardHeader>
-            <CardTitle>Show Schedule</CardTitle>
+            <CardTitle>Jadwal Pertunjukan Hari Ini</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Attraction Name</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Date & Time</TableHead>
+                    <TableHead>Nama Atraksi</TableHead>
+                    <TableHead>Lokasi</TableHead>
+                    <TableHead>Tanggal & Jam</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -203,14 +194,14 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ userData }) => {
                           {formatDateTime(show.tgl_penugasan)}
                         </TableCell>
                         <TableCell>
-                          <Badge className="bg-green-500">{show.status}</Badge>
+                          <Badge className="bg-green-500">Terjadwal</Badge>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-4">
-                        No shows scheduled
+                        Tidak ada jadwal pertunjukan hari ini
                       </TableCell>
                     </TableRow>
                   )}
@@ -222,51 +213,59 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ userData }) => {
 
         <Card className="col-span-1">
           <CardHeader>
-            <CardTitle>Animals Under Training</CardTitle>
+            <CardTitle>Hewan Yang Dilatih</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Animal</TableHead>
-                    <TableHead>Species</TableHead>
-                    <TableHead>Show</TableHead>
-                    <TableHead>Health Status</TableHead>
+                    <TableHead>Hewan</TableHead>
+                    <TableHead>Spesies</TableHead>
+                    <TableHead>Pertunjukan</TableHead>
+                    <TableHead>Status Kesehatan</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {trainedAnimals.map((animal) => (
-                    <TableRow key={animal.id}>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Avatar className="h-8 w-8 mr-2">
-                            <AvatarImage
-                              src={animal.url_foto}
-                              alt={animal.nama}
-                            />
-                            <AvatarFallback>
-                              {animal.nama.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">{animal.nama}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{animal.spesies}</TableCell>
-                      <TableCell>{animal.nama_atraksi}</TableCell>
-                      <TableCell>
-                        <Badge
-                          className={
-                            animal.status_kesehatan === "Healthy"
-                              ? "bg-green-500"
-                              : "bg-yellow-500"
-                          }
-                        >
-                          {animal.status_kesehatan}
-                        </Badge>
+                  {trainedAnimals.length > 0 ? (
+                    trainedAnimals.map((animal) => (
+                      <TableRow key={animal.id}>
+                        <TableCell>
+                          <div className="flex items-center">
+                            <Avatar className="h-8 w-8 mr-2">
+                              <AvatarImage
+                                src={animal.url_foto || ""}
+                                alt={animal.nama}
+                              />
+                              <AvatarFallback>
+                                {animal.nama?.charAt(0) || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium">{animal.nama}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{animal.spesies}</TableCell>
+                        <TableCell>{animal.nama_atraksi}</TableCell>
+                        <TableCell>
+                          <Badge
+                            className={
+                              animal.status_kesehatan === "Sehat"
+                                ? "bg-green-500"
+                                : "bg-yellow-500"
+                            }
+                          >
+                            {animal.status_kesehatan}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-4">
+                        Belum ada hewan yang dilatih
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -276,40 +275,50 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ userData }) => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Latest Training Status</CardTitle>
+          <CardTitle>Status Latihan Terakhir</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Animal</TableHead>
-                  <TableHead>Date & Time</TableHead>
+                  <TableHead>Hewan</TableHead>
+                  <TableHead>Tanggal & Jam</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Notes</TableHead>
+                  <TableHead>Catatan</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {trainingStatuses.map((status) => (
-                  <TableRow key={status.id}>
-                    <TableCell className="font-medium">
-                      {status.animal_name}
+                {trainingStatuses.length > 0 ? (
+                  trainingStatuses.map((status) => (
+                    <TableRow key={status.id}>
+                      <TableCell className="font-medium">
+                        {status.animal_name}
+                      </TableCell>
+                      <TableCell>{formatDateTime(status.date)}</TableCell>
+                      <TableCell>
+                        <Badge
+                          className={
+                            status.status === "Selesai"
+                              ? "bg-green-500"
+                              : status.status === "Dalam Proses"
+                              ? "bg-blue-500"
+                              : "bg-yellow-500"
+                          }
+                        >
+                          {status.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{status.notes}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-4">
+                      Belum ada data latihan
                     </TableCell>
-                    <TableCell>{formatDateTime(status.date)}</TableCell>
-                    <TableCell>
-                      <Badge
-                        className={
-                          status.status === "Completed"
-                            ? "bg-green-500"
-                            : "bg-blue-500"
-                        }
-                      >
-                        {status.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{status.notes}</TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>

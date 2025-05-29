@@ -86,12 +86,14 @@ export async function POST(req: Request) {
       }),
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "An unexpected error occurred";
     console.error(error);
     return new Response(
       JSON.stringify({
         message: "Failed",
-        error: error.message,
+        error: errorMessage,
       }),
       { status: 500 }
     );

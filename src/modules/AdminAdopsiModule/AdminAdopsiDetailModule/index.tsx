@@ -14,83 +14,191 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { X, Trash } from "lucide-react";
+import { X } from "lucide-react";
 
-const animals = [
-  {
-    id: "ani-101",
-    name: "Simba",
-    species: "African Lion",
-    adopter: "Prasetya Andriani",
-    startDate: "2025-01-01",
-    endDate: "2025-12-31",
-    contribution: "Rp 1.500.000",
-    isAdopted: true,
-  },
-  {
-    id: "ani-102",
-    name: "Zara",
-    species: "Plains Zebra",
-    adopter: "Prasetya Andriani",
-    startDate: "2025-02-01",
-    endDate: "2025-11-30",
-    contribution: "Rp 1.200.000",
-    isAdopted: true,
-  },
-  {
-    id: "ani-103",
-    name: "Rafiki",
-    species: "Giraffe",
-    adopter: "Margana Jaya",
-    startDate: "2025-03-01",
-    endDate: "2025-10-31",
-    contribution: "Rp 1.800.000",
-    isAdopted: true,
-  },
-];
+interface AnimalAdoption {
+  animal: {
+    id_hewan: string;
+    nama_hewan: string;
+    spesies: string;
+  };
+  currentAdoption: {
+    id_adopter: string;
+    nama_adopter: string;
+    kontribusi_finansial: number;
+    status_pembayaran: string;
+    tgl_mulai_adopsi: string;
+    tgl_berhenti_adopsi: string;
+  } | null;
+}
 
 export default function AdminAdopsiDetailModule({ animalId }: { animalId: string }) {
   const router = useRouter();
-  const [animal, setAnimal] = useState<any>(null);
-  const [paymentStatus, setPaymentStatus] = useState("tertunda");
+  const [animalData, setAnimalData] = useState<AnimalAdoption | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
+  const [paymentStatus, setPaymentStatus] = useState<string>("tertunda");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [showToast, setShowToast] = useState(false); // State untuk toast
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
 
   useEffect(() => {
-    // Cari data hewan berdasarkan animalId
-    const selectedAnimal = animals.find((a) => a.id === animalId);
-    setAnimal(selectedAnimal);
+    fetchAnimalData();
   }, [animalId]);
 
-  const handleSaveStatus = () => {
-    console.log("Status pembayaran disimpan:", paymentStatus);
-
-    // Simulasi penyimpanan status pembayaran
-    setShowToast(true); // Tampilkan toast
-    setTimeout(() => {
-      setShowToast(false);
-      router.push("/admin-adopsi"); // Arahkan kembali ke AdminAdopsiModule
-    }, 3000);
-  };
-
-  const handleStopAdoption = () => {
-    console.log("Adopsi dihentikan");
-
-    // Simulasi perubahan isAdopted menjadi false
-    if (animal) {
-      animal.isAdopted = false;
+  const fetchAnimalData = async () => {
+    setIsLoading(true);
+    try {
+      console.log(`Fetching data for animal ID: ${animalId}`);
+      const response = await fetch(`/api/adopsi/${animalId}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Error: ${response.status} - ${errorData.message || "Unknown error"}`);
+      }
+      
+      const data = await response.json();
+      console.log("Animal data received:", data);
+      
+      setAnimalData(data);
+      
+      if (data.currentAdoption) {
+        const statusFromApi = data.currentAdoption.status_pembayaran.toLowerCase();
+        setPaymentStatus(statusFromApi === "lunas" ? "lunas" : "tertunda");
+      }
+    } catch (err) {
+      console.error("Error fetching animal data:", err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Gagal memuat data hewan");
+      }
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    setShowToast(true); // Tampilkan toast
+  const showToastMessage = (message: string, type: "success" | "error" = "success") => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
     setTimeout(() => {
       setShowToast(false);
-      router.push("/admin-adopsi"); // Arahkan kembali ke AdminAdopsiModule
     }, 3000);
   };
 
-  if (!animal) {
-    return <p className="text-center">Data hewan tidak ditemukan.</p>;
+  const handleSaveStatus = async () => {
+    if (!animalData?.currentAdoption) return;
+    
+    try {
+      console.log("Saving payment status:", paymentStatus);
+      
+      const formattedStatus = paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1);
+      console.log("Formatted status:", formattedStatus);
+      
+      const response = await fetch(`/api/adopsi`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id_adopter: animalData.currentAdoption.id_adopter,
+          id_hewan: animalData.animal.id_hewan,
+          status_pembayaran: formattedStatus
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Error: ${response.status} - ${errorData.message || "Unknown error"}`);
+      }
+      
+      showToastMessage("Status pembayaran berhasil diperbarui", "success");
+      
+      fetchAnimalData();
+      
+    } catch (err) {
+      console.error("Error saving payment status:", err);
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      showToastMessage(`Gagal memperbarui status: ${errorMessage}`, "error");
+    }
+  };
+
+  const handleStopAdoption = async () => {
+    if (!animalData?.currentAdoption) return;
+    
+    try {
+      // pake tanggal kemarin buat mastiin adopsi dianggap udah selesai
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      
+      console.log("Stopping adoption with end date:", yesterdayStr);
+      
+      const response = await fetch(`/api/adopsi`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id_adopter: animalData.currentAdoption.id_adopter,
+          id_hewan: animalData.animal.id_hewan,
+          tgl_berhenti_adopsi: yesterdayStr
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Error: ${response.status} - ${errorData.message || "Unknown error"}`);
+      }
+      
+      showToastMessage("Adopsi berhasil dihentikan", "success");
+      
+      setIsDialogOpen(false);
+      
+      setTimeout(() => {
+        router.push(`/admin-adopsi?t=${Date.now()}`);
+      }, 1500);
+    } catch (err) {
+      console.error("Error stopping adoption:", err);
+      showToastMessage("Gagal menghentikan adopsi", "error");
+      setIsDialogOpen(false);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-10 px-4 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+      </div>
+    );
   }
+
+  if (error || !animalData) {
+    return (
+      <div className="container mx-auto py-10 px-4 text-center">
+        <p className="text-red-500">{error || "Data tidak ditemukan"}</p>
+        <Button 
+          variant="default" 
+          className="mt-4"
+          onClick={() => router.push("/admin-adopsi")}
+        >
+          Kembali
+        </Button>
+      </div>
+    );
+  }
+
+  const { animal, currentAdoption } = animalData;
 
   return (
     <div className="container mx-auto py-10 px-4 font-outfit flex flex-col items-center">
@@ -100,65 +208,73 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
           <Button
             variant="ghost"
             className="absolute top-2 right-2 text-muted-foreground hover:text-red-500"
-            onClick={() => router.push("/admin-adopsi")} // Navigasi ke halaman daftar adopsi
+            onClick={() => router.push("/admin-adopsi")}
           >
             <X className="h-5 w-5" />
           </Button>
         </CardHeader>
-        <CardContent className="space-y-4 text-center">
+        <CardContent>
           <div className="space-y-2">
             <p>
-              <span className="font-semibold">Nama Hewan:</span> {animal.name}
+              <span className="font-bold">Nama Hewan:</span> {animal.nama_hewan || "(kalau ada)"}
             </p>
             <p>
-              <span className="font-semibold">Jenis Hewan:</span> {animal.species}
+              <span className="font-bold">Jenis Hewan:</span> {animal.spesies || "[jenis]"}
             </p>
-            <p>
-              <span className="font-semibold">Adopter Saat Ini:</span> {animal.adopter}
-            </p>
-            <p>
-              <span className="font-semibold">Tanggal Mulai Adopsi:</span> {animal.startDate}
-            </p>
-            <p>
-              <span className="font-semibold">Tanggal Akhir Adopsi:</span> {animal.endDate}
-            </p>
-            <p>
-              <span className="font-semibold">Nominal Kontribusi:</span> {animal.contribution}
-            </p>
-          </div>
+            {currentAdoption ? (
+              <>
+                <p>
+                  <span className="font-bold">Adopter Saat Ini:</span> {currentAdoption.nama_adopter || "[nama adopter]"}
+                </p>
+                <p>
+                  <span className="font-bold">Tanggal Mulai Adopsi:</span> {currentAdoption.tgl_mulai_adopsi || "[tanggal awal]"}
+                </p>
+                <p>
+                  <span className="font-bold">Tanggal Akhir Adopsi:</span> {currentAdoption.tgl_berhenti_adopsi || "[tanggal akhir]"}
+                </p>
+                <p>
+                  <span className="font-bold">Nominal Kontribusi:</span> {formatCurrency(currentAdoption.kontribusi_finansial) || "[nominal]"}
+                </p>
 
-          <div className="flex flex-col items-center gap-4">
-            <span className="font-semibold">Status Pembayaran:</span>
-            <Select
-              value={paymentStatus}
-              onValueChange={(value) => setPaymentStatus(value)}
-            >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Pilih status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="tertunda">Tertunda</SelectItem>
-                <SelectItem value="lunas">Lunas</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex justify-center gap-4 mt-4">
-            <Button
-              variant="default"
-              className="bg-red-500 text-white hover:bg-red-600 text-sm flex items-center gap-2"
-              onClick={() => setIsDialogOpen(true)}
-            >
-              <Trash className="h-4 w-4" />
-              Hentikan Adopsi
-            </Button>
-            <Button
-              variant="default"
-              className="bg-green-500 text-white hover:bg-green-600 text-sm"
-              onClick={handleSaveStatus}
-            >
-              Simpan Status
-            </Button>
+                <div className="mt-4 space-y-4">
+                  <div className="space-y-2">
+                    <p className="font-bold">Status Pembayaran:</p>
+                    <Select
+                      value={paymentStatus}
+                      onValueChange={(value) => setPaymentStatus(value)}
+                    >
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Pilih status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="tertunda">Tertunda</SelectItem>
+                        <SelectItem value="lunas">Lunas</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Tombol ditempatkan secara berdampingan */}
+                  <div className="flex justify-center gap-4 mt-6">
+                    <Button
+                      variant="destructive"
+                      className="bg-red-500 hover:bg-red-600 text-white"
+                      onClick={() => setIsDialogOpen(true)}
+                    >
+                      Hentikan Adopsi
+                    </Button>
+                    <Button 
+                      variant="default"
+                      className="bg-green-500 text-white hover:bg-green-600"
+                      onClick={handleSaveStatus}
+                    >
+                      Simpan Status
+                    </Button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="text-amber-500 font-medium">Hewan ini sedang tidak diadopsi</p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -170,7 +286,7 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
             <AlertDialogTitle>Apakah Anda yakin ingin menghentikan adopsi ini?</AlertDialogTitle>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="text-gray-500 hover:text-gray-700">
+            <AlertDialogCancel>
               Batal
             </AlertDialogCancel>
             <AlertDialogAction
@@ -185,8 +301,8 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
 
       {/* Toast Notification */}
       {showToast && (
-        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
-          Aksi berhasil dilakukan!
+        <div className={`fixed bottom-4 right-4 ${toastType === "success" ? "bg-green-500" : "bg-red-500"} text-white px-4 py-2 rounded shadow-lg`}>
+          {toastMessage}
         </div>
       )}
     </div>

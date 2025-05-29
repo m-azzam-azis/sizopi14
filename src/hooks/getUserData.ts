@@ -23,6 +23,7 @@ export type ReturnType = {
   };
   isValid: boolean;
   isLoading: boolean;
+  authState: "initializing" | "loading" | "authenticated" | "unauthenticated";
 };
 
 type sessionType = {
@@ -47,26 +48,80 @@ type sessionType = {
 };
 
 const nonAuthenticatedRoutes = ["/login", "/register", "/api/auth"];
+const adminOnlyRoutes = [
+  "/kelola-pengunjung",
+  "/kelola-pengunjung/atraksi",
+  "/kelola-pengunjung/wahana",
+  "/admin-adopsi",
+  "/admin-adopsi/detail",
+  "/admin-adopsi/register",
+  "/api/wahana",
+  "/api/atraksi",
+];
 
-const adminOnlyRoutes = ["/atraksi", "/api/atraksi"];
+const visitorRoutes = ["/reservasi"];
+
+const adopterRoutes = [
+  "/adopter",
+  "/adopter/",
+  "/adopter-adopsi",
+  "/adopter-adopsi/detail",
+  "/adopter-adopsi/sertifikat",
+  "/adopter-adopsi/kondisi",
+];
+
+const veterinarianRoutes = [
+  "/rekam-medis",
+  "/jadwal-pemeriksaan",
+  "/api/rekam-medis",
+  //"/api/hewan",
+  "/api/dokter",
+  "/api/jadwal-pemeriksaan"
+];
+
+const trainerRoutes = [
+  "/jadwal-pertunjukan",
+  "/api/trainer-animals",
+  "/api/jadwal-penugasan",
+];
+
+const caretakerRoutes = [
+  "/pakan",
+  "/pakan/",
+  "/pakan/riwayat",
+  "/habitat",
+  "/habitat/",
+  "/satwa",
+  "/api/pakan",
+  "/api/feeding-history"
+  //"/api/hewan",
+];
 
 export const getUserData: () => ReturnType = () => {
   const [token, setToken] = useState<string | null>(null);
   const [decodedToken, setDecodedToken] = useState<sessionType | null>(null);
-
+  const [authState, setAuthState] = useState<
+    "initializing" | "loading" | "authenticated" | "unauthenticated"
+  >("initializing");
   const [isLoading, setIsLoading] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
 
   async function fetchCookie() {
     try {
+      setAuthState("loading");
       const res = await fetch("/api/auth/cookies");
       const data: { message: string; token: string } = await res.json();
-      if (data.token) setToken(data.token);
-      else setToken(null);
+      if (data.token) {
+        setToken(data.token);
+      } else {
+        setToken(null);
+        setAuthState("unauthenticated");
+      }
     } catch (error) {
       console.error("Error fetching cookie:", error);
       setToken(null);
+      setAuthState("unauthenticated");
     } finally {
       setIsLoading(false);
     }
@@ -83,36 +138,131 @@ export const getUserData: () => ReturnType = () => {
         const isExpired = decoded.exp * 1000 < Date.now();
         if (isExpired) {
           setToken(null);
+          setAuthState("unauthenticated");
         } else {
           setDecodedToken(decoded);
+          setAuthState("authenticated");
         }
       } catch (error) {
         console.error("Error decoding token:", error);
         setDecodedToken(null);
+        setAuthState("unauthenticated");
       }
     }
   }, [token]);
 
   useEffect(() => {
-    if (!isLoading) {
-      if (
-        token &&
-        nonAuthenticatedRoutes.some((route) => pathname.startsWith(route))
-      ) {
+    if (authState === "initializing" || authState === "loading") {
+      return;
+    }
+
+    const isAdopterRoute = adopterRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+    if (isAdopterRoute) {
+      if (authState === "unauthenticated") {
         router.push("/");
+        return;
+      }
+    }
+
+    if (
+      authState === "authenticated" &&
+      nonAuthenticatedRoutes.some((route) => pathname.startsWith(route))
+    ) {
+      router.push("/");
+      return;
+    }
+
+    const isAdminRoute = adminOnlyRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+    if (isAdminRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
       }
 
       if (
-        token &&
-        adminOnlyRoutes.some((route) => pathname.startsWith(route))
+        authState === "authenticated" &&
+        decodedToken?.data.role !== "admin"
       ) {
-        if (decodedToken && decodedToken.data.role !== "admin") {
+        router.push("/");
+        return;
+      }
+    }
+
+    const isVisitorRoute = visitorRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+    if (isVisitorRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
+      }
+
+      if (
+        authState === "authenticated" &&
+        decodedToken?.data.role !== "visitor"
+      ) {
+        router.push("/");
+        return;
+      }
+    }
+
+    const isVeterinarianRoute = veterinarianRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+    if (isVeterinarianRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
+      }   
+
+      if (
+          authState === "authenticated" &&
+          decodedToken?.data.role !== "veterinarian"
+        ) {
           router.push("/");
           return;
         }
+    }
+
+    const isCaretakerRoute = caretakerRoutes.some((route) =>
+      pathname.startsWith(route)
+    );  
+    if (isCaretakerRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
+      }
+
+    if (
+        authState === "authenticated" &&
+        decodedToken?.data.role !== "caretaker"
+      ) {
+        router.push("/");
+        return;
       }
     }
-  }, [isLoading, token, pathname, router, decodedToken]);
+
+    const isTrainerRoute = trainerRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+    if (isTrainerRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
+      }
+      if (
+        authState === "authenticated" &&
+        decodedToken?.data.role !== "trainer"
+      ) {
+        router.push("/");
+        return;
+      }
+    }
+  }, [authState, decodedToken, pathname, router]);
 
   if (isLoading || !decodedToken) {
     return {
@@ -134,6 +284,7 @@ export const getUserData: () => ReturnType = () => {
       },
       isValid: false,
       isLoading,
+      authState,
     };
   }
 
@@ -156,5 +307,6 @@ export const getUserData: () => ReturnType = () => {
     },
     isValid: true,
     isLoading,
+    authState,
   };
 };
