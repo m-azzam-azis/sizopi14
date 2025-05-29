@@ -17,6 +17,7 @@ import {
 import { X } from "lucide-react";
 import toast from "react-hot-toast";
 import { handleDbNotification } from "@/utils/dbNotifications";
+
 interface AnimalAdoption {
   animal: {
     id_hewan: string;
@@ -64,7 +65,9 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
       setAnimalData(data);
       
       if (data.currentAdoption) {
-        setPaymentStatus(data.currentAdoption.status_pembayaran.toLowerCase());
+        // Set default status ke "tertunda" jika status dari database kosong
+        const status = data.currentAdoption.status_pembayaran || "Tertunda";
+        setPaymentStatus(status.toLowerCase());
       }
     } catch (err) {
       console.error("Error fetching animal data:", err);
@@ -87,72 +90,69 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
     }, 3000);
   };
 
-    // Pada fungsi handleSaveStatus
-
-const handleSaveStatus = async () => {
-  if (!animalData?.currentAdoption) {
-    toast.error("Data adopsi tidak ditemukan");
-    return;
-  }
-  
-  try {
-    console.log("Saving payment status:", paymentStatus);
+  const handleSaveStatus = async () => {
+    if (!animalData?.currentAdoption) {
+      toast.error("Data adopsi tidak ditemukan");
+      return;
+    }
     
-    const formattedStatus = paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1);
-    console.log("Formatted status:", formattedStatus);
-    
-    const response = await fetch(`/api/adopsi/${animalData.animal.id_hewan}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id_adopter: animalData.currentAdoption.id_adopter,
-        status_pembayaran: formattedStatus
-        // Hapus tgl_mulai_adopsi untuk menghindari masalah format tanggal
-      }),
-    });
-
-    console.log("Response status:", response.status);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Error response:", errorText);
-      let errorMessage = `HTTP error! Status: ${response.status}`;
+    try {
+      console.log("Saving payment status:", paymentStatus);
       
-      try {
-        const errorData = JSON.parse(errorText);
-        if (errorData.error) {
-          errorMessage = errorData.error;
+      const formattedStatus = paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1);
+      console.log("Formatted status:", formattedStatus);
+      
+      const response = await fetch(`/api/adopsi/${animalData.animal.id_hewan}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id_adopter: animalData.currentAdoption.id_adopter,
+          status_pembayaran: formattedStatus
+        }),
+      });
+
+      console.log("Response status:", response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
+        let errorMessage = `HTTP error! Status: ${response.status}`;
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (e) {
+          // Jika tidak bisa parse sebagai JSON, gunakan error text asli
+          if (errorText) errorMessage = errorText;
         }
-      } catch (e) {
-        // Jika tidak bisa parse sebagai JSON, gunakan error text asli
-        if (errorText) errorMessage = errorText;
+        
+        throw new Error(errorMessage);
       }
       
-      throw new Error(errorMessage);
-    }
-    
-    const data = await response.json();
-    console.log("Response data:", data);
-    
-    // Menampilkan pesan dari trigger jika ada
-    if (data.triggerMessage) {
-      handleDbNotification(data.triggerMessage);
-    } else {
-      toast.success("Status pembayaran berhasil diperbarui");
-    }
+      const data = await response.json();
+      console.log("Response data:", data);
+      
+      // Menampilkan pesan dari trigger jika ada
+      if (data.triggerMessage) {
+        toast.success(data.triggerMessage, { duration: 5000 });
+      } else {
+        toast.success("Status pembayaran berhasil diperbarui");
+      }
 
-    setTimeout(() => {
-      router.push(`/admin-adopsi?t=${Date.now()}`);
-    }, 1500);
-    
-  } catch (err) {
-    console.error("Error saving payment status:", err);
-    const errorMessage = err instanceof Error ? err.message : "Unknown error";
-    toast.error(`Gagal memperbarui status: ${errorMessage}`);
-  }
-};
+      setTimeout(() => {
+        router.push(`/admin-adopsi?t=${Date.now()}`);
+      }, 2000);
+      
+    } catch (err) {
+      console.error("Error saving payment status:", err);
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      toast.error(`Gagal memperbarui status: ${errorMessage}`);
+    }
+  };
 
   const handleStopAdoption = async () => {
     if (!animalData?.currentAdoption) return;
@@ -245,10 +245,10 @@ const handleSaveStatus = async () => {
         <CardContent>
           <div className="space-y-2">
             <p>
-              <span className="font-bold">Nama Hewan:</span> {animal.nama_hewan || "(kalau ada)"}
+              <span className="font-bold">Nama Hewan:</span> {animal?.nama_hewan || "(kalau ada)"}
             </p>
             <p>
-              <span className="font-bold">Jenis Hewan:</span> {animal.spesies || "[jenis]"}
+              <span className="font-bold">Jenis Hewan:</span> {animal?.spesies || "[jenis]"}
             </p>
             {currentAdoption ? (
               <>
@@ -273,7 +273,7 @@ const handleSaveStatus = async () => {
                       onValueChange={(value) => setPaymentStatus(value)}
                     >
                       <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Pilih status" />
+                        <SelectValue placeholder="Tertunda" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="tertunda">Tertunda</SelectItem>

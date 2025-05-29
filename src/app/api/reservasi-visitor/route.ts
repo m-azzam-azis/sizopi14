@@ -83,11 +83,15 @@ export async function POST(request: Request) {
       );
     }
 
+    const formattedDate = new Date(tanggal_kunjungan)
+      .toISOString()
+      .split("T")[0];
+
     const reservasiModel = new Reservasi();
 
     const capacityCheck = await reservasiModel.checkCapacity(
       nama_fasilitas,
-      new Date(tanggal_kunjungan),
+      formattedDate,
       jumlah_tiket
     );
 
@@ -101,7 +105,7 @@ export async function POST(request: Request) {
     const result = await reservasiModel.createReservation({
       username_P,
       nama_fasilitas,
-      tanggal_kunjungan: new Date(tanggal_kunjungan),
+      tanggal_kunjungan: formattedDate,
       jumlah_tiket,
     });
 
@@ -138,17 +142,26 @@ export async function PUT(request: Request) {
       );
     }
 
+    const formattedDate =
+      typeof tanggal_kunjungan === "string"
+        ? tanggal_kunjungan.split("T")[0]
+        : new Date(tanggal_kunjungan).toISOString().split("T")[0];
+
+    const formattedNewDate = new_tanggal_kunjungan
+      ? typeof new_tanggal_kunjungan === "string"
+        ? new_tanggal_kunjungan.split("T")[0]
+        : new Date(new_tanggal_kunjungan).toISOString().split("T")[0]
+      : undefined;
+
     const reservasiModel = new Reservasi();
 
     try {
       await reservasiModel.updateReservation({
         username_P,
         nama_fasilitas,
-        tanggal_kunjungan: new Date(tanggal_kunjungan),
+        tanggal_kunjungan: formattedDate,
         jumlah_tiket: 1,
-        new_tanggal_kunjungan: new_tanggal_kunjungan
-          ? new Date(new_tanggal_kunjungan)
-          : undefined,
+        new_tanggal_kunjungan: formattedNewDate,
         new_jumlah_tiket: new_jumlah_tiket,
       });
 
@@ -185,12 +198,14 @@ export async function DELETE(request: Request) {
       );
     }
 
+    const formattedDate = date.split("T")[0];
+
     const reservasiModel = new Reservasi();
 
     const result = await reservasiModel.cancelReservation(
       username,
       facility,
-      new Date(date)
+      formattedDate
     );
 
     if (!result) {

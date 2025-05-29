@@ -8,24 +8,30 @@ DECLARE
     adopter_name VARCHAR;
     total_sum INT;
 BEGIN
-    -- Hitung total kontribusi untuk adopter
-    SELECT COALESCE(SUM(a.kontribusi_finansial), 0) INTO total_sum
-    FROM adopsi a
-    WHERE a.id_adopter = NEW.id_adopter AND a.status_pembayaran = 'Lunas';
-    
-    -- Update total_kontribusi di tabel adopter
-    UPDATE adopter SET total_kontribusi = total_sum
-    WHERE id_adopter = NEW.id_adopter;
-    
-    -- Dapatkan nama adopter
-    SELECT COALESCE(i.nama, o.nama_organisasi, ad.username_adopter) INTO adopter_name
-    FROM adopter ad
-    LEFT JOIN individu i ON i.id_adopter = ad.id_adopter
-    LEFT JOIN organisasi o ON o.id_adopter = ad.id_adopter
-    WHERE ad.id_adopter = NEW.id_adopter;
-    
-    -- Tampilkan pesan sukses
-    RAISE NOTICE 'SUKSES: Total kontribusi adopter "%" telah diperbarui.', adopter_name;
+    -- Hanya jalankan logika jika status berubah menjadi Lunas
+    IF NEW.status_pembayaran = 'Lunas' THEN
+        -- Hitung total kontribusi untuk adopter
+        SELECT COALESCE(SUM(a.kontribusi_finansial), 0) INTO total_sum
+        FROM adopsi a
+        WHERE a.id_adopter = NEW.id_adopter AND a.status_pembayaran = 'Lunas';
+        
+        -- Update total_kontribusi di tabel adopter
+        UPDATE adopter SET total_kontribusi = total_sum
+        WHERE id_adopter = NEW.id_adopter;
+        
+        -- Dapatkan nama adopter
+        SELECT COALESCE(i.nama, o.nama_organisasi, ad.username_adopter) INTO adopter_name
+        FROM adopter ad
+        LEFT JOIN individu i ON i.id_adopter = ad.id_adopter
+        LEFT JOIN organisasi o ON o.id_adopter = ad.id_adopter
+        WHERE ad.id_adopter = NEW.id_adopter;
+        
+        -- Tampilkan pesan sukses
+        RAISE NOTICE 'SUKSES: Total kontribusi adopter "%" telah diperbarui.', adopter_name;
+        
+        -- Jalankan juga update_top_adopters untuk memicu pesan peringkat
+        PERFORM update_top_adopters();
+    END IF;
     
     RETURN NEW;
 END;
@@ -38,13 +44,11 @@ DROP TRIGGER IF EXISTS adopsi_insert_trigger ON adopsi;
 CREATE TRIGGER adopsi_update_trigger
 AFTER UPDATE OF status_pembayaran ON adopsi
 FOR EACH ROW
-WHEN (OLD.status_pembayaran <> 'Lunas' AND NEW.status_pembayaran = 'Lunas')
 EXECUTE FUNCTION update_total_kontribusi();
 
 CREATE TRIGGER adopsi_insert_trigger
 AFTER INSERT ON adopsi
 FOR EACH ROW
-WHEN (NEW.status_pembayaran = 'Lunas')
 EXECUTE FUNCTION update_total_kontribusi();
 
 -- Trigger untuk pemeringkatan adopter dengan total kontribusi tertinggi
@@ -80,10 +84,46 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Versi function sebagai stored procedure biasa untuk dipanggil langsung
+CREATE OR REPLACE FUNCTION get_top_adopters()
+RETURNS TEXT AS $$
+DECLARE
+    top_adopter_name VARCHAR;
+    top_kontribusi INT;
+    result_msg TEXT;
+BEGIN
+    -- Ambil adopter dengan kontribusi tertinggi setahun terakhir
+    SELECT 
+        COALESCE(i.nama, o.nama_organizasi, ad.username_adopter), 
+        SUM(a.kontribusi_finansial)
+    INTO top_adopter_name, top_kontribusi
+    FROM adopsi a
+    JOIN adopter ad ON a.id_adopter = ad.id_adopter
+    LEFT JOIN individu i ON i.id_adopter = a.id_adopter
+    LEFT JOIN organisasi o ON o.id_adopter = a.id_adopter
+    WHERE a.status_pembayaran = 'Lunas'
+      AND a.tgl_mulai_adopsi >= (CURRENT_DATE - INTERVAL '1 year')
+    GROUP BY COALESCE(i.nama, o.nama_organizasi, ad.username_adopter)
+    ORDER BY SUM(a.kontribusi_finansial) DESC
+    LIMIT 1;
+
+    IF top_adopter_name IS NOT NULL THEN
+        -- Format pesan dengan pemisah ribuan
+        result_msg := format('SUKSES: Daftar Top 5 Adopter satu tahun terakhir berhasil diperbarui, dengan peringkat pertama dengan nama adopter "%s" berkontribusi sebesar "Rp%s"', 
+            top_adopter_name, 
+            to_char(top_kontribusi, 'FM999,999,999'));
+        RETURN result_msg;
+    ELSE
+        RETURN NULL;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Hapus trigger jika sudah ada
 DROP TRIGGER IF EXISTS top_adopters_update_trigger ON adopsi;
 
 CREATE TRIGGER top_adopters_update_trigger
-AFTER INSERT OR UPDATE OR DELETE ON adopsi
-FOR STATEMENT
+AFTER UPDATE OF status_pembayaran ON adopsi
+FOR EACH ROW
+WHEN (NEW.status_pembayaran = 'Lunas')
 EXECUTE FUNCTION update_top_adopters();

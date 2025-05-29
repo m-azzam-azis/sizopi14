@@ -1,4 +1,4 @@
-import { toast } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 export const handleDbNotification = (message: string | null | undefined): boolean => {
   if (!message) return false;

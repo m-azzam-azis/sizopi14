@@ -158,7 +158,7 @@ export async function PUT(
           }
         });
         
-        // Periksa terlebih dahulu apakah data adopsi ada (tanpa menyertakan tgl_mulai_adopsi)
+        // Periksa terlebih dahulu apakah data adopsi ada
         const checkQuery = `
           SELECT * FROM adopsi
           WHERE id_adopter = $1 AND id_hewan = $2
@@ -188,7 +188,7 @@ export async function PUT(
         const result = await client.query(updateQuery, [
           id_adopter, 
           animalId,
-          status_pembayaran
+          status_pembayaran || 'Tertunda' // Default to 'Tertunda' if not provided
         ]);
         
         console.log("Update result:", result.rows);
