@@ -22,7 +22,7 @@ import { getUserData } from "@/hooks/getUserData";
 import { toast } from "sonner";
 
 export const Navbar = () => {
-  const { userData, isValid } = getUserData();
+  const { userData, isValid, refreshUserData } = getUserData();
   const [isAdopter, setIsAdopter] = useState(false);
 
   const mapRoleToUIRole = (role: string): string => {
@@ -43,7 +43,6 @@ export const Navbar = () => {
   };
 
   const uiRole = mapRoleToUIRole(userData.role);
-
   useEffect(() => {
     const checkIfAdopter = async () => {
       if (isValid && userData.username) {
@@ -84,6 +83,19 @@ export const Navbar = () => {
 
     checkIfAdopter();
   }, [isValid, userData.username]);
+
+  // Listen for profile update events to refresh user data
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      refreshUserData();
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
+  }, [refreshUserData]);
 
   const logout = async () => {
     try {

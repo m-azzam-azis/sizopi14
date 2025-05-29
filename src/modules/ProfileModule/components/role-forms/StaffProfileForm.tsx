@@ -59,10 +59,11 @@ const StaffProfileForm: React.FC<StaffProfileFormProps> = ({ user }) => {
         body: JSON.stringify({
           id_staf: data.staffId,
         }),
-      });
-
-      if (response.ok) {
+      });      if (response.ok) {
         toast.success("Staff profile updated successfully!");
+        
+        // Dispatch custom event to notify navbar about profile update
+        window.dispatchEvent(new CustomEvent('profileUpdated'));
       } else {
         const errorData = await response.json();
         toast.error(errorData.error || "Failed to update profile");

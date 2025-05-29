@@ -76,13 +76,15 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           email: data.email,
           no_telepon: data.phoneNumber,
         }),
-      });
-
-      if (response.ok) {
+      });      if (response.ok) {
         toast({
           title: "Profile updated",
           description: "Your basic profile information has been updated successfully.",
         });
+        
+        // Dispatch custom event to notify navbar about profile update
+        window.dispatchEvent(new CustomEvent('profileUpdated'));
+        
         // Call the parent onSubmit if provided (for additional handling)
         if (onSubmit) {
           await onSubmit(data);

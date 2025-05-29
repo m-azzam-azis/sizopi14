@@ -59,10 +59,11 @@ const VisitorProfileForm: React.FC<VisitorProfileFormProps> = ({ user }) => {
           alamat: data.address,
           tgl_lahir: data.birthDate.toISOString().split("T")[0], // Convert to YYYY-MM-DD format
         }),
-      });
-
-      if (response.ok) {
+      });      if (response.ok) {
         toast.success("Visitor profile updated successfully!");
+        
+        // Dispatch custom event to notify navbar about profile update
+        window.dispatchEvent(new CustomEvent('profileUpdated'));
       } else {
         const errorData = await response.json();
         toast.error(errorData.error || "Failed to update profile");

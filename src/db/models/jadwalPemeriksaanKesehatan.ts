@@ -94,7 +94,7 @@ export class JadwalPemeriksaanKesehatan extends BaseModel<JadwalPemeriksaanKeseh
             // Check if record with this composite key exists
             const existing = await this.findByCompositeKey(
                 data.id_hewan, 
-                data.tgl_pemeriksaan_selanjutnya
+                data.tgl_pemeriksaan_selanjutnya.toISOString().split('T')[0] // Ensure date is in YYYY-MM-DD format
             );
             
             if (existing) {

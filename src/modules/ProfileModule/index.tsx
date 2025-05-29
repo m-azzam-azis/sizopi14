@@ -114,11 +114,13 @@ const ProfileModule: React.FC = () => {
           };
           setProfileData(updatedProfile);
         }
-        
-        toast({
+          toast({
           title: "Profile updated",
           description: "Your profile information has been updated successfully.",
         });
+
+        // Dispatch custom event to notify navbar about profile update
+        window.dispatchEvent(new CustomEvent('profileUpdated'));
       } else {
         const errorData = await response.json();
         toast({

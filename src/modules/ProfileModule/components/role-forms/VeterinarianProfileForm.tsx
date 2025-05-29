@@ -74,10 +74,11 @@ const VeterinarianProfileForm: React.FC<VeterinarianProfileFormProps> = ({
           no_str: data.certificationNumber,
           // Note: specializations updates would be handled separately if needed
         }),
-      });
-
-      if (response.ok) {
+      });      if (response.ok) {
         toast.success("Veterinarian profile updated successfully!");
+        
+        // Dispatch custom event to notify navbar about profile update
+        window.dispatchEvent(new CustomEvent('profileUpdated'));
       } else {
         const errorData = await response.json();
         toast.error(errorData.error || "Failed to update profile");
