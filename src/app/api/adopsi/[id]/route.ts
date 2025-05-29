@@ -1,4 +1,5 @@
 import pool from "@/db/db";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
@@ -115,7 +116,117 @@ export async function GET(
   }
 }
 
-// DELETE endpoint tetap sama seperti sebelumnya
+export async function PUT(
+    request: NextRequest,
+    { params }: { params: { id: string } }
+  ) {
+    try {
+      const animalId = params.id;
+      console.log(`Updating adoption for animal: ${animalId}`);
+      
+      if (!animalId) {
+        return NextResponse.json(
+          { error: "Animal ID tidak boleh kosong" },
+          { status: 400 }
+        );
+      }
+  
+      const body = await request.json();
+      console.log("Request body:", body);
+      
+      const { id_adopter, status_pembayaran, tgl_berhenti_adopsi, tgl_mulai_adopsi } = body;
+      
+      if (!id_adopter) {
+        return NextResponse.json(
+          { error: "ID adopter tidak boleh kosong" },
+          { status: 400 }
+        );
+      }
+      
+      // Mulai transaksi untuk menangkap notifikasi dari trigger
+      const client = await pool.connect();
+      const triggerMessages: string[] = [];
+      
+      try {
+        await client.query('BEGIN');
+        
+        // Pasang listener untuk notifikasi dari database
+        client.on('notice', (msg: any) => {
+          console.log('Database Notice:', msg.message);
+          if (msg.message && msg.message.includes('SUKSES:')) {
+            triggerMessages.push(msg.message);
+          }
+        });
+        
+        // Periksa terlebih dahulu apakah data adopsi ada (tanpa menyertakan tgl_mulai_adopsi)
+        const checkQuery = `
+          SELECT * FROM adopsi
+          WHERE id_adopter = $1 AND id_hewan = $2
+        `;
+        
+        const checkResult = await client.query(checkQuery, [id_adopter, animalId]);
+        console.log("Check result:", checkResult.rows);
+        
+        if (checkResult.rowCount === 0) {
+          await client.query('ROLLBACK');
+          return NextResponse.json(
+            { error: "Data adopsi tidak ditemukan" },
+            { status: 404 }
+          );
+        }
+        
+        // Jika ditemukan, update status pembayaran
+        const updateQuery = `
+          UPDATE adopsi 
+          SET status_pembayaran = $3
+          WHERE id_adopter = $1 AND id_hewan = $2
+          RETURNING *
+        `;
+        
+        console.log("Update query:", updateQuery);
+        
+        const result = await client.query(updateQuery, [
+          id_adopter, 
+          animalId,
+          status_pembayaran
+        ]);
+        
+        console.log("Update result:", result.rows);
+        
+        if (result.rowCount === 0) {
+          await client.query('ROLLBACK');
+          return NextResponse.json(
+            { error: "Gagal mengupdate data adopsi" },
+            { status: 500 }
+          );
+        }
+        
+        await client.query('COMMIT');
+        
+        return NextResponse.json({
+          success: true,
+          message: "Status pembayaran berhasil diupdate",
+          data: result.rows[0],
+          triggerMessage: triggerMessages.length > 0 ? triggerMessages[0] : null
+        });
+        
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+      
+    } catch (error) {
+      console.error("Error updating adoption:", error);
+      return NextResponse.json(
+        { error: "Gagal mengupdate data adopsi", details: error instanceof Error ? error.message : String(error) },
+        { status: 500 }
+      );
+    }
+  }
+  
+  
 
 export async function DELETE(
   request: Request,

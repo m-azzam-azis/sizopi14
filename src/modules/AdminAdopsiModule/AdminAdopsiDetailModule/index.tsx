@@ -15,7 +15,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { X } from "lucide-react";
-
+import toast from "react-hot-toast";
+import { handleDbNotification } from "@/utils/dbNotifications";
 interface AnimalAdoption {
   animal: {
     id_hewan: string;
@@ -54,8 +55,7 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
       const response = await fetch(`/api/adopsi/${animalId}`);
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Error: ${response.status} - ${errorData.message || "Unknown error"}`);
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
       
       const data = await response.json();
@@ -64,15 +64,14 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
       setAnimalData(data);
       
       if (data.currentAdoption) {
-        const statusFromApi = data.currentAdoption.status_pembayaran.toLowerCase();
-        setPaymentStatus(statusFromApi === "lunas" ? "lunas" : "tertunda");
+        setPaymentStatus(data.currentAdoption.status_pembayaran.toLowerCase());
       }
     } catch (err) {
       console.error("Error fetching animal data:", err);
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("Gagal memuat data hewan");
+        setError("An unknown error occurred");
       }
     } finally {
       setIsLoading(false);
@@ -88,42 +87,72 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
     }, 3000);
   };
 
-  const handleSaveStatus = async () => {
-    if (!animalData?.currentAdoption) return;
-    
-    try {
-      console.log("Saving payment status:", paymentStatus);
-      
-      const formattedStatus = paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1);
-      console.log("Formatted status:", formattedStatus);
-      
-      const response = await fetch(`/api/adopsi`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id_adopter: animalData.currentAdoption.id_adopter,
-          id_hewan: animalData.animal.id_hewan,
-          status_pembayaran: formattedStatus
-        }),
-      });
+    // Pada fungsi handleSaveStatus
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Error: ${response.status} - ${errorData.message || "Unknown error"}`);
+const handleSaveStatus = async () => {
+  if (!animalData?.currentAdoption) {
+    toast.error("Data adopsi tidak ditemukan");
+    return;
+  }
+  
+  try {
+    console.log("Saving payment status:", paymentStatus);
+    
+    const formattedStatus = paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1);
+    console.log("Formatted status:", formattedStatus);
+    
+    const response = await fetch(`/api/adopsi/${animalData.animal.id_hewan}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id_adopter: animalData.currentAdoption.id_adopter,
+        status_pembayaran: formattedStatus
+        // Hapus tgl_mulai_adopsi untuk menghindari masalah format tanggal
+      }),
+    });
+
+    console.log("Response status:", response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Error response:", errorText);
+      let errorMessage = `HTTP error! Status: ${response.status}`;
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (e) {
+        // Jika tidak bisa parse sebagai JSON, gunakan error text asli
+        if (errorText) errorMessage = errorText;
       }
       
-      showToastMessage("Status pembayaran berhasil diperbarui", "success");
-      
-      fetchAnimalData();
-      
-    } catch (err) {
-      console.error("Error saving payment status:", err);
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      showToastMessage(`Gagal memperbarui status: ${errorMessage}`, "error");
+      throw new Error(errorMessage);
     }
-  };
+    
+    const data = await response.json();
+    console.log("Response data:", data);
+    
+    // Menampilkan pesan dari trigger jika ada
+    if (data.triggerMessage) {
+      handleDbNotification(data.triggerMessage);
+    } else {
+      toast.success("Status pembayaran berhasil diperbarui");
+    }
+
+    setTimeout(() => {
+      router.push(`/admin-adopsi?t=${Date.now()}`);
+    }, 1500);
+    
+  } catch (err) {
+    console.error("Error saving payment status:", err);
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    toast.error(`Gagal memperbarui status: ${errorMessage}`);
+  }
+};
 
   const handleStopAdoption = async () => {
     if (!animalData?.currentAdoption) return;

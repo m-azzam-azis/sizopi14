@@ -126,30 +126,33 @@ export async function POST(request: Request) {
   }
 }
 
-export async function PUT(request: Request) {
+export async function PUT(
+    request: Request,
+    { params }: { params: { id: string } }
+  ) {
     try {
+      const animalId = params.id;
       const body = await request.json();
-      const { id_adopter, id_hewan, status_pembayaran, tgl_berhenti_adopsi } = body;
+      const { id_adopter, status_pembayaran, tgl_berhenti_adopsi, tgl_mulai_adopsi } = body;
       
-      if (!id_adopter || !id_hewan) {
-        return NextResponse.json(
-          { error: "ID adopter dan ID hewan tidak boleh kosong" },
-          { status: 400 }
-        );
+      // Verifikasi parameter yang diperlukan
+      if (!id_adopter) {
+        return new Response(JSON.stringify({
+          error: "ID adopter tidak boleh kosong"
+        }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
       }
       
-      // Aktifkan penangkapan pesan notice dari database
-      await pool.query('SET client_min_messages TO NOTICE');
-      
-      // Mulai transaksi untuk menangkap pesan NOTICE
       const client = await pool.connect();
       const triggerMessages: string[] = [];
       
       try {
         await client.query('BEGIN');
         
-        // Perbaikan tipe any menggunakan interface PostgresNotice
-        client.addListener('notice', (msg: PostgresNotice) => {
+        // Pasang listener untuk notifikasi dari database
+        client.on('notice', (msg: any) => {
           console.log('Database Notice:', msg.message);
           if (msg.message && msg.message.includes('SUKSES:')) {
             triggerMessages.push(msg.message);
@@ -158,69 +161,95 @@ export async function PUT(request: Request) {
         
         // Buat SET clause berdasarkan parameter yang diberikan
         const setClause = [];
-        const queryParams = [id_adopter, id_hewan];
-        let paramIndex = 3;
+        const queryParams = [];
+        let paramIndex = 1;
+        
+        queryParams.push(id_adopter);
+        queryParams.push(animalId);
         
         if (status_pembayaran) {
-          setClause.push(`status_pembayaran = $${paramIndex}`);
+          setClause.push(`status_pembayaran = $${paramIndex + 2}`);
           queryParams.push(status_pembayaran);
           paramIndex++;
         }
         
         if (tgl_berhenti_adopsi) {
-          setClause.push(`tgl_berhenti_adopsi = $${paramIndex}`);
+          setClause.push(`tgl_berhenti_adopsi = $${paramIndex + 2}`);
           queryParams.push(tgl_berhenti_adopsi);
           paramIndex++;
         }
         
         if (setClause.length === 0) {
-          return NextResponse.json(
-            { error: "Tidak ada data yang diupdate" },
-            { status: 400 }
-          );
+          return new Response(JSON.stringify({
+            error: "Tidak ada data yang diupdate"
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        
+        // Where clause untuk adopsi
+        let whereClause = "id_adopter = $1 AND id_hewan = $2";
+        if (tgl_mulai_adopsi) {
+          whereClause += ` AND tgl_mulai_adopsi = $${paramIndex + 2}`;
+          queryParams.push(tgl_mulai_adopsi);
+          paramIndex++;
         }
         
         // Update adopsi
         const updateQuery = `
           UPDATE adopsi 
           SET ${setClause.join(', ')}
-          WHERE id_adopter = $1 AND id_hewan = $2
+          WHERE ${whereClause}
           RETURNING *
         `;
+        
+        console.log("Query:", updateQuery);
+        console.log("Params:", queryParams);
         
         const result = await client.query(updateQuery, queryParams);
         
         if (result.rowCount === 0) {
-          return NextResponse.json(
-            { error: "Data adopsi tidak ditemukan" },
-            { status: 404 }
-          );
+          await client.query('ROLLBACK');
+          return new Response(JSON.stringify({
+            error: "Data adopsi tidak ditemukan"
+          }), {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+          });
         }
         
         await client.query('COMMIT');
         
-        return NextResponse.json({
+        return new Response(JSON.stringify({
           success: true,
           message: status_pembayaran ? "Status pembayaran berhasil diupdate" : "Data adopsi berhasil diupdate",
           data: result.rows[0],
-          noticeMessages: triggerMessages
+          triggerMessage: triggerMessages.length > 0 ? triggerMessages[0] : null
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
         });
         
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
-        
-        } catch (error) {
-        console.error("Error updating adoption:", error);
-        return NextResponse.json(
-            { error: "Gagal mengupdate data adopsi", details: (error as Error).message },
-            { status: 500 }
-        );
-        }
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+      
+    } catch (error) {
+      console.error("Error updating adoption:", error);
+      return new Response(JSON.stringify({
+        error: "Gagal mengupdate data adopsi", 
+        details: error instanceof Error ? error.message : String(error)
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
     }
+  }
+  
 
 export async function DELETE(request: Request) {
     try {
