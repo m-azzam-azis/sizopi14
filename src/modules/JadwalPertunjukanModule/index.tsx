@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -13,10 +15,7 @@ import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TrainerData } from "@/types/user";
 import { Loader2 } from "lucide-react";
-
-interface TrainerDashboardProps {
-  userData: TrainerData;
-}
+import { getUserData } from "@/hooks/getUserData";
 
 interface DashboardData {
   trainer: {
@@ -48,19 +47,20 @@ interface DashboardData {
   }[];
 }
 
-const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ userData }) => {
+const JadwalPertunjukanModule = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
     null
   );
   const [error, setError] = useState<string | null>(null);
+  const { userData } = getUserData();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
         const response = await fetch(
-          `/api/dashboard/trainer?username=${userData.username}`
+          `/api/jadwal-penugasan?username=${userData.username}`
         );
 
         if (!response.ok) {
@@ -116,60 +116,10 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ userData }) => {
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">ID Staf</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {trainer?.id_staf || "N/A"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {trainer ? `${trainer.nama_depan} ${trainer.nama_belakang}` : ""}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Jadwal Hari Ini
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{todayShows.length}</div>
-            <p className="text-xs text-muted-foreground">
-              {todayShows.length > 0
-                ? `Pertunjukan berikutnya: ${formatTime(
-                    todayShows[0].tgl_penugasan
-                  )}`
-                : "Tidak ada jadwal hari ini"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Hewan Yang Dilatih
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{trainedAnimals.length}</div>
-            <p className="text-xs text-muted-foreground">
-              {trainedAnimals.length > 0
-                ? `${trainedAnimals.length} hewan dari berbagai spesies`
-                : "Belum ada hewan yang dilatih"}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 mb-4">
+      <div className="grid gap-4 md:grid-cols-2 mb-4 mx-auto px-5 md:px-10 lg:px-20">
         <Card className="col-span-1">
           <CardHeader>
-            <CardTitle>Jadwal Pertunjukan Hari Ini</CardTitle>
+            <CardTitle>Jadwal Pertunjukan</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="rounded-md border">
@@ -201,7 +151,7 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ userData }) => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-4">
-                        Tidak ada jadwal pertunjukan hari ini
+                        Tidak ada jadwal pertunjukan
                       </TableCell>
                     </TableRow>
                   )}
@@ -273,7 +223,7 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ userData }) => {
         </Card>
       </div>
 
-      <Card>
+      <Card className="mx-5 md:mx-10 lg:mx-20 mb-10">
         <CardHeader>
           <CardTitle>Status Latihan Terakhir</CardTitle>
         </CardHeader>
@@ -328,4 +278,4 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ userData }) => {
   );
 };
 
-export default TrainerDashboard;
+export default JadwalPertunjukanModule;

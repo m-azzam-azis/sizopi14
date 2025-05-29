@@ -576,10 +576,10 @@ INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('003417f2-cf99-4dff-b42b-4167e5
 INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('d3f0c021-bb7f-44e9-a31f-2304ef6b34a0', '2024-06-23', 30);
 INSERT INTO jadwal_pemeriksaan_kesehatan VALUES ('54dbb957-d7b1-4094-8084-9a2a33a4f7be', '2024-06-25', 60);
 
-INSERT INTO jadwal_penugasan VALUES ('hutapeamaimunah', '2024-05-01 08:00:00', 'Kolam Renang');
-INSERT INTO jadwal_penugasan VALUES ('randriani', '2024-05-01 09:00:00', 'Teater Satwa');
-INSERT INTO jadwal_penugasan VALUES ('betaniasuryono', '2024-05-02 10:00:00', 'Zona Edukasi');
-INSERT INTO jadwal_penugasan VALUES ('jumarinovitasari', '2024-05-02 13:00:00', 'Panggung Musik');
+INSERT INTO jadwal_penugasan VALUES ('hutapeamaimunah', '2025-05-30 08:00:00', 'Kolam Renang');
+INSERT INTO jadwal_penugasan VALUES ('randriani', '2025-06-01 09:00:00', 'Teater Satwa');
+INSERT INTO jadwal_penugasan VALUES ('betaniasuryono', '2025-06-02 10:00:00', 'Zona Edukasi');
+INSERT INTO jadwal_penugasan VALUES ('jumarinovitasari', '2025-06-02 13:00:00', 'Panggung Musik');
 INSERT INTO jadwal_penugasan VALUES ('urajata', '2024-05-03 08:30:00', 'Kebun Mini');
 INSERT INTO jadwal_penugasan VALUES ('citra42', '2024-05-03 11:00:00', 'Galeri Satwa');
 INSERT INTO jadwal_penugasan VALUES ('dian28', '2024-05-04 09:30:00', 'Taman Reptil');
