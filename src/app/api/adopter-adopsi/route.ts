@@ -1,5 +1,3 @@
-import { Adopter } from "@/db/models/adopter";
-import { Adopsi } from "@/db/models/adopsi";
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/db/db"; 
 
