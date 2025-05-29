@@ -55,15 +55,20 @@ const adminOnlyRoutes = [
   "/admin-adopsi",
   "/admin-adopsi/detail",
   "/admin-adopsi/register",
-  "/adopter",
-  "/adopter/",
   "/api/wahana",
   "/api/atraksi",
-  "/api/adopsi/",
-  "/api/adopter/"
 ];
 
 const visitorRoutes = ["/reservasi"];
+
+const adopterRoutes = [
+  "/adopter",
+  "/adopter/",
+  "/adopter-adopsi",
+  "/adopter-adopsi/detail",
+  "/adopter-adopsi/sertifikat",
+  "/adopter-adopsi/kondisi",
+];
 
 const veterinarianRoutes = [
   "/rekam-medis",
@@ -149,6 +154,16 @@ export const getUserData: () => ReturnType = () => {
   useEffect(() => {
     if (authState === "initializing" || authState === "loading") {
       return;
+    }
+
+    const isAdopterRoute = adopterRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+    if (isAdopterRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
+      }
     }
 
     if (
