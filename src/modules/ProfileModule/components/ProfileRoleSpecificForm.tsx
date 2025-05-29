@@ -1,8 +1,8 @@
 import React from "react";
 import { UserRole } from "@/types/user";
 import VisitorProfileForm from "./role-forms/VisitorProfileForm";
-// import VeterinarianProfileForm from "./role-forms/VeterinarianProfileForm";
-// import StaffProfileForm from "./role-forms/StaffProfileForm";
+import VeterinarianProfileForm from "./role-forms/VeterinarianProfileForm";
+import StaffProfileForm from "./role-forms/StaffProfileForm";
 
 interface ProfileRoleSpecificFormProps {
   user: {
@@ -29,12 +29,14 @@ const ProfileRoleSpecificForm: React.FC<ProfileRoleSpecificFormProps> = ({
       return <VisitorProfileForm user={user} />;
 
     case "veterinarian":
-      // return <VeterinarianProfileForm user={user} />;
+      return <VeterinarianProfileForm user={user} />;
 
     case "admin":
+      return <StaffProfileForm user={user} />;
     case "caretaker":
+      return <StaffProfileForm user={user} />;
     case "trainer":
-      // return <StaffProfileForm user={user} />;
+      return <StaffProfileForm user={user} />;
 
     default:
       return <p>No additional settings for this role.</p>;

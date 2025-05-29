@@ -25,16 +25,15 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 const toastVariants = cva(
-  'group pointer-events-auto border-solid border-1 border-border relative flex w-fit items-center justify-start space-x-3 overflow-hidden rounded-[15px] shadow-lg transition-all data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=open]:slide-in-from-top-full data-[state=closed]:slide-out-to-right-full data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:sm:slide-in-from-bottom-full ml-auto px-[25px] py-[10px]',
-  {
-    variants: {
+  'group pointer-events-auto border-solid border-2 relative flex w-fit items-center justify-start space-x-3 overflow-hidden rounded-[15px] shadow-lg transition-all data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=open]:slide-in-from-top-full data-[state=closed]:slide-out-to-right-full data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:sm:slide-in-from-bottom-full ml-auto px-[25px] py-[15px]',
+  {    variants: {
       variant: {
         default:
-          'bg-blue-500 text-[#FFFFFF]',
-        loading:
-          'bg-blue-500 text-[#FFFFFF]',
-        error: 'bg-error text-[#FFFFFF]',
-        success: 'bg-success text-[#FFFFFF]',
+          'bg-blue-500 text-[#FFFFFF] border-blue-600',        loading:
+          'bg-blue-500 text-[#FFFFFF] border-blue-600',
+        error: 'bg-error text-[#FFFFFF] border-red-600',
+        success: 'bg-green-100 text-green-900 border-green-500 font-medium',
+        destructive: 'bg-red-100 text-red-900 border-red-500 font-medium',
       },
     },
     defaultVariants: {

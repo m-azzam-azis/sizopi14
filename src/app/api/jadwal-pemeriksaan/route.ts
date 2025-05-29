@@ -63,15 +63,25 @@ export async function POST(request: Request) {
       console.log("Setting default frequency to 3 months");
       data.freq_pemeriksaan_rutin = 3;
     }
-    
-    console.log("Creating jadwal pemeriksaan with data:", data);    // Use the enhanced model method for composite key handling
+      console.log("Creating jadwal pemeriksaan with data:", data);    // Use the enhanced model method for composite key handling
     try {
       const jadwalModel = new JadwalPemeriksaanKesehatan();
       
       // This will handle the composite key check and creation in one operation
-      const createdRecord = await jadwalModel.createWithCompositeCheck(data);
+      const result = await jadwalModel.createWithCompositeCheck(data);
       
-      return new Response(JSON.stringify(createdRecord), {
+      // Extract success message from PostgreSQL NOTICE if available
+      let successMessage = null;
+      if (result.pgNotices && result.pgNotices.length > 0) {
+        // Extract the notice text - typically in format "NOTICE: SUKSES: Jadwal..."
+        const noticeText = result.pgNotices[0];
+        successMessage = noticeText.replace(/^NOTICE:\s+/i, '');
+      }
+      
+      return new Response(JSON.stringify({
+        data: result.createdRecord,
+        message: successMessage
+      }), {
         status: 201,
         headers: { "Content-Type": "application/json" },
       });

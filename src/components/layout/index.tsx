@@ -5,11 +5,11 @@ import { Toaster } from "../ui/sonner";
 
 export const Layout = async ({ children }: { children: React.ReactNode }) => {
   return (
-    <main className="min-h-screen font-openSans flex flex-col">
+    <div className="min-h-screen font-openSans flex flex-col">
       <Toaster position="top-center" />
       <Navbar />
-      <main className="min-h-screen mt-[40px]">{children}</main>
+      <div className="flex-1 mt-[40px]">{children}</div>
       <Footer />
-    </main>
+    </div>
   );
 };
