@@ -23,6 +23,7 @@ export type ReturnType = {
   };
   isValid: boolean;
   isLoading: boolean;
+  authState: "initializing" | "loading" | "authenticated" | "unauthenticated";
 };
 
 type sessionType = {
@@ -47,26 +48,41 @@ type sessionType = {
 };
 
 const nonAuthenticatedRoutes = ["/login", "/register", "/api/auth"];
+const adminOnlyRoutes = [
+  "/kelola-pengunjung",
+  "/kelola-pengunjung/atraksi",
+  "/kelola-pengunjung/wahana",
+  "/api/wahana",
+  "/api/atraksi",
+];
 
-const adminOnlyRoutes = ["/atraksi", "/api/atraksi"];
+const visitorRoutes = ["/reservasi"];
 
 export const getUserData: () => ReturnType = () => {
   const [token, setToken] = useState<string | null>(null);
   const [decodedToken, setDecodedToken] = useState<sessionType | null>(null);
-
+  const [authState, setAuthState] = useState<
+    "initializing" | "loading" | "authenticated" | "unauthenticated"
+  >("initializing");
   const [isLoading, setIsLoading] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
 
   async function fetchCookie() {
     try {
+      setAuthState("loading");
       const res = await fetch("/api/auth/cookies");
       const data: { message: string; token: string } = await res.json();
-      if (data.token) setToken(data.token);
-      else setToken(null);
+      if (data.token) {
+        setToken(data.token);
+      } else {
+        setToken(null);
+        setAuthState("unauthenticated");
+      }
     } catch (error) {
       console.error("Error fetching cookie:", error);
       setToken(null);
+      setAuthState("unauthenticated");
     } finally {
       setIsLoading(false);
     }
@@ -83,36 +99,68 @@ export const getUserData: () => ReturnType = () => {
         const isExpired = decoded.exp * 1000 < Date.now();
         if (isExpired) {
           setToken(null);
+          setAuthState("unauthenticated");
         } else {
           setDecodedToken(decoded);
+          setAuthState("authenticated");
         }
       } catch (error) {
         console.error("Error decoding token:", error);
         setDecodedToken(null);
+        setAuthState("unauthenticated");
       }
     }
   }, [token]);
 
   useEffect(() => {
-    if (!isLoading) {
-      if (
-        token &&
-        nonAuthenticatedRoutes.some((route) => pathname.startsWith(route))
-      ) {
+    if (authState === "initializing" || authState === "loading") {
+      return;
+    }
+
+    if (
+      authState === "authenticated" &&
+      nonAuthenticatedRoutes.some((route) => pathname.startsWith(route))
+    ) {
+      router.push("/");
+      return;
+    }
+
+    const isAdminRoute = adminOnlyRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+    if (isAdminRoute) {
+      if (authState === "unauthenticated") {
         router.push("/");
+        return;
       }
 
       if (
-        token &&
-        adminOnlyRoutes.some((route) => pathname.startsWith(route))
+        authState === "authenticated" &&
+        decodedToken?.data.role !== "admin"
       ) {
-        if (decodedToken && decodedToken.data.role !== "admin") {
-          router.push("/");
-          return;
-        }
+        router.push("/dashboard");
+        return;
       }
     }
-  }, [isLoading, token, pathname, router, decodedToken]);
+
+    const isVisitorRoute = visitorRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+    if (isVisitorRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
+      }
+
+      if (
+        authState === "authenticated" &&
+        decodedToken?.data.role !== "visitor"
+      ) {
+        router.push("/");
+        return;
+      }
+    }
+  }, [authState, decodedToken, pathname, router]);
 
   if (isLoading || !decodedToken) {
     return {
@@ -134,6 +182,7 @@ export const getUserData: () => ReturnType = () => {
       },
       isValid: false,
       isLoading,
+      authState,
     };
   }
 
@@ -156,5 +205,6 @@ export const getUserData: () => ReturnType = () => {
     },
     isValid: true,
     isLoading,
+    authState,
   };
 };

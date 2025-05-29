@@ -25,7 +25,13 @@ export const VeterinarianRegisterModule: React.FC = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSpecs, setSelectedSpecs] = useState<string[]>([]);
+
   const [showOtherField, setShowOtherField] = useState(false);
+
+  useEffect(() => {
+    setShowOtherField(selectedSpecs.includes("other"));
+  }, [selectedSpecs]);
+
   const [availableSpecializations, setAvailableSpecializations] = useState<
     string[]
   >([]);
@@ -115,8 +121,12 @@ export const VeterinarianRegisterModule: React.FC = () => {
 
       toast.success("Registration successful!");
       router.push("/login");
-    } catch (error: any) {
-      toast.error(error.message || "Registration failed. Please try again.");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Registration failed. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

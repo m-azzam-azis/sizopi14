@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AdopsiOrganisasiForm({
@@ -16,7 +15,6 @@ export default function AdopsiOrganisasiForm({
   adopter: { address: string; noTelp: string };
   animalData: { name: string; species: string };
 }) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
 
   const {
@@ -32,7 +30,7 @@ export default function AdopsiOrganisasiForm({
     },
   });
   const validateName = (value: string) => value.trim() !== "" || "Nama tidak boleh kosong";
-  const validateNPP = (value: string) => /^ORG\d{5}$/.test(value) || "NPP harus berupa angka sepanjang 17 karakter";
+  const validateNPP = (value: string) => /^ORG\d{5}$/.test(value) || "NPP harus berupa karakter kombinasi 'ORG' diikuti 5 digit angka";
   const validateNominal = (value: string) =>
     /^\d+$/.test(value) && parseInt(value) > 0 || "Nominal harus berupa angka lebih dari 0";
 

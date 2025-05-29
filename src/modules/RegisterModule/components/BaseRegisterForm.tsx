@@ -1,8 +1,8 @@
 "use client";
 
-import React, { ReactNode, useState } from "react";
+import React, { useState } from "react";
 import { z } from "zod";
-import { useForm, UseFormReturn } from "react-hook-form";
+import { FieldPath, useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -36,7 +36,41 @@ export const baseRegisterSchema = z
 
 export type BaseRegisterFormValues = z.infer<typeof baseRegisterSchema>;
 
-export function mapToBackendPayload(data: any, role: string) {
+export interface VisitorFormValues extends BaseRegisterFormValues {
+  address: string;
+  birthDate: string | Date;
+}
+
+export interface VeterinarianFormValues extends BaseRegisterFormValues {
+  certificationNumber: string;
+  specializations?: string[];
+  otherSpecialization?: string;
+}
+
+export interface StaffFormValues extends BaseRegisterFormValues {
+  staffId?: string;
+}
+
+function isVisitorForm(
+  data: BaseRegisterFormValues
+): data is VisitorFormValues {
+  return "address" in data && "birthDate" in data;
+}
+
+function isVeterinarianForm(
+  data: BaseRegisterFormValues
+): data is VeterinarianFormValues {
+  return "certificationNumber" in data;
+}
+
+function isStaffForm(data: BaseRegisterFormValues): data is StaffFormValues {
+  return "staffId" in data;
+}
+
+export function mapToBackendPayload<T extends BaseRegisterFormValues>(
+  data: T,
+  role: string
+) {
   const base = {
     username: data.username,
     email: data.email,
@@ -47,72 +81,73 @@ export function mapToBackendPayload(data: any, role: string) {
     no_telepon: data.phoneNumber,
   };
 
-  console.log("Base Payload:", base);
-
-  if (role === "visitor") {
-    console.log("Visitor Payload:", {
-      ...base,
-      alamat: data.address,
-      tgl_lahir: data.birthDate,
-    });
+  if (role === "visitor" && isVisitorForm(data)) {
     return {
       ...base,
       alamat: data.address,
       tgl_lahir: data.birthDate,
     };
   }
-  if (role === "veterinarian") {
+
+  if (role === "veterinarian" && isVeterinarianForm(data)) {
     return {
       ...base,
       no_str: data.certificationNumber,
     };
   }
-  if (role === "caretaker" || role === "trainer" || role === "admin") {
+
+  if (
+    (role === "caretaker" || role === "trainer" || role === "admin") &&
+    isStaffForm(data)
+  ) {
     return {
       ...base,
       id_staf: data.staffId,
     };
   }
 
-  console.log("RAHHHHHHHHHHHHHHH");
   return base;
 }
 
-interface BaseRegisterFormProps {
-  onSubmit: (data: any) => void;
+interface BaseRegisterFormProps<
+  T extends BaseRegisterFormValues = BaseRegisterFormValues
+> {
+  onSubmit: (data: T) => void;
   title?: string;
   description?: string;
   extraFields?: React.ReactNode;
   isLoading?: boolean;
-  form?: UseFormReturn<any>; // Add this line
+  form?: UseFormReturn<T>;
 }
 
-const BaseRegisterForm: React.FC<BaseRegisterFormProps> = ({
+function BaseRegisterForm<
+  T extends BaseRegisterFormValues = BaseRegisterFormValues
+>({
   onSubmit,
   title,
   description,
   extraFields,
   isLoading = false,
-  form: externalForm, // Receive the external form
-}) => {
+  form: externalForm,
+}: BaseRegisterFormProps<T>) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const form =
-    externalForm ||
-    useForm({
-      resolver: zodResolver(baseRegisterSchema),
-      defaultValues: {
-        firstName: "",
-        lastName: "",
-        middleName: "",
-        email: "",
-        username: "",
-        phoneNumber: "",
-        password: "",
-        confirmPassword: "",
-      },
-    });
+  const internalForm = useForm<BaseRegisterFormValues>({
+    resolver: zodResolver(baseRegisterSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      middleName: "",
+      email: "",
+      username: "",
+      phoneNumber: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
+  const form = externalForm || (internalForm as unknown as UseFormReturn<T>);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-primary/30 flex items-center justify-center px-4 py-12">
@@ -139,7 +174,7 @@ const BaseRegisterForm: React.FC<BaseRegisterFormProps> = ({
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="firstName"
+                name={"firstName" as FieldPath<T>}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>First Name</FormLabel>
@@ -152,7 +187,7 @@ const BaseRegisterForm: React.FC<BaseRegisterFormProps> = ({
               />
               <FormField
                 control={form.control}
-                name="lastName"
+                name={"lastName" as FieldPath<T>}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Last Name</FormLabel>
@@ -167,7 +202,7 @@ const BaseRegisterForm: React.FC<BaseRegisterFormProps> = ({
 
             <FormField
               control={form.control}
-              name="middleName"
+              name={"middleName" as FieldPath<T>}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Middle Name (Optional)</FormLabel>
@@ -181,7 +216,7 @@ const BaseRegisterForm: React.FC<BaseRegisterFormProps> = ({
 
             <FormField
               control={form.control}
-              name="email"
+              name={"email" as FieldPath<T>}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Email</FormLabel>
@@ -199,7 +234,7 @@ const BaseRegisterForm: React.FC<BaseRegisterFormProps> = ({
 
             <FormField
               control={form.control}
-              name="username"
+              name={"username" as FieldPath<T>}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Username</FormLabel>
@@ -213,7 +248,7 @@ const BaseRegisterForm: React.FC<BaseRegisterFormProps> = ({
 
             <FormField
               control={form.control}
-              name="phoneNumber"
+              name={"phoneNumber" as FieldPath<T>}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Phone Number</FormLabel>
@@ -227,7 +262,7 @@ const BaseRegisterForm: React.FC<BaseRegisterFormProps> = ({
 
             <FormField
               control={form.control}
-              name="password"
+              name={"password" as FieldPath<T>}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
@@ -259,7 +294,7 @@ const BaseRegisterForm: React.FC<BaseRegisterFormProps> = ({
 
             <FormField
               control={form.control}
-              name="confirmPassword"
+              name={"confirmPassword" as FieldPath<T>}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
@@ -316,6 +351,6 @@ const BaseRegisterForm: React.FC<BaseRegisterFormProps> = ({
       </motion.div>
     </div>
   );
-};
+}
 
 export default BaseRegisterForm;

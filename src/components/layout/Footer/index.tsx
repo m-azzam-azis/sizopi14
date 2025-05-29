@@ -1,5 +1,4 @@
-import { Facebook, Instagram, Linkedin, Twitter, Youtube } from "lucide-react";
-import Link from "next/link";
+import { Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 import { FACEBOOK_URL, INSTAGRAM_URL, X_URL, YOUTUBE_URL } from "./constant";
 
 export const Footer = () => {

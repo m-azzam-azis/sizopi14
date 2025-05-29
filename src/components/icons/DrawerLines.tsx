@@ -2,7 +2,6 @@ import React from "react";
 import type { IconProps } from "./interface";
 
 export const DrawerLines: React.FC<IconProps> = ({
-  fill = "fill-[#000]",
   className,
   size,
 }) => {

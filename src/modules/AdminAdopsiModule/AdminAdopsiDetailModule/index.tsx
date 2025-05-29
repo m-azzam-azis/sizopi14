@@ -129,6 +129,7 @@ export default function AdminAdopsiDetailModule({ animalId }: { animalId: string
     if (!animalData?.currentAdoption) return;
     
     try {
+      // pake tanggal kemarin buat mastiin adopsi dianggap udah selesai
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayStr = yesterday.toISOString().split('T')[0];

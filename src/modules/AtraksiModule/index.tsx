@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -10,8 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Pencil, Trash } from "lucide-react";
+import { PlusCircle, Pencil, Trash, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,36 +21,29 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import AtraksiFormModal from "./modals/AtraksiFormModal";
 import {
-  AtraksiFormValues,
   EditAtraksiFormValues,
+  CreateAtraksiFormValues,
 } from "./forms/AtraksiForm";
-
-interface Fasilitas {
-  nama: string;
-  jadwal: Date;
-  kapasitas_max: number;
-}
-
-interface Atraksi {
-  nama_atraksi: string;
-  lokasi: string;
-}
-
-interface Pengguna {
-  username: string;
-  nama_depan: string;
-  nama_belakang: string;
-}
+import { toast } from "sonner";
+import { getUserData } from "@/hooks/getUserData";
+import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface PelatihHewan {
-  username_lh: string;
   id_staf: string;
-  pengguna?: Pengguna;
+  nama_belakang: string;
+  nama_depan: string;
+  username: string;
+  username_lh: string;
 }
 
 interface Hewan {
@@ -66,127 +58,96 @@ interface AtraksiData {
   nama_atraksi: string;
   lokasi: string;
   kapasitas: number;
-  jadwal: Date;
+  jadwal: string | Date;
   hewan_terlibat: Hewan[];
   pelatih: PelatihHewan | null;
 }
 
+interface AtraksiApiResponse {
+  nama_atraksi: string;
+  lokasi: string;
+  kapasitas_max: number;
+  jadwal: string;
+  hewan_terlibat?: Hewan[];
+  pelatih?: PelatihHewan;
+}
+
 const AtraksiModule = () => {
-  const router = useRouter();
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const { isLoading: authLoading, authState } = getUserData();
   const [atraksiToDelete, setAtraksiToDelete] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentAtraksi, setCurrentAtraksi] = useState<AtraksiData | null>(
     null
   );
+  const [isLoading, setIsLoading] = useState(true);
+  const [atraksiData, setAtraksiData] = useState<AtraksiData[]>([]);
+  const [pelatihHewan, setPelatihHewan] = useState<PelatihHewan[]>([]);
+  const [hewan, setHewan] = useState<Hewan[]>([]);
+  const [rotationMessage, setRotationMessage] = useState<string | null>(null);
+  const [showRotationDialog, setShowRotationDialog] = useState(false);
 
-  const pelatihHewan: PelatihHewan[] = [
-    {
-      username_lh: "trainer1",
-      id_staf: "staff-001",
-      pengguna: {
-        username: "trainer1",
-        nama_depan: "Budi",
-        nama_belakang: "Santoso",
-      },
-    },
-    {
-      username_lh: "trainer2",
-      id_staf: "staff-002",
-      pengguna: {
-        username: "trainer2",
-        nama_depan: "Siti",
-        nama_belakang: "Nurbaya",
-      },
-    },
-    {
-      username_lh: "trainer3",
-      id_staf: "staff-003",
-      pengguna: {
-        username: "trainer3",
-        nama_depan: "Rudi",
-        nama_belakang: "Hartono",
-      },
-    },
-  ];
+  const fetchAtraksiData = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/atraksi");
+      if (!response.ok) throw new Error("Failed to fetch data");
+      const data = await response.json();
+      setAtraksiData(data.data);
+    } catch (error) {
+      console.error("Error fetching atraksi data:", error);
+      toast.error("Gagal memuat data atraksi");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const hewan: Hewan[] = [
-    {
-      id: "ani-101",
-      nama: "Simba",
-      spesies: "African Lion",
-      url_foto:
-        "https://images.unsplash.com/photo-1545006398-2cf48043d3f3?q=80&w=400",
-    },
-    {
-      id: "ani-102",
-      nama: "Zara",
-      spesies: "Plains Zebra",
-      url_foto:
-        "https://images.unsplash.com/photo-1549975248-52273875de73?q=80&w=400",
-    },
-    {
-      id: "ani-103",
-      nama: "Rafiki",
-      spesies: "Giraffe",
-      url_foto:
-        "https://images.unsplash.com/photo-1534567059665-cbcfe2e19af4?q=80&w=400",
-    },
-    {
-      id: "ani-106",
-      nama: "Flipper",
-      spesies: "Bottlenose Dolphin",
-      url_foto:
-        "https://images.unsplash.com/photo-1607153333879-c174d265f1d2?q=80&w=400",
-    },
-    {
-      id: "ani-107",
-      nama: "Frost",
-      spesies: "Polar Bear",
-      url_foto:
-        "https://images.unsplash.com/photo-1461770354136-8f58567b617a?q=80&w=400",
-    },
-  ];
+  const fetchPelatihData = async () => {
+    try {
+      const response = await fetch("/api/trainers");
+      if (!response.ok) {
+        throw new Error("Failed to fetch trainers");
+      }
 
-  const [atraksiData, setAtraksiData] = useState<AtraksiData[]>([
-    {
-      id: "atr-001",
-      nama_atraksi: "Dolphin Show",
-      lokasi: "Aquatic Center",
-      kapasitas: 200,
-      jadwal: new Date("2025-05-15T10:00:00"),
-      hewan_terlibat: [hewan[3]],
-      pelatih: pelatihHewan[0],
-    },
-    {
-      id: "atr-002",
-      nama_atraksi: "Lion Feeding",
-      lokasi: "Savanna Enclosure",
-      kapasitas: 100,
-      jadwal: new Date("2025-05-15T14:00:00"),
-      hewan_terlibat: [hewan[0]],
-      pelatih: pelatihHewan[1],
-    },
-    {
-      id: "atr-003",
-      nama_atraksi: "Safari Adventure",
-      lokasi: "Savanna Enclosure",
-      kapasitas: 150,
-      jadwal: new Date("2025-05-16T11:00:00"),
-      hewan_terlibat: [hewan[0], hewan[1], hewan[2]],
-      pelatih: pelatihHewan[2],
-    },
-    {
-      id: "atr-004",
-      nama_atraksi: "Arctic Experience",
-      lokasi: "Arctic Zone",
-      kapasitas: 80,
-      jadwal: new Date("2025-05-17T13:30:00"),
-      hewan_terlibat: [hewan[4]],
-      pelatih: pelatihHewan[0],
-    },
-  ]);
+      const { data } = await response.json();
+      setPelatihHewan(data);
+    } catch (error) {
+      console.error("Error fetching trainers:", error);
+      toast.error("Failed to load trainer data");
+    }
+  };
+
+  const fetchHewanData = async () => {
+    try {
+      const response = await fetch("/api/animals");
+      if (!response.ok) {
+        throw new Error("Failed to fetch animals");
+      }
+      const { data } = await response.json();
+      setHewan(data);
+    } catch (error) {
+      console.error("Error fetching animals:", error);
+      toast.error("Failed to load animal data");
+    }
+  };
+
+  useEffect(() => {
+    const fetchAllData = async () => {
+      setIsLoading(true);
+      try {
+        await Promise.all([
+          fetchAtraksiData(),
+          fetchPelatihData(),
+          fetchHewanData(),
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAllData();
+  }, []);
 
   const handleEditClick = (atraksi: AtraksiData) => {
     setCurrentAtraksi(atraksi);
@@ -194,25 +155,72 @@ const AtraksiModule = () => {
   };
 
   const handleDeleteClick = (id: string) => {
-    setAtraksiToDelete(id);
-    setShowDeleteAlert(true);
-  };
-
-  const handleDelete = () => {
-    if (atraksiToDelete) {
-      setAtraksiData(
-        atraksiData.filter((atraksi) => atraksi.id !== atraksiToDelete)
-      );
-      console.log(`Delete atraksi with ID: ${atraksiToDelete}`);
+    const attraction = atraksiData.find((a) => a.id === id);
+    if (attraction) {
+      setAtraksiToDelete(attraction.nama_atraksi);
+      setShowDeleteAlert(true);
     }
-    setShowDeleteAlert(false);
-    setAtraksiToDelete(null);
   };
 
-  const handleEditAtraksi = (data: EditAtraksiFormValues) => {
-    if (currentAtraksi) {
+  const handleDelete = async () => {
+    if (atraksiToDelete) {
+      try {
+        const response = await fetch(
+          `/api/atraksi?nama_atraksi=${encodeURIComponent(atraksiToDelete)}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        console.log(
+          `Deleting attraction: ${atraksiToDelete}, Response: ${response.status}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to delete attraction");
+        }
+
+        setAtraksiData(
+          atraksiData.filter(
+            (atraksi) => atraksi.nama_atraksi !== atraksiToDelete
+          )
+        );
+        toast.success("Atraksi berhasil dihapus");
+      } catch (error) {
+        console.error("Error deleting attraction:", error);
+        toast.error("Gagal menghapus atraksi");
+      }
+
+      setShowDeleteAlert(false);
+      setAtraksiToDelete(null);
+    }
+  };
+
+  const handleEditAtraksi = async (data: EditAtraksiFormValues) => {
+    if (!currentAtraksi) return;
+
+    try {
+      const response = await fetch("/api/atraksi", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nama_atraksi: currentAtraksi.nama_atraksi,
+          kapasitas_max: data.kapasitas,
+          jadwal: data.jadwal,
+        }),
+      });
+
+      const result = await response.json();
+      console.log("Response from API:", result);
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to update attraction");
+      }
+
       const updatedAtraksiData = atraksiData.map((atraksi) => {
-        if (atraksi.id === currentAtraksi.id) {
+        if (atraksi.nama_atraksi === currentAtraksi.nama_atraksi) {
           return {
             ...atraksi,
             jadwal: data.jadwal,
@@ -223,13 +231,25 @@ const AtraksiModule = () => {
       });
 
       setAtraksiData(updatedAtraksiData);
-      console.log("Updated atraksi:", currentAtraksi.id);
+      toast.success("Atraksi berhasil diperbarui");
+
+      if (result.rotationMessage) {
+        console.log("Rotation message received:", result.rotationMessage);
+        setRotationMessage(result.rotationMessage);
+        setShowRotationDialog(true);
+      }
+    } catch (error) {
+      console.error("Error updating attraction:", error);
+      toast.error("Gagal memperbarui atraksi");
     }
+
+    setIsEditModalOpen(false);
+    setCurrentAtraksi(null);
   };
 
   const formattedPelatihList = pelatihHewan.map((pelatih) => ({
     id: pelatih.username_lh,
-    name: `${pelatih.pengguna?.nama_depan} ${pelatih.pengguna?.nama_belakang}`,
+    name: `${pelatih?.nama_depan} ${pelatih?.nama_belakang}`,
   }));
 
   const formattedHewanList = hewan.map((animal) => ({
@@ -238,44 +258,98 @@ const AtraksiModule = () => {
     spesies: animal.spesies,
   }));
 
-  const handleAddAtraksi = (data: any) => {
-    const newId = `atr-00${atraksiData.length + 1}`;
+  const handleAddAtraksi = async (data: CreateAtraksiFormValues) => {
+    try {
+      const response = await fetch("/api/atraksi", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nama_atraksi: data.nama_atraksi,
+          lokasi: data.lokasi,
+          kapasitas_max: data.kapasitas,
+          jadwal: data.jadwal,
+          pelatih_id: data.pelatih_id,
+          hewan_ids: data.hewan_ids,
+        }),
+      });
 
-    const selectedHewan = hewan.filter((animal) =>
-      data.hewan_ids.includes(animal.id)
-    );
+      if (!response.ok) {
+        throw new Error("Failed to create attraction");
+      }
 
-    const selectedPelatih = pelatihHewan.find(
-      (pelatih) => pelatih.username_lh === data.pelatih_id
-    );
+      await fetchAtraksiData();
+      toast.success("Atraksi berhasil ditambahkan");
+    } catch (error) {
+      console.error("Error creating attraction:", error);
+      toast.error("Gagal menambahkan atraksi");
+    }
 
-    const newAtraksi: AtraksiData = {
-      id: newId,
-      nama_atraksi: data.nama_atraksi,
-      lokasi: data.lokasi,
-      kapasitas: data.kapasitas,
-      jadwal: data.jadwal,
-      hewan_terlibat: selectedHewan,
-      pelatih: selectedPelatih || null,
-    };
-
-    setAtraksiData([...atraksiData, newAtraksi]);
-    console.log("Added new attraction:", newAtraksi);
     setIsAddModalOpen(false);
   };
 
-  const formatDateTime = (date: Date) => {
-    return date.toLocaleString("id-ID", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const formatDateTime = (time: string | Date) => {
+    if (!time) return "-";
+
+    if (typeof time === "string") {
+      if (time.includes(":")) {
+        const [hours, minutes] = time.split(":");
+        return `${hours}:${minutes}`;
+      } else if (time.includes("T")) {
+        try {
+          const date = new Date(time);
+          return date.toLocaleString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        } catch {
+          return time;
+        }
+      }
+
+      return time;
+    } else {
+      try {
+        return time.toLocaleString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      } catch {
+        return "Invalid time";
+      }
+    }
   };
+
+  if (
+    authLoading ||
+    authState === "initializing" ||
+    authState === "loading" ||
+    authState === "unauthenticated"
+  ) {
+    return (
+      <div className="flex h-screen w-full justify-center items-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-lg font-medium">Memverifikasi akses...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-10 px-4">
+      <div className="flex justify-center items-center gap-5 p-4">
+        <Link href="/kelola-pengunjung/">
+          <Button variant="outline">Reservasi</Button>
+        </Link>
+        <Link href="/kelola-pengunjung/atraksi">
+          <Button variant="secondary">Atraksi</Button>
+        </Link>
+        <Link href="/kelola-pengunjung/wahana">
+          <Button variant="outline">Wahana</Button>
+        </Link>
+      </div>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-h3 font-bold text-foreground">
@@ -289,65 +363,72 @@ const AtraksiModule = () => {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border border-border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nama Atraksi</TableHead>
-                  <TableHead>Lokasi</TableHead>
-                  <TableHead>Kapasitas</TableHead>
-                  <TableHead>Jadwal</TableHead>
-                  <TableHead>Hewan yang terlibat</TableHead>
-                  <TableHead>Pelatih</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {atraksiData.map((atraksi) => (
-                  <TableRow key={atraksi.id}>
-                    <TableCell className="font-medium">
-                      {atraksi.nama_atraksi}
-                    </TableCell>
-                    <TableCell>{atraksi.lokasi}</TableCell>
-                    <TableCell>{atraksi.kapasitas} orang</TableCell>
-                    <TableCell>{formatDateTime(atraksi.jadwal)}</TableCell>
-                    <TableCell>
-                      {atraksi.hewan_terlibat.length > 0
-                        ? atraksi.hewan_terlibat
-                            .map((hewan) => hewan.spesies)
-                            .join(", ")
-                        : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {atraksi.pelatih
-                        ? `${atraksi.pelatih.pengguna?.nama_depan}`
-                        : "-"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleEditClick(atraksi)}
-                          className="h-8 w-8"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleDeleteClick(atraksi.id)}
-                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+          {isLoading ? (
+            <div className="flex justify-center items-center p-8">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              <p>Memuat data atraksi...</p>
+            </div>
+          ) : (
+            <div className="rounded-md border border-border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nama Atraksi</TableHead>
+                    <TableHead>Lokasi</TableHead>
+                    <TableHead>Kapasitas</TableHead>
+                    <TableHead>Jadwal</TableHead>
+                    <TableHead>Hewan yang terlibat</TableHead>
+                    <TableHead>Pelatih</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {atraksiData.map((atraksi) => (
+                    <TableRow key={atraksi.id}>
+                      <TableCell className="font-medium">
+                        {atraksi.nama_atraksi}
+                      </TableCell>
+                      <TableCell>{atraksi.lokasi}</TableCell>
+                      <TableCell>{atraksi.kapasitas} orang</TableCell>
+                      <TableCell>{formatDateTime(atraksi.jadwal)}</TableCell>
+                      <TableCell>
+                        {atraksi.hewan_terlibat.length > 0
+                          ? atraksi.hewan_terlibat
+                              .map((hewan) => hewan.spesies)
+                              .join(", ")
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {atraksi.pelatih
+                          ? `${atraksi.pelatih?.nama_depan}`
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleEditClick(atraksi)}
+                            className="h-8 w-8"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleDeleteClick(atraksi.id)}
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -377,7 +458,7 @@ const AtraksiModule = () => {
           lokasi={currentAtraksi.lokasi}
           pelatih={
             currentAtraksi.pelatih
-              ? `${currentAtraksi.pelatih.pengguna?.nama_depan} ${currentAtraksi.pelatih.pengguna?.nama_belakang}`
+              ? `${currentAtraksi.pelatih?.nama_depan} ${currentAtraksi.pelatih?.nama_belakang}`
               : "-"
           }
           hewan_terlibat={
@@ -410,6 +491,44 @@ const AtraksiModule = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Rotation Message Dialog */}
+      <Dialog
+        open={showRotationDialog}
+        onOpenChange={(isOpen) => {
+          setShowRotationDialog(isOpen);
+
+          if (!isOpen) {
+            fetchAtraksiData();
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rotasi Pelatih</DialogTitle>
+            <DialogDescription className="py-4">
+              <div className="text-sm text-blue-600 mb-2">
+                {rotationMessage}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Sesuai kebijakan, pelatih hewan akan dirotasi setelah bertugas
+                lebih dari 3 bulan pada atraksi yang sama.
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end">
+            <Button
+              onClick={() => {
+                setShowRotationDialog(false);
+
+                fetchAtraksiData();
+              }}
+            >
+              Tutup
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

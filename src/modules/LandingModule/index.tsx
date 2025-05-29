@@ -7,8 +7,6 @@ import {
   CheckCheck,
   Code,
   Database,
-  Lock,
-  Newspaper,
   Search,
   Shield,
 } from "lucide-react";
