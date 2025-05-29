@@ -1,3 +1,12 @@
+CREATE TABLE IF NOT EXISTS login_attempts (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(50) NOT NULL,
+  ip_address VARCHAR(50),
+  user_agent TEXT,
+  attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  success BOOLEAN NOT NULL
+);
+
 CREATE OR REPLACE FUNCTION check_duplicate_username()
 RETURNS TRIGGER AS $$
 BEGIN
