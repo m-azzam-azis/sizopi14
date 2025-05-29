@@ -14,7 +14,10 @@ if (isDebug) {
     database: process.env.DB_NAME,
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
-    ssl: false, // Non-SSL for local/dev
+    // ssl: false, // Non-SSL for local/dev
+    ssl: {
+      rejectUnauthorized: false,
+    },
   });
 } else {
   pool = new Pool({

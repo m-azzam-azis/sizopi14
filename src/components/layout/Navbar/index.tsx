@@ -30,12 +30,16 @@ export const Navbar = () => {
       case "visitor":
         return "pengunjung";
       case "veterinarian":
+      case "dokter_hewan":
         return "dokter";
       case "caretaker":
+      case "penjaga_hewan":
         return "penjaga";
       case "trainer":
+      case "pelatih_hewan":
         return "pelatih";
       case "admin":
+      case "staf_admin":
         return "admin";
       default:
         return "";
@@ -152,6 +156,12 @@ export const Navbar = () => {
                 >
                   Jadwal Pemeriksaan
                 </Link>
+                <Link
+                  href="/hewan"
+                  className="max-md:hidden text-lg text-primary font-outfit font-medium"
+                >
+                  Kelola Hewan
+                </Link>
               </>
             ) : uiRole === "penjaga" ? (
               <>
@@ -160,6 +170,18 @@ export const Navbar = () => {
                   className="max-md:hidden text-base text-primary font-outfit font-medium"
                 >
                   Pemberian Pakan Hewan
+                </Link>
+                <Link
+                  href="/habitat"
+                  className="max-md:hidden text-base text-primary font-outfit font-medium"
+                >
+                  Manajemen Habitat
+                </Link>
+                <Link
+                  href="/hewan"
+                  className="max-md:hidden text-base text-primary font-outfit font-medium"
+                >
+                  Kelola Hewan
                 </Link>
               </>
             ) : uiRole === "admin" ? (
@@ -181,6 +203,18 @@ export const Navbar = () => {
                   className="max-md:hidden text-base text-primary font-outfit font-medium"
                 >
                   Kelola Adopter
+                </Link>
+                <Link
+                  href="/habitat"
+                  className="max-md:hidden text-base text-primary font-outfit font-medium"
+                >
+                  Manajemen Habitat
+                </Link>
+                <Link
+                  href="/hewan"
+                  className="max-md:hidden text-base text-primary font-outfit font-medium"
+                >
+                  Kelola Hewan
                 </Link>
               </>
             ) : uiRole === "pelatih" ? (
@@ -279,6 +313,12 @@ export const Navbar = () => {
                       >
                         Jadwal Pemeriksaan
                       </Link>
+                      <Link
+                        href="/hewan"
+                        className="text-lg text-primary font-outfit"
+                      >
+                        Kelola Hewan
+                      </Link>
                     </>
                   ) : uiRole === "penjaga" ? (
                     <>
@@ -287,6 +327,18 @@ export const Navbar = () => {
                         className="text-base text-primary font-outfit"
                       >
                         Pemberian Pakan Hewan
+                      </Link>
+                      <Link
+                        href="/habitat"
+                        className="text-base text-primary font-outfit"
+                      >
+                        Manajemen Habitat
+                      </Link>
+                      <Link
+                        href="/hewan"
+                        className="text-base text-primary font-outfit"
+                      >
+                        Kelola Hewan
                       </Link>
                     </>
                   ) : uiRole === "admin" ? (
@@ -308,6 +360,18 @@ export const Navbar = () => {
                         className="text-base text-primary font-outfit"
                       >
                         Kelola Adopter
+                      </Link>
+                      <Link
+                        href="/habitat"
+                        className="text-base text-primary font-outfit"
+                      >
+                        Manajemen Habitat
+                      </Link>
+                      <Link
+                        href="/hewan"
+                        className="text-base text-primary font-outfit"
+                      >
+                        Kelola Hewan
                       </Link>
                     </>
                   ) : uiRole === "pelatih" ? (

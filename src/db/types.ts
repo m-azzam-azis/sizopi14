@@ -59,7 +59,7 @@ export interface HewanType {
   nama: string;
   spesies: string;
   asal_hewan: string;
-  tanggal_lahir: Date;
+  tanggal_lahir: string | null;
   status_kesehatan: string;
   nama_habitat: string;
   url_foto: string;
