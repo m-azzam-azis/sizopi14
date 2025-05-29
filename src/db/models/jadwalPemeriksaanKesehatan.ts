@@ -88,9 +88,8 @@ export class JadwalPemeriksaanKesehatan extends BaseModel<JadwalPemeriksaanKeseh
             throw error;
         }
     }
-    
-    // Override create method to handle composite key constraint checks
-    async createWithCompositeCheck(data: JadwalPemeriksaanKesehatanType): Promise<JadwalPemeriksaanKesehatanType> {
+      // Override create method to handle composite key constraint checks and capture PostgreSQL notices
+    async createWithCompositeCheck(data: JadwalPemeriksaanKesehatanType): Promise<{createdRecord: JadwalPemeriksaanKesehatanType, pgNotices: string[]}> {
         try {
             // Check if record with this composite key exists
             const existing = await this.findByCompositeKey(
@@ -102,8 +101,42 @@ export class JadwalPemeriksaanKesehatan extends BaseModel<JadwalPemeriksaanKeseh
                 throw new Error(`Record with id_hewan=${data.id_hewan} and date=${data.tgl_pemeriksaan_selanjutnya} already exists`);
             }
             
-            // If not exists, create using parent method
-            return await this.create(data);
+            // If not exists, create using client to capture notices
+            const client = await pool.connect();
+            const pgNotices: string[] = [];
+            
+            // Set up notice listener
+            client.on('notice', (notice) => {
+                console.log("PostgreSQL NOTICE:", notice.message);
+            });
+            
+            try {
+                // Start transaction
+                await client.query('BEGIN');
+                
+                const fields = Object.keys(data).join(', ');
+                const placeholders = Object.keys(data).map((_, i) => `$${i + 1}`).join(', ');
+                const values = Object.values(data);
+                
+                const query = `
+                    INSERT INTO ${this.tableName} (${fields})
+                    VALUES (${placeholders})
+                    RETURNING *;
+                `;
+                
+                const result = await client.query(query, values);
+                await client.query('COMMIT');
+                
+                return {
+                    createdRecord: result.rows[0],
+                    pgNotices
+                };
+            } catch (error) {
+                await client.query('ROLLBACK');
+                throw error;
+            } finally {
+                client.release();
+            }
         } catch (error) {
             console.error("Failed during composite key check or creation:", error);
             throw error;

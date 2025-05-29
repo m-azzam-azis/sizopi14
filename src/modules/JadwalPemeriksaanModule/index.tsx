@@ -6,6 +6,8 @@ import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarIcon, Plus, Search, Pencil, Trash2, X } from "lucide-react";
+import { showToast } from "@/components/ui/custom-toast";
+import { SuccessModal } from "@/components/ui/success-modal";
 
 // UI Components
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,6 +94,8 @@ export const JadwalPemeriksaanModule: React.FC = () => {
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
   const [editingItem, setEditingItem] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [noticeMessage, setNoticeMessage] = useState("");
 
   // Fetch hewan dari API
   useEffect(() => {
@@ -186,19 +190,29 @@ export const JadwalPemeriksaanModule: React.FC = () => {
   const getAnimalName = (id: string) => {
     const animal = hewan.find((h) => h.id === id);
     return animal ? animal.nama : id;
-  };  // Handle form submission (Create & Update)
+  };  // Helper to get animal name from ID and display toast notifications
+
+  // Handle form submission (Create & Update)
   const onSubmit = async (data: PemeriksaanFormValues) => {
     try {
       // Validate required fields for composite key
       if (!data.id_hewan) {
         console.error("Missing ID Hewan for composite key");
-        alert("Error: ID Hewan harus diisi untuk jadwal pemeriksaan");
+        showToast({
+          title: "Error",
+          description: "ID Hewan harus diisi untuk jadwal pemeriksaan",
+          variant: "destructive"
+        });
         return;
       }
 
       if (!data.tanggal_pemeriksaan) {
         console.error("Missing examination date for composite key");
-        alert("Error: Tanggal pemeriksaan harus diisi");
+        showToast({
+          title: "Error",
+          description: "Tanggal pemeriksaan harus diisi",
+          variant: "destructive"
+        });
         return;
       }
       
@@ -230,14 +244,20 @@ export const JadwalPemeriksaanModule: React.FC = () => {
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || "Failed to update schedule");
-        }      } else {
+        }
+
+        showToast({
+          title: "Berhasil",
+          description: "Jadwal pemeriksaan berhasil diperbarui",
+          variant: "success"
+        });
+      } else {
         // Create - properly handle composite key requirements
         console.log("Creating new jadwal with composite key:", {
           id_hewan: data.id_hewan,
           tanggal: tgl_pemeriksaan_selanjutnya
         });
-        
-        const response = await fetch("/api/jadwal-pemeriksaan", {
+          const response = await fetch("/api/jadwal-pemeriksaan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -252,13 +272,40 @@ export const JadwalPemeriksaanModule: React.FC = () => {
           console.error("Create failure response:", errorData);
           throw new Error(errorData.error || "Failed to create schedule");
         }
+          // Parse response and show PostgreSQL notice if available
+        const responseData = await response.json();
+        
+        // Debug what we're getting from the API
+        console.log("API response data:", responseData);
+        if (responseData.message) {
+          // Show the RAISE NOTICE message from PostgreSQL trigger both as toast and modal
+          showToast({
+            title: "Sukses",
+            description: responseData.message,
+            variant: "success"
+          });
+          
+          // Also show in a more prominent modal
+          setNoticeMessage(responseData.message);
+          setSuccessModalOpen(true);
+        } else {
+          showToast({
+            title: "Berhasil",
+            description: "Jadwal pemeriksaan baru berhasil dibuat",
+            variant: "success"
+          });
+        }
       }
       
       setIsDialogOpen(false);
       fetchJadwal();
     } catch (error) {
       console.error("Error submitting form:", error);
-      // You could add toast notification here for user feedback
+      showToast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Terjadi kesalahan saat menyimpan jadwal",
+        variant: "destructive"
+      });
     }
   };  // Delete an item with composite key (id_hewan AND date)
   const handleDelete = async (id_hewan: string, date: string) => {
@@ -284,21 +331,40 @@ export const JadwalPemeriksaanModule: React.FC = () => {
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Delete failed:", errorData);
-        alert(`Gagal menghapus jadwal: ${errorData.error || 'Unknown error'}`);
+        showToast({
+          title: "Gagal",
+          description: `Gagal menghapus jadwal: ${errorData.error || 'Unknown error'}`,
+          variant: "destructive"
+        });
       } else {
         const responseData = await response.json();
         console.log("Delete success:", responseData);
+        showToast({
+          title: "Berhasil",
+          description: "Jadwal pemeriksaan berhasil dihapus",
+          variant: "success"
+        });
       }
       
       fetchJadwal();
     } catch (error) {
       console.error("Error deleting jadwal pemeriksaan:", error);
-      alert(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      showToast({
+        title: "Error",
+        description: error instanceof Error ? error.message : String(error),
+        variant: "destructive"
+      });
     }
   };
-
   return (
     <div className="container mx-auto py-8 px-4">
+      {/* Success Modal for PostgreSQL NOTICES */}
+      <SuccessModal 
+        isOpen={successModalOpen}
+        onClose={() => setSuccessModalOpen(false)}
+        message={noticeMessage}
+      />
+
       <h1 className="text-3xl font-bold mb-6">Jadwal Pemeriksaan Kesehatan</h1>
 
       <Card className="mb-6">
@@ -440,14 +506,14 @@ export const JadwalPemeriksaanModule: React.FC = () => {
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+          <Table>            <TableHeader>
               <TableRow>
                 <TableHead>Tanggal Pemeriksaan Selanjutnya</TableHead>
                 <TableHead>Frekuensi (Bulan)</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
-            </TableHeader>            <TableBody>
+            </TableHeader>
+            <TableBody>
               {filteredData.length > 0 ? (
                 filteredData.map((item) => (
                   <TableRow key={`${item.id_hewan}-${new Date(item.tgl_pemeriksaan_selanjutnya).getTime()}`}>

@@ -48,11 +48,29 @@ const VisitorProfileForm: React.FC<VisitorProfileFormProps> = ({ user }) => {
       birthDate: user.birthDate ? new Date(user.birthDate) : undefined,
     },
   });
+  const onSubmit = async (data: VisitorFormValues) => {
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          alamat: data.address,
+          tgl_lahir: data.birthDate.toISOString().split("T")[0], // Convert to YYYY-MM-DD format
+        }),
+      });
 
-  const onSubmit = (data: VisitorFormValues) => {
-    // In a real app, this would make an API call to update the user profile
-    console.log("Updated visitor information:", data);
-    toast.success("Visitor profile updated successfully!");
+      if (response.ok) {
+        toast.success("Visitor profile updated successfully!");
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Failed to update profile");
+      }
+    } catch (error) {
+      console.error("Error updating visitor profile:", error);
+      toast.error("Failed to update profile. Please try again.");
+    }
   };
 
   return (

@@ -6,6 +6,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
+import { showToast } from "@/components/ui/custom-toast";
+import { SuccessModal } from "@/components/ui/success-modal";
 import {
   Eye,
   EyeOff,
@@ -106,6 +108,8 @@ export const RekamMedisModule = () => {
   const [currentRecord, setCurrentRecord] = useState<any>(null);
   const [dokterList, setDokterList] = useState<any[]>([]);
   const [hewanList, setHewanList] = useState<any[]>([]);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [noticeMessage, setNoticeMessage] = useState("");
 
   // Form for adding new rekam medis
   const addForm = useForm<RekamMedisFormValues>({
@@ -240,7 +244,6 @@ export const RekamMedisModule = () => {
         nama_belakang: userData.nama_belakang,
       }]
     : dokterList;
-
   // Handle add new rekam medis (POST)
   const handleAddRekamMedis = async (values: RekamMedisFormValues) => {
     if (userData.role !== "veterinarian") return;
@@ -250,16 +253,46 @@ export const RekamMedisModule = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...values, username_dh: userData.username }), // paksa username_dh dari user login
       });
+      
       if (!res.ok) throw new Error("Gagal menambah data");
+      
+      // Parse response and check for PostgreSQL notices
+      const responseData = await res.json();
+      console.log("API response data:", responseData);
+      
+      if (responseData.message) {
+        // Show the RAISE NOTICE message from PostgreSQL trigger both as toast and modal
+        showToast({
+          title: "Sukses",
+          description: responseData.message,
+          variant: "success"
+        });
+        
+        // Also show in a more prominent modal
+        setNoticeMessage(responseData.message);
+        setSuccessModalOpen(true);
+      } else {
+        // Regular success message
+        showToast({
+          title: "Berhasil",
+          description: "Data rekam medis berhasil ditambahkan",
+          variant: "success"
+        });
+      }
+      
       setIsAddDialogOpen(false);
       addForm.reset();
       fetchRekamMedis();
     } catch (err) {
-      // Optional: tampilkan toast error
+      // Display error toast
+      showToast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Gagal menambah data rekam medis",
+        variant: "destructive"
+      });
       console.error("Error adding rekam medis:", err);
     }
   };
-
   // Handle edit rekam medis (PUT)
   const handleEditRekamMedis = async (values: RekamMedisFormValues) => {
     if (userData.role !== "veterinarian") return;
@@ -270,12 +303,43 @@ export const RekamMedisModule = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...currentRecord, ...values }),
       });
+      
       if (!res.ok) throw new Error("Gagal mengupdate data");
+      
+      // Parse response and check for PostgreSQL notices
+      const responseData = await res.json();
+      console.log("API response data (update):", responseData);
+      
+      if (responseData.message) {
+        // Show the RAISE NOTICE message from PostgreSQL trigger both as toast and modal
+        showToast({
+          title: "Sukses",
+          description: responseData.message,
+          variant: "success"
+        });
+        
+        // Also show in a more prominent modal
+        setNoticeMessage(responseData.message);
+        setSuccessModalOpen(true);
+      } else {
+        showToast({
+          title: "Berhasil",
+          description: "Data rekam medis berhasil diperbarui",
+          variant: "success"
+        });
+      }
+      
       setIsEditDialogOpen(false);
       setCurrentRecord(null);
       fetchRekamMedis();
     } catch (err) {
-      // Optional: tampilkan toast error
+      // Show error toast
+      showToast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Gagal mengupdate data rekam medis",
+        variant: "destructive"
+      });
+      console.error("Error updating rekam medis:", err);
     }
   };
 
@@ -315,6 +379,13 @@ export const RekamMedisModule = () => {
 
   return (
     <div className="container mx-auto py-10 px-4 mt-7">
+      {/* Success Modal for PostgreSQL NOTICES */}
+      <SuccessModal 
+        isOpen={successModalOpen}
+        onClose={() => setSuccessModalOpen(false)}
+        message={noticeMessage}
+      />
+
       <Card className="border-0 shadow-md">
         <CardHeader className="bg-primary/5">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
