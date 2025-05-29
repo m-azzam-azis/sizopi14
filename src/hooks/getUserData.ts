@@ -52,11 +52,39 @@ const adminOnlyRoutes = [
   "/kelola-pengunjung",
   "/kelola-pengunjung/atraksi",
   "/kelola-pengunjung/wahana",
+  "/admin-adopsi",
+  "/admin-adopsi/detail",
+  "/admin-adopsi/register",
+  "/adopter",
+  "/adopter/",
   "/api/wahana",
   "/api/atraksi",
+  "/api/adopsi/",
+  "/api/adopter/"
 ];
 
 const visitorRoutes = ["/reservasi"];
+
+const veterinarianRoutes = [
+  "/rekam-medis",
+  "/jadwal-pemeriksaan",
+  "/api/rekam-medis",
+  //"/api/hewan",
+  "/api/dokter",
+  "/api/jadwal-pemeriksaan"
+];
+
+const caretakerRoutes = [
+  "/pakan",
+  "/pakan/",
+  "/pakan/riwayat",
+  "/habitat",
+  "/habitat/",
+  "/satwa",
+  "/api/pakan",
+  "/api/feeding-history"
+  //"/api/hewan",
+];
 
 export const getUserData: () => ReturnType = () => {
   const [token, setToken] = useState<string | null>(null);
@@ -138,7 +166,7 @@ export const getUserData: () => ReturnType = () => {
         authState === "authenticated" &&
         decodedToken?.data.role !== "admin"
       ) {
-        router.push("/dashboard");
+        router.push("/");
         return;
       }
     }
@@ -155,6 +183,42 @@ export const getUserData: () => ReturnType = () => {
       if (
         authState === "authenticated" &&
         decodedToken?.data.role !== "visitor"
+      ) {
+        router.push("/");
+        return;
+      }
+    }
+
+    const isVeterinarianRoute = veterinarianRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+    if (isVeterinarianRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
+      }   
+
+      if (
+          authState === "authenticated" &&
+          decodedToken?.data.role !== "veterinarian"
+        ) {
+          router.push("/");
+          return;
+        }
+    }
+
+    const isCaretakerRoute = caretakerRoutes.some((route) =>
+      pathname.startsWith(route)
+    );  
+    if (isCaretakerRoute) {
+      if (authState === "unauthenticated") {
+        router.push("/");
+        return;
+      }
+
+    if (
+        authState === "authenticated" &&
+        decodedToken?.data.role !== "caretaker"
       ) {
         router.push("/");
         return;
