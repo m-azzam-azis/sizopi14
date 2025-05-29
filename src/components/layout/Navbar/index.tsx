@@ -156,12 +156,6 @@ export const Navbar = () => {
             ) : uiRole === "penjaga" ? (
               <>
                 <Link
-                  href="/catatan-perawatan-hewan"
-                  className="max-md:hidden text-base text-primary font-outfit font-medium"
-                >
-                  Catatan Perawatan
-                </Link>
-                <Link
                   href="/pakan"
                   className="max-md:hidden text-base text-primary font-outfit font-medium"
                 >
@@ -288,12 +282,6 @@ export const Navbar = () => {
                     </>
                   ) : uiRole === "penjaga" ? (
                     <>
-                      <Link
-                        href="/catatan-perawatan-hewan"
-                        className="text-base text-primary font-outfit"
-                      >
-                        Catatan Perawatan
-                      </Link>
                       <Link
                         href="/pakan"
                         className="text-base text-primary font-outfit"
